@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Event Concepter - API Documentation</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-calendar-alt"></i> AI Event Concepter</h1>
+                <p class="subtitle">Microservices API Documentation</p>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="intro">
+                <h2>Welcome to the API Documentation Hub</h2>
+                <p>Explore our microservices architecture with interactive API documentation powered by Swagger UI.</p>
+            </div>
+
+            <div class="services-grid">
+                <!-- API Gateway -->
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <h3>API Gateway</h3>
+                    <p class="service-description">
+                        Central entry point providing unified API access, service routing, and request orchestration across all microservices.
+                    </p>
+                    <div class="service-details">
+                        <span class="port">Port: 8080</span>
+                        <span class="tech">Spring Boot 3</span>
+                    </div>
+                    <div class="service-features">
+                        <span class="feature">Service Routing</span>
+                        <span class="feature">API Aggregation</span>
+                        <span class="feature">Request Orchestration</span>
+                    </div>
+                    <div class="service-actions">
+                        <a href="http://localhost:8090" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-book"></i> View API Docs
+                        </a>
+                        <a href="http://localhost:8080/health" class="btn btn-secondary" target="_blank">
+                            <i class="fas fa-heartbeat"></i> Health Check
+                        </a>
+                    </div>
+                </div>
+
+                <!-- User Service -->
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>User Service</h3>
+                    <p class="service-description">
+                        Complete user lifecycle management including registration, authentication, profile management, and user preferences.
+                    </p>
+                    <div class="service-details">
+                        <span class="port">Port: 8081</span>
+                        <span class="tech">Spring Boot 3</span>
+                    </div>
+                    <div class="service-features">
+                        <span class="feature">User Registration</span>
+                        <span class="feature">Profile Management</span>
+                        <span class="feature">User Preferences</span>
+                    </div>
+                    <div class="service-actions">
+                        <a href="http://localhost:8091" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-book"></i> View API Docs
+                        </a>
+                        <a href="http://localhost:8081/health" class="btn btn-secondary" target="_blank">
+                            <i class="fas fa-heartbeat"></i> Health Check
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Concept Service -->
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3>Concept Service</h3>
+                    <p class="service-description">
+                        Core business logic for managing event concepts including creation, storage, versioning, and export capabilities.
+                    </p>
+                    <div class="service-details">
+                        <span class="port">Port: 8082</span>
+                        <span class="tech">Spring Boot 3</span>
+                    </div>
+                    <div class="service-features">
+                        <span class="feature">Concept Management</span>
+                        <span class="feature">Version Control</span>
+                        <span class="feature">Export to PDF/JSON</span>
+                    </div>
+                    <div class="service-actions">
+                        <a href="http://localhost:8092" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-book"></i> View API Docs
+                        </a>
+                        <a href="http://localhost:8082/health" class="btn btn-secondary" target="_blank">
+                            <i class="fas fa-heartbeat"></i> Health Check
+                        </a>
+                    </div>
+                </div>
+
+                <!-- GenAI Service -->
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3>GenAI Service</h3>
+                    <p class="service-description">
+                        LangChain-powered service for document ingestion, RAG pipeline processing, and AI-driven content creation for event concepts.
+                    </p>
+                    <div class="service-details">
+                        <span class="port">Port: 8083</span>
+                        <span class="tech">Python + Flask + LangChain</span>
+                    </div>
+                    <div class="service-features">
+                        <span class="feature">Document Ingestion</span>
+                        <span class="feature">RAG Pipeline</span>
+                        <span class="feature">Content Generation</span>
+                    </div>
+                    <div class="service-actions">
+                        <a href="http://localhost:8093" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-book"></i> View API Docs
+                        </a>
+                        <a href="http://localhost:8083" class="btn btn-secondary" target="_blank">
+                            <i class="fas fa-heartbeat"></i> Health Check
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="architecture-section">
+                <h2><i class="fas fa-sitemap"></i> Architecture Overview</h2>
+                <div class="architecture-flow">
+                    <div class="flow-item">
+                        <i class="fas fa-desktop"></i>
+                        <span>Frontend</span>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item primary">
+                        <i class="fas fa-gateway"></i>
+                        <span>API Gateway</span>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-services">
+                        <div class="flow-item">
+                            <i class="fas fa-users"></i>
+                            <span>User Service</span>
+                        </div>
+                        <div class="flow-item">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Concept Service</span>
+                        </div>
+                        <div class="flow-item">
+                            <i class="fas fa-brain"></i>
+                            <span>GenAI Service</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-start">
+                <h2><i class="fas fa-rocket"></i> Quick Start</h2>
+                <div class="commands">
+                    <div class="command-group">
+                        <h4>🚀 Start All Documentation</h4>
+                        <pre><code>./start-docs.sh</code></pre>
+                        <small>Then visit: <a href="http://localhost:8094" target="_blank">http://localhost:8094</a> for the Documentation Hub</small>
+                    </div>
+                    <div class="command-group">
+                        <h4>🛑 Stop All Documentation</h4>
+                        <pre><code>./stop-docs.sh</code></pre>
+                        <small>Cleanly stops all documentation services</small>
+                    </div>
+                    <div class="command-group">
+                        <h4>🔍 Check Service Health</h4>
+                        <pre><code>curl http://localhost:8080/health</code></pre>
+                        <small>Verify API Gateway is running</small>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 AI Event Concepter Team. Built with ❤️ for TUM AET DevOps25.</p>
+        </div>
+    </footer>
+</body>
+</html> 
