@@ -41,7 +41,7 @@ generate_java() {
     --skip-validate-spec \
     --api-package de.tum.aet.devops25.api.generated.controller \
     --model-package de.tum.aet.devops25.api.generated.model \
-    --additional-properties=useTags=true,useSpringBoot3=true,interfaceOnly=true
+    --additional-properties=useTags=true,useSpringBoot3=true,interfaceOnly=true,sourceFolder=""
 
   # Generate for user-svc
   openapi-generator-cli generate \
@@ -51,7 +51,7 @@ generate_java() {
     --skip-validate-spec \
     --api-package de.tum.aet.devops25.api.generated.controller \
     --model-package de.tum.aet.devops25.api.generated.model \
-    --additional-properties=useTags=true,useSpringBoot3=true,interfaceOnly=true
+    --additional-properties=useTags=true,useSpringBoot3=true,interfaceOnly=true,sourceFolder=""
 
   # Generate for concept-svc
   openapi-generator-cli generate \
@@ -61,7 +61,7 @@ generate_java() {
     --skip-validate-spec \
     --api-package de.tum.aet.devops25.api.generated.controller \
     --model-package de.tum.aet.devops25.api.generated.model \
-    --additional-properties=useTags=true,useSpringBoot3=true,interfaceOnly=true
+    --additional-properties=useTags=true,useSpringBoot3=true,interfaceOnly=true,sourceFolder=""
 
   echo "Java code generation complete!"
 }
