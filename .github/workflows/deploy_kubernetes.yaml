@@ -18,6 +18,8 @@ jobs:
 
       - name: Setup Helm
         uses: azure/setup-helm@v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
