@@ -9,11 +9,11 @@ on:
       - dev
 
 jobs:
-  build-and-deploy:
-    runs-on: "ubuntu-latest"
-    environment:
-      name: staging
-
+  build_images:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [client, gateway, user-svc, concept-svc, genai-svc]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -31,21 +31,41 @@ jobs:
           platforms: all
 
       - name: Install Docker Buildx
-        id: buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push Docker Images
-        run: |
-          SERVICES=("client" "gateway" "user-svc" "concept-svc" "genai-svc")
-          for SERVICE in "${SERVICES[@]}"; do
-            echo "Building and pushing $SERVICE"
-            docker buildx build \
-              --platform linux/amd64,linux/arm64 \
-              --tag ghcr.io/${{ github.repository }}/$SERVICE:pr-${{ github.event.pull_request.number }} \
-              --tag ghcr.io/${{ github.repository }}/$SERVICE:latest \
-              --push \
-              --file ./$SERVICE/Dockerfile ./$SERVICE
-          done
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
+          tags: |
+            type=raw,value=pr-${{ github.event.pull_request.number }},enable=${{ github.event_name == 'pull_request' }}
+            type=raw,value=latest,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/dev' }}
+
+      - name: Generate API code from OpenAPI specs
+        run: bash api/scripts/gen-all.sh
+
+      - name: Build and push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          platforms: linux/amd64,linux/arm64
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build_images
+    environment:
+      name: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Setup Helm
         uses: azure/setup-helm@v3
@@ -67,11 +87,11 @@ jobs:
             --namespace team-git-push-force-dev \
             --create-namespace \
             --set ingress.host=dev-aieventconcepter.student.k8s.aet.cit.tum.de \
-            --set client.image.tag=pr-${{ github.event.pull_request.number }} \
-            --set gateway.image.tag=pr-${{ github.event.pull_request.number }} \
-            --set usersvc.image.tag=pr-${{ github.event.pull_request.number }} \
-            --set conceptsvc.image.tag=pr-${{ github.event.pull_request.number }} \
-            --set genaisvc.image.tag=pr-${{ github.event.pull_request.number }}
+            --set client.image.tag=pr-${{ github.event.pull_request.number || github.sha }} \
+            --set gateway.image.tag=pr-${{ github.event.pull_request.number || github.sha }} \
+            --set usersvc.image.tag=pr-${{ github.event.pull_request.number || github.sha }} \
+            --set conceptsvc.image.tag=pr-${{ github.event.pull_request.number || github.sha }} \
+            --set genaisvc.image.tag=pr-${{ github.event.pull_request.number || github.sha }}
 
       - name: Rollout Restart Deployments
         run: |
