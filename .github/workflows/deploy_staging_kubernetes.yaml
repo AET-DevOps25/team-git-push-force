@@ -1,0 +1,78 @@
+name: Deploy to Staging Kubernetes
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build-and-deploy:
+    runs-on: "ubuntu-latest"
+    environment:
+      name: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      - name: Install Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker Images
+        run: |
+          SERVICES=("client" "gateway" "user-svc" "concept-svc" "genai-svc")
+          for SERVICE in "${SERVICES[@]}"; do
+            echo "Building and pushing $SERVICE"
+            docker buildx build \
+              --platform linux/amd64,linux/arm64 \
+              --tag ghcr.io/${{ github.repository }}/$SERVICE:pr-${{ github.event.pull_request.number }} \
+              --tag ghcr.io/${{ github.repository }}/$SERVICE:latest \
+              --push \
+              --file ./$SERVICE/Dockerfile ./$SERVICE
+          done
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "latest"
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+
+      - name: Run Helm Upgrade
+        run: |
+          cd helm/ai-event-concepter
+          helm upgrade --install ai-event-concepter . \
+            --namespace team-git-push-force-dev \
+            --create-namespace \
+            --set ingress.host=dev-aieventconcepter.student.k8s.aet.cit.tum.de \
+            --set client.image.tag=pr-${{ github.event.pull_request.number }} \
+            --set gateway.image.tag=pr-${{ github.event.pull_request.number }} \
+            --set usersvc.image.tag=pr-${{ github.event.pull_request.number }} \
+            --set conceptsvc.image.tag=pr-${{ github.event.pull_request.number }} \
+            --set genaisvc.image.tag=pr-${{ github.event.pull_request.number }}
+
+      - name: Rollout Restart Deployments
+        run: |
+          kubectl rollout restart deployment -n team-git-push-force-dev

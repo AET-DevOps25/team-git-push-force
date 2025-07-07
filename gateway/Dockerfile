@@ -8,6 +8,9 @@ WORKDIR /app
 COPY build.gradle settings.gradle ./
 COPY gradle ./gradle
 
+# Trigger dependency resolution
+RUN gradle dependencies --no-daemon
+
 # Copy source code
 COPY src ./src
 

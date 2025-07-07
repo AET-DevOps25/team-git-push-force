@@ -29,7 +29,6 @@ generate_java() {
   check_command openapi-generator-cli
 
   # Create output directories
-  create_dir "server/src/main/java/generated"
   create_dir "user-svc/src/main/java/generated"
   create_dir "concept-svc/src/main/java/generated"
 
@@ -37,7 +36,7 @@ generate_java() {
   openapi-generator-cli generate \
     -i api/gateway.yaml \
     -g spring \
-    -o server/src/main/java/generated \
+    -o gateway \
     --skip-validate-spec \
     --api-package de.tum.aet.devops25.api.generated.controller \
     --model-package de.tum.aet.devops25.api.generated.model \

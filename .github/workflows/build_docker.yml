@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [client, server, user-svc, concept-svc, genai-svc]
+        service: [client, gateway, user-svc, concept-svc, genai-svc]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -92,6 +92,9 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
             type=sha
+
+      - name: Generate API code from OpenAPI specs
+        run: bash api/scripts/gen-all.sh
 
       - name: Build and push Docker Image
         uses: docker/build-push-action@v5

@@ -1,0 +1,8 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: root_redirect
+          uri: forward:/health
+          predicates:
+            - Path=/
