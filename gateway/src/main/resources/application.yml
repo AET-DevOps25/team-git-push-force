@@ -6,3 +6,43 @@ spring:
           uri: forward:/health
           predicates:
             - Path=/
+        - id: user_health_route
+          uri: ${user-service.url}
+          predicates:
+            - Path=/api/users/health
+          filters:
+            - RewritePath=/api/users/health, /health
+        - id: user_service_route
+          uri: ${user-service.url}
+          predicates:
+            - Path=/api/users/**
+            - Path=/auth/**
+        - id: concept_health_route
+          uri: ${concept-service.url}
+          predicates:
+            - Path=/api/concepts/health
+          filters:
+            - RewritePath=/api/concepts/health, /health
+        - id: concept_service_route
+          uri: ${concept-service.url}
+          predicates:
+            - Path=/api/concepts/**
+        - id: genai_health_route
+          uri: ${genai-service.url}
+          predicates:
+            - Path=/api/genai/health
+          filters:
+            - RewritePath=/api/genai/health, /health
+        - id: genai_service_route
+          uri: ${genai-service.url}
+          predicates:
+            - Path=/api/genai/**
+
+user-service:
+  url: http://user-svc:8080
+
+concept-service:
+  url: http://concept-svc:8080
+
+genai-service:
+  url: http://genai-svc:8083
