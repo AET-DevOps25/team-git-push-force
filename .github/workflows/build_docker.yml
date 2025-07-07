@@ -19,7 +19,7 @@ jobs:
         run: bash api/scripts/gen-all.sh
 
       - name: Upload entire repository as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: full-repository
           path: .
@@ -33,7 +33,7 @@ jobs:
         service: [gateway, user-svc, concept-svc]
     steps:
       - name: Download full repository artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: full-repository
           path: .
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download full repository artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: full-repository
           path: .
@@ -85,7 +85,7 @@ jobs:
         service: [client, gateway, user-svc, concept-svc, genai-svc]
     steps:
       - name: Download full repository artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: full-repository
           path: .
