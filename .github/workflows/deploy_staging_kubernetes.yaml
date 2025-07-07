@@ -9,14 +9,33 @@ on:
       - dev
 
 jobs:
+  generate_api_code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Generate API code from OpenAPI specs
+        run: bash api/scripts/gen-all.sh
+
+      - name: Upload entire repository as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: full-repository
+          path: .
+
   build_images:
     runs-on: ubuntu-latest
+    needs: generate_api_code
     strategy:
       matrix:
         service: [client, gateway, user-svc, concept-svc, genai-svc]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Download full repository artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: full-repository
+          path: .
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
@@ -42,9 +61,6 @@ jobs:
             type=raw,value=pr-${{ github.event.pull_request.number }},enable=${{ github.event_name == 'pull_request' }}
             type=raw,value=latest,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/dev' }}
 
-      - name: Generate API code from OpenAPI specs
-        run: bash api/scripts/gen-all.sh
-
       - name: Build and push Docker Image
         uses: docker/build-push-action@v5
         with:
@@ -64,11 +80,16 @@ jobs:
       name: staging
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Download full repository artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: full-repository
+          path: .
 
       - name: Setup Helm
         uses: azure/setup-helm@v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
