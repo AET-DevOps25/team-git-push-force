@@ -15,8 +15,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Generate API code from OpenAPI specs
-        run: bash api/scripts/gen-all.sh
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install OpenAPI Generator
+        run: |
+          npm install -g @openapitools/openapi-generator-cli
+          pip install openapi-python-client
+
+      - name: Generate Code
+        run: |
+          chmod +x api/scripts/gen-all.sh
+          ./api/scripts/gen-all.sh
 
       - name: Upload entire repository as artifact
         uses: actions/upload-artifact@v4
@@ -32,7 +57,7 @@ jobs:
         service: [client, gateway, user-svc, concept-svc, genai-svc]
     steps:
       - name: Download full repository artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: full-repository
           path: .
