@@ -23,14 +23,14 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: client-service
+                name: client-svc
                 port:
                   number: {{ .Values.client.service.port }}
           - path: /api
             pathType: Prefix
             backend:
               service:
-                name: gateway-service
+                name: gateway
                 port:
                   number: {{ .Values.gateway.service.port }}
 {{- end }}
