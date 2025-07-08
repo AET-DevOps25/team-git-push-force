@@ -28,18 +28,22 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    this.stateService.setLoading('auth', true);
+    this.stateService.setLoading('login', true);
+    console.log('🔐 AuthService.login() called with:', credentials.email);
+    
     return this.apiService.post<AuthResponse>('/auth/login', credentials)
       .pipe(
         tap(response => {
+          console.log('✅ AuthService received login response:', response);
           this.handleAuthSuccess(response);
         }),
         catchError(error => {
+          console.error('❌ AuthService login error:', error);
           this.stateService.setError('Login failed. Please check your credentials.');
           throw error;
         }),
         tap(() => {
-          this.stateService.setLoading('auth', false);
+          this.stateService.setLoading('login', false);
         })
       );
   }
@@ -104,7 +108,18 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     const token = this.getToken();
-    return !!token && !this.isTokenExpired(token);
+    const hasToken = !!token;
+    const isExpired = token ? this.isTokenExpired(token) : true;
+    const result = hasToken && !isExpired;
+    
+    console.log('🔍 isAuthenticated() check:', {
+      hasToken,
+      tokenPrefix: token ? token.substring(0, 20) + '...' : 'none',
+      isExpired,
+      result
+    });
+    
+    return result;
   }
 
   private initializeAuth(): void {
@@ -120,6 +135,8 @@ export class AuthService {
   }
 
   private handleAuthSuccess(response: AuthResponse): void {
+    console.log('🎉 handleAuthSuccess() called with:', response);
+    
     this.storageService.setItem(this.TOKEN_KEY, response.accessToken);
     this.storageService.setItem(this.REFRESH_TOKEN_KEY, response.refreshToken);
     this.storageService.setItem(this.USER_KEY, response.user);
@@ -127,6 +144,12 @@ export class AuthService {
     this.stateService.setUser(response.user);
     this.isAuthenticatedSubject.next(true);
     this.stateService.setError(null);
+    
+    console.log('🔒 Authentication state updated:', {
+      token: !!response.accessToken,
+      user: response.user.email,
+      isAuthenticated: this.isAuthenticated()
+    });
   }
 
   private clearAuth(): void {
@@ -140,10 +163,23 @@ export class AuthService {
   }
 
   private isTokenExpired(token: string): boolean {
+    // Handle mock tokens (they don't expire)
+    if (token.startsWith('mock-token-')) {
+      console.log('🔧 Mock token detected, never expires:', token);
+      return false;
+    }
+
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.exp * 1000 < Date.now();
-    } catch {
+      const isExpired = payload.exp * 1000 < Date.now();
+      console.log('🕐 Token expiry check:', { 
+        exp: payload.exp, 
+        now: Date.now(), 
+        expired: isExpired 
+      });
+      return isExpired;
+    } catch (error) {
+      console.log('❌ Invalid token format:', token, error);
       return true;
     }
   }
