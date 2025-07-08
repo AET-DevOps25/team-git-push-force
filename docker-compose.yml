@@ -20,7 +20,6 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_MAIN_WEB_APPLICATION_TYPE=reactive
-      - spring.cloud.compatibility-verifier.enabled=false
       - USER_SERVICE_URL=http://user-svc:8080
       - CONCEPT_SERVICE_URL=http://concept-svc:8080
       - GENAI_SERVICE_URL=http://genai-svc:8083
