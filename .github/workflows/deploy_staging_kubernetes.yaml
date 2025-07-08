@@ -55,7 +55,7 @@ jobs:
     strategy:
       matrix:
         service: [client, gateway, user-svc, concept-svc, genai-svc]
-      max-parallel: 2
+      max-parallel: 1
     steps:
       - name: Download full repository artifact
         uses: actions/download-artifact@v4
@@ -98,7 +98,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,scope=${{ matrix.service }},mode=max
-          retry: 3
 
   deploy:
     runs-on: ubuntu-latest
