@@ -100,15 +100,14 @@
       <textarea matInput 
                 [formControl]="messageControl"
                 [rows]="inputRows"
-                [maxRows]="4"
-                (keydown.enter)="onEnterKey($event)"
+                (keydown.enter)="onEnterKey($any($event))"
                 (input)="adjustTextareaHeight()"
                 placeholder="Ask me anything about your event concept..."
                 cdkTextareaAutosize
                 #messageTextarea></textarea>
       
-      <mat-hint *ngIf="messageControl.value?.length">
-        {{ messageControl.value.length }}/{{ maxMessageLength }} characters
+      <mat-hint *ngIf="messageControl.value">
+        {{ (messageControl.value || '').length }}/{{ maxMessageLength }} characters
       </mat-hint>
       
       <mat-error *ngIf="messageControl.hasError('required')">

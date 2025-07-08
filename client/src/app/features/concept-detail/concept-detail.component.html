@@ -1,0 +1,99 @@
+<div class="concept-detail-container" *ngIf="concept$ | async as concept">
+  <!-- Header -->
+  <div class="header">
+    <button mat-icon-button (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="header-info">
+      <h1>{{ concept.title }}</h1>
+      <div class="status-badge" [ngClass]="getStatusClass(concept.status)">
+        <mat-icon [color]="getStatusColor(concept.status)">{{ getStatusIcon(concept.status) }}</mat-icon>
+        <span>{{ concept.status.replace('_', ' ') }}</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-outlined-button (click)="editConcept()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-raised-button color="primary" (click)="exportPDF()">
+        <mat-icon>file_download</mat-icon>
+        Export PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Split Layout -->
+  <div class="content-layout">
+    <!-- Left Panel: Concept Information -->
+    <div class="concept-panel">
+      <mat-card class="info-card">
+        <mat-card-header>
+          <mat-card-title>Event Details</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="detail-item">
+            <strong>Description:</strong>
+            <p>{{ concept.description }}</p>
+          </div>
+          
+          <div class="detail-item" *ngIf="concept.eventDetails?.targetAudience">
+            <strong>Target Audience:</strong>
+            <p>{{ concept.eventDetails?.targetAudience }}</p>
+          </div>
+          
+          <div class="detail-item" *ngIf="concept.eventDetails?.format">
+            <strong>Format:</strong>
+            <p>{{ concept.eventDetails?.format }}</p>
+          </div>
+          
+          <div class="detail-item" *ngIf="concept.eventDetails?.capacity">
+            <strong>Expected Capacity:</strong>
+            <p>{{ concept.eventDetails?.capacity }} attendees</p>
+          </div>
+          
+          <div class="detail-item" *ngIf="concept.tags.length > 0">
+            <strong>Tags:</strong>
+            <mat-chip-listbox>
+              <mat-chip *ngFor="let tag of concept.tags">{{ tag }}</mat-chip>
+            </mat-chip-listbox>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      
+      <mat-card class="meta-card">
+        <mat-card-content>
+          <div class="meta-info">
+            <div class="meta-item">
+              <mat-icon>schedule</mat-icon>
+              <span>Created: {{ concept.createdAt | date:'MMM d, y' }}</span>
+            </div>
+            <div class="meta-item">
+              <mat-icon>update</mat-icon>
+              <span>Updated: {{ concept.updatedAt | date:'MMM d, y' }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Right Panel: AI Chat -->
+    <div class="chat-panel">
+      <mat-card class="chat-card">
+        <mat-card-header>
+          <mat-card-title>AI Assistant</mat-card-title>
+          <mat-card-subtitle>Get suggestions and refine your concept</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <app-chat-interface></app-chat-interface>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="!(concept$ | async)" class="loading-state">
+  <mat-icon>event_note</mat-icon>
+  <p>Loading concept...</p>
+</div> 

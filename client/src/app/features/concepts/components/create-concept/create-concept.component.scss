@@ -1,0 +1,77 @@
+@import '../../../../styles/abstracts/variables';
+@import '../../../../styles/abstracts/effects';
+
+.create-concept-container {
+  padding: $spacing-md;
+  max-width: 800px;
+  margin: 0 auto;
+  
+  @media (min-width: $screen-lg) {
+    padding: $spacing-xl;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+  
+  h1 {
+    margin: 0 0 0 $spacing-md;
+    font-size: 1.75rem;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+}
+
+.concept-form-card {
+  @extend .transition-normal;
+  border-radius: $radius-md;
+  
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+    
+    .full-width {
+      width: 100%;
+    }
+    
+    .form-row {
+      display: flex;
+      gap: $spacing-md;
+      
+      mat-form-field {
+        flex: 1;
+      }
+      
+      @media (max-width: $screen-sm) {
+        flex-direction: column;
+        gap: $spacing-sm;
+      }
+    }
+    
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: $spacing-md;
+      margin-top: $spacing-lg;
+      
+      button {
+        @extend .transition-fast;
+        height: 48px;
+        font-size: 1rem;
+        font-weight: 500;
+        min-width: 120px;
+      }
+      
+      @media (max-width: $screen-sm) {
+        flex-direction: column-reverse;
+        
+        button {
+          width: 100%;
+        }
+      }
+    }
+  }
+} 

@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TextFieldModule } from '@angular/cdk/text-field';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ChatMessage, ChatRequest } from '../../../../core/models';
@@ -26,7 +27,8 @@ import { ChatMessage, ChatRequest } from '../../../../core/models';
     MatIconModule,
     MatProgressSpinnerModule,
     MatChipsModule,
-    MatTooltipModule
+    MatTooltipModule,
+    TextFieldModule
   ],
   templateUrl: './chat-interface.component.html',
   styleUrl: './chat-interface.component.scss'

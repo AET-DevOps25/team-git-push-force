@@ -1,0 +1,92 @@
+@import '../../../../styles/abstracts/variables';
+@import '../../../../styles/abstracts/effects';
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: $spacing-md;
+  background: linear-gradient(135deg, var(--primary-color-light) 0%, var(--primary-color) 100%);
+  
+  @media (min-width: $screen-md) {
+    padding: $spacing-lg;
+  }
+}
+
+.login-card {
+  @extend .transition-normal;
+  width: 100%;
+  max-width: 400px;
+  border-radius: $radius-lg;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  
+  &:hover {
+    @extend .hover-lift;
+  }
+  
+  mat-card-header {
+    text-align: center;
+    margin-bottom: $spacing-md;
+    
+    mat-card-title {
+      font-size: 1.75rem;
+      font-weight: 500;
+      margin-bottom: $spacing-xs;
+    }
+    
+    mat-card-subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  
+  .full-width {
+    width: 100%;
+  }
+  
+  .form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: $spacing-sm 0;
+  }
+  
+  .login-button {
+    @extend .transition-fast;
+    height: 48px;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: $spacing-sm;
+    
+    mat-spinner {
+      margin: 0 auto;
+    }
+  }
+}
+
+.card-actions {
+  text-align: center;
+  padding-top: $spacing-md;
+  
+  .register-link {
+    margin: 0;
+    color: var(--text-muted);
+    
+    .link {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+      
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+} 
