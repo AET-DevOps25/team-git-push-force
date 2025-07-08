@@ -1,0 +1,69 @@
+<mat-toolbar color="primary" class="header-toolbar">
+  <button mat-icon-button 
+          routerLink="/dashboard" 
+          *ngIf="user$ | async"
+          class="home-button">
+    <mat-icon>home</mat-icon>
+  </button>
+  
+  <span class="app-title" routerLink="/dashboard">
+    AI Event Concepter
+  </span>
+  
+  <div class="flex-1"></div>
+  
+  <!-- Navigation for authenticated users -->
+  <ng-container *ngIf="user$ | async; else guestNav">
+    <button mat-button routerLink="/concepts" class="nav-button">
+      <mat-icon>lightbulb</mat-icon>
+      Concepts
+    </button>
+    
+    <!-- User Menu -->
+    <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-trigger">
+      <mat-icon>account_circle</mat-icon>
+      <span class="user-name">{{ (user$ | async)?.firstName }}</span>
+      <mat-icon>arrow_drop_down</mat-icon>
+    </button>
+    
+    <mat-menu #userMenu="matMenu" class="user-menu">
+      <div class="user-info p-md">
+        <div class="user-display-name">{{ (user$ | async)?.firstName }} {{ (user$ | async)?.lastName }}</div>
+        <div class="user-email text-muted">{{ (user$ | async)?.email }}</div>
+      </div>
+      <mat-divider></mat-divider>
+      
+      <button mat-menu-item routerLink="/profile">
+        <mat-icon>person</mat-icon>
+        <span>Profile</span>
+      </button>
+      
+      <button mat-menu-item routerLink="/dashboard">
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </button>
+      
+      <mat-divider></mat-divider>
+      
+      <button mat-menu-item (click)="logout()" class="logout-item">
+        <mat-icon>logout</mat-icon>
+        <span>Sign Out</span>
+      </button>
+    </mat-menu>
+  </ng-container>
+  
+  <!-- Guest Navigation -->
+  <ng-template #guestNav>
+    <div class="guest-nav flex items-center">
+      <button mat-button routerLink="/auth/login" class="login-button">
+        Login
+      </button>
+      <button mat-raised-button 
+              color="accent" 
+              routerLink="/auth/register"
+              class="signup-button">
+        Get Started
+      </button>
+    </div>
+  </ng-template>
+</mat-toolbar> 

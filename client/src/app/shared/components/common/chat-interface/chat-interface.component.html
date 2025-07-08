@@ -1,0 +1,130 @@
+<mat-card class="chat-container flex flex-col">
+  <!-- Chat Header -->
+  <div class="chat-header flex justify-between items-center p-md">
+    <div class="chat-title flex items-center">
+      <mat-icon>smart_toy</mat-icon>
+      <span>AI Assistant</span>
+      <mat-icon class="status-indicator" 
+                [class.online]="!isLoading"
+                [class.loading]="isLoading"
+                matTooltip="{{ isLoading ? 'Thinking...' : 'Ready to help' }}">
+        {{ isLoading ? 'pending' : 'circle' }}
+      </mat-icon>
+    </div>
+    
+    <div class="chat-actions flex">
+      <button mat-icon-button 
+              (click)="clearChat()"
+              [disabled]="messages.length === 0"
+              matTooltip="Clear conversation">
+        <mat-icon>clear_all</mat-icon>
+      </button>
+      
+      <button mat-icon-button 
+              (click)="exportChat()"
+              [disabled]="messages.length === 0"
+              matTooltip="Export conversation">
+        <mat-icon>download</mat-icon>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Messages Area -->
+  <div class="messages-container flex-1" #messagesContainer>
+    <div class="messages-list flex flex-col p-md">
+      <!-- Welcome Message -->
+      <div class="message assistant-message flex" *ngIf="messages.length === 0">
+        <div class="message-avatar flex items-center justify-center">
+          <mat-icon>smart_toy</mat-icon>
+        </div>
+        <div class="message-content flex-1">
+          <div class="message-text">
+            Hi! I'm your AI assistant for event conceptualization. I can help you:
+            <ul>
+              <li>Brainstorm event ideas and themes</li>
+              <li>Refine your event concept details</li>
+              <li>Suggest speakers and agenda items</li>
+              <li>Provide feedback on your event plans</li>
+            </ul>
+            What would you like to work on today?
+          </div>
+        </div>
+      </div>
+      
+      <!-- Chat Messages -->
+      <div class="message flex" 
+           *ngFor="let message of messages; trackBy: trackByMessage"
+           [class.user-message]="message.role === 'user'"
+           [class.assistant-message]="message.role === 'assistant'">
+        <div class="message-avatar flex items-center justify-center">
+          <mat-icon>{{ message.role === 'user' ? 'person' : 'smart_toy' }}</mat-icon>
+        </div>
+        <div class="message-content flex-1">
+          <div class="message-text" [innerHTML]="formatMessage(message.content)"></div>
+          <div class="message-time text-muted">
+            {{ formatTime(message.timestamp) }}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Loading Message -->
+      <div class="message assistant-message flex" *ngIf="isLoading">
+        <div class="message-avatar flex items-center justify-center">
+          <mat-icon>smart_toy</mat-icon>
+        </div>
+        <div class="message-content flex-1">
+          <div class="message-text typing flex items-center">
+            <mat-spinner diameter="16"></mat-spinner>
+            <span>AI is thinking...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Suggested Actions -->
+  <div class="suggestions p-md" *ngIf="suggestions.length > 0 && !isLoading">
+    <div class="suggestions-label text-muted">Suggested actions:</div>
+    <mat-chip-set class="mt-md">
+      <mat-chip *ngFor="let suggestion of suggestions" 
+                (click)="sendSuggestion(suggestion)">
+        {{ suggestion }}
+      </mat-chip>
+    </mat-chip-set>
+  </div>
+  
+  <!-- Input Area -->
+  <div class="chat-input flex items-end p-md">
+    <mat-form-field appearance="outline" class="message-input flex-1">
+      <mat-label>Type your message...</mat-label>
+      <textarea matInput 
+                [formControl]="messageControl"
+                [rows]="inputRows"
+                [maxRows]="4"
+                (keydown.enter)="onEnterKey($event)"
+                (input)="adjustTextareaHeight()"
+                placeholder="Ask me anything about your event concept..."
+                cdkTextareaAutosize
+                #messageTextarea></textarea>
+      
+      <mat-hint *ngIf="messageControl.value?.length">
+        {{ messageControl.value.length }}/{{ maxMessageLength }} characters
+      </mat-hint>
+      
+      <mat-error *ngIf="messageControl.hasError('required')">
+        Message is required
+      </mat-error>
+      <mat-error *ngIf="messageControl.hasError('maxlength')">
+        Message is too long (max {{ maxMessageLength }} characters)
+      </mat-error>
+    </mat-form-field>
+    
+    <button mat-fab 
+            color="primary"
+            (click)="sendMessage()"
+            [disabled]="!canSendMessage()"
+            class="send-button">
+      <mat-icon>{{ isLoading ? 'stop' : 'send' }}</mat-icon>
+    </button>
+  </div>
+</mat-card> 

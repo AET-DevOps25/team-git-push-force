@@ -3,8 +3,24 @@
 // GLOBAL STYLES - AI Event Concepter
 // ==========================================================================
 
-@use './app/styles/abstracts/variables' as vars;
-@use './app/styles/abstracts/material-theme';
+// Base imports
 @use './app/styles/base/reset';
 @use './app/styles/base/typography';
+
+// Material theme configuration (includes global theme application)
+@use './app/styles/abstracts/material-theme';
+
+// Essential design tokens
+@use './app/styles/abstracts/variables';
+@use './app/styles/abstracts/colors';
+@use './app/styles/abstracts/effects';
+
+// Layout utilities
 @use './app/styles/layout/grid';
+
+// Global styles
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}

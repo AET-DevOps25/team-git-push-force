@@ -1,0 +1,112 @@
+@use '../../../../styles/abstracts/variables' as vars;
+
+.header-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+}
+
+.app-title {
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  font-size: 1.25rem;
+  transition: var(--transition-fast);
+  
+  &:hover {
+    text-decoration: none;
+    transform: scale(var(--scale-hover));
+  }
+}
+
+.home-button {
+  margin-right: vars.$spacing-sm;
+}
+
+.nav-button {
+  margin-right: vars.$spacing-sm;
+  
+  mat-icon {
+    margin-right: vars.$spacing-xs;
+  }
+}
+
+.user-menu-trigger {
+  .user-name {
+    margin: 0 vars.$spacing-xs;
+    font-weight: 500;
+    
+    // Hide user name on small screens
+    @media (max-width: vars.$screen-sm) {
+      display: none;
+    }
+  }
+  
+  mat-icon:first-child {
+    margin-right: vars.$spacing-xs;
+  }
+  
+  mat-icon:last-child {
+    margin-left: vars.$spacing-xs;
+  }
+}
+
+.user-menu {
+  min-width: 240px;
+  
+  .user-info {
+    min-width: 200px;
+    
+    .user-display-name {
+      font-weight: 500;
+      font-size: 0.875rem;
+      line-height: 1.2;
+    }
+    
+    .user-email {
+      font-size: 0.75rem;
+      margin-top: vars.$spacing-xs;
+      color: var(--text-muted);
+    }
+  }
+}
+
+.guest-nav {
+  gap: vars.$spacing-sm;
+  
+  .login-button {
+    margin-right: vars.$spacing-xs;
+  }
+}
+
+// Menu item styling
+::ng-deep .user-menu .mat-mdc-menu-item {
+  mat-icon {
+    margin-right: vars.$spacing-sm;
+    color: var(--text-muted);
+    transition: var(--transition-fast);
+  }
+  
+  &.logout-item {
+    mat-icon {
+      color: var(--mat-warn-500);
+    }
+  }
+  
+  &:hover mat-icon {
+    color: inherit;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: vars.$screen-sm) {
+  .nav-button span {
+    display: none;
+  }
+  
+  .nav-button mat-icon {
+    margin-right: 0;
+  }
+} 

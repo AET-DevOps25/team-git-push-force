@@ -1,0 +1,23 @@
+// ==========================================================================
+// ESSENTIAL EFFECTS - Simple transitions and animations
+// ==========================================================================
+
+:root {
+  // Animation timing
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  
+  // Common easing
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  
+  // Common transform values
+  --scale-hover: 1.02;
+  --translate-hover: -2px;
+}
+
+// Simple utility classes for the most common cases
+.transition-fast { transition: all var(--transition-fast); }
+.transition-normal { transition: all var(--transition-normal); }
+
+.hover-lift:hover { transform: translateY(var(--translate-hover)); }
+.hover-scale:hover { transform: scale(var(--scale-hover)); } 
