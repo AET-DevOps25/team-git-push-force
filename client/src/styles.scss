@@ -1,19 +1,10 @@
 
-// Custom Theming for Angular Material
-// For more information: https://material.angular.dev/guide/theming
-@use '@angular/material' as mat;
+// ==========================================================================
+// GLOBAL STYLES - AI Event Concepter
+// ==========================================================================
 
-html {
-  @include mat.theme((
-    color: (
-      theme-type: light,
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
-    ),
-    typography: Roboto,
-    density: 0,
-  ));
-}/* You can add global styles to this file, and also import other style files */
-
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+@use './app/styles/abstracts/variables' as vars;
+@use './app/styles/abstracts/material-theme';
+@use './app/styles/base/reset';
+@use './app/styles/base/typography';
+@use './app/styles/layout/grid';

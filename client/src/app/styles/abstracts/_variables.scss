@@ -1,0 +1,21 @@
+// ==========================================================================
+// ESSENTIAL DESIGN TOKENS - AI Event Concepter
+// ==========================================================================
+
+// Basic spacing (8px grid system)
+$spacing-xs: 0.5rem;    // 8px
+$spacing-sm: 1rem;      // 16px
+$spacing-md: 1.5rem;    // 24px
+$spacing-lg: 2rem;      // 32px
+$spacing-xl: 3rem;      // 48px
+
+// Border radius
+$radius-sm: 0.5rem;     // 8px
+$radius-md: 0.75rem;    // 12px
+$radius-lg: 1rem;       // 16px
+
+// Breakpoints for responsive design
+$screen-sm: 640px;
+$screen-md: 768px;
+$screen-lg: 1024px;
+$screen-xl: 1280px;
