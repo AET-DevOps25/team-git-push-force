@@ -126,7 +126,9 @@ export class ApiService {
       return this.mockApiService.getChatHistory(params?.conceptId) as Observable<T>;
     }
     if (endpoint === '/documents/upload' && method === 'POST') {
-      return this.mockApiService.uploadDocument(data) as Observable<T>;
+      // Extract the file from FormData for mock service
+      const file = data.get('file') as File;
+      return this.mockApiService.uploadDocument(file) as Observable<T>;
     }
     if (endpoint === '/documents' && method === 'GET') {
       return this.mockApiService.getDocuments(params) as Observable<T>;
