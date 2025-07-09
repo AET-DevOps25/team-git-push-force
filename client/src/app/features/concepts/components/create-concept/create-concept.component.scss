@@ -2,75 +2,491 @@
 @import '../../../../styles/abstracts/effects';
 
 .create-concept-container {
-  padding: $spacing-md;
-  max-width: 800px;
-  margin: 0 auto;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow-x: hidden;
   
-  @media (min-width: $screen-lg) {
-    padding: $spacing-xl;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
   }
 }
 
-.header {
+// Hero Section - Reduced size
+.hero-section {
+  position: relative;
+  padding: $spacing-md $spacing-lg;
   display: flex;
   align-items: center;
-  margin-bottom: $spacing-lg;
+  justify-content: space-between;
+  min-height: 20vh; // Reduced from 35vh
   
-  h1 {
-    margin: 0 0 0 $spacing-md;
-    font-size: 1.75rem;
-    font-weight: 500;
-    color: var(--text-primary);
+  @media (max-width: $screen-lg) {
+    flex-direction: column;
+    text-align: center;
+    padding: $spacing-md;
+    min-height: 15vh; // Reduced from 30vh
   }
 }
 
-.concept-form-card {
-  @extend .transition-normal;
-  border-radius: $radius-md;
+.hero-content {
+  flex: 1;
+  max-width: 600px;
+  z-index: 2;
   
-  form {
+  .welcome-text {
+    margin-bottom: $spacing-md; // Reduced from $spacing-lg
+    
+    .hero-title {
+      font-size: clamp(1.5rem, 3vw, 2rem); // Reduced from 1.75rem to 2.5rem
+      font-weight: 700;
+      color: white;
+      line-height: 1.2;
+      margin: 0 0 $spacing-xs 0; // Reduced margin
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm; // Reduced gap
+      
+      @media (max-width: $screen-sm) {
+        flex-direction: row; // Keep inline on mobile
+        gap: $spacing-xs;
+      }
+      
+      .title-icon {
+        font-size: 1.75rem !important; // Reduced from 2rem
+        width: 1.75rem !important;
+        height: 1.75rem !important;
+        color: #FFD700;
+      }
+    }
+    
+    .hero-subtitle {
+      font-size: 0.9rem; // Reduced from 1rem
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.6;
+      margin: 0;
+    }
+  }
+  
+  .hero-back {
+    @extend .transition-normal;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    padding: $spacing-sm $spacing-md; // Reduced padding
+    font-size: 0.875rem; // Reduced font size
+    font-weight: 500;
+    color: white;
     display: flex;
-    flex-direction: column;
-    gap: $spacing-md;
+    align-items: center;
+    gap: $spacing-xs;
     
-    .full-width {
-      width: 100%;
+    &:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
     }
     
-    .form-row {
+    mat-icon {
+      margin: 0; // Remove margin, use gap instead
+    }
+  }
+}
+
+// Form Section
+.form-section {
+  position: relative;
+  padding: 0 $spacing-lg $spacing-lg;
+  
+  @media (max-width: $screen-md) {
+    padding: 0 $spacing-md $spacing-md;
+  }
+}
+
+.form-container {
+  max-width: 900px; // Increased for stepper
+  margin: 0 auto;
+}
+
+// Enhanced Stepper Styling (matching register component)
+.concept-stepper {
+  background: transparent;
+
+  ::ng-deep .mat-step-text-label {
+    color: #ffffff !important;
+  }
+}
+
+.form-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: $spacing-xl;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: $spacing-lg;
+  position: relative;
+  
+  // Subtle top highlight like other cards
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  }
+  
+  @media (max-width: $screen-md) {
+    padding: $spacing-lg;
+  }
+  
+  .card-header {
+    margin-bottom: $spacing-lg;
+    text-align: left; // Changed from center to left align
+    
+    .card-title {
       display: flex;
-      gap: $spacing-md;
+      align-items: center;
+      justify-content: flex-start; // Changed from center to flex-start for left alignment
+      gap: $spacing-sm;
+      font-size: 1.5rem; // Increased to match other components
+      font-weight: 700; // Increased weight for consistency
+      color: var(--text-primary);
+      margin: 0 0 $spacing-sm 0; // Increased margin
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
       
-      mat-form-field {
-        flex: 1;
-      }
-      
-      @media (max-width: $screen-sm) {
-        flex-direction: column;
-        gap: $spacing-sm;
+      mat-icon {
+        color: #667eea; // Set explicit color for icon since it can't use gradient
+        font-size: 1.5rem !important;
+        width: 1.5rem !important;
+        height: 1.5rem !important;
       }
     }
     
-    .form-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: $spacing-md;
-      margin-top: $spacing-lg;
+    .card-subtitle {
+      color: var(--text-muted);
+      margin: 0;
+      font-size: 1rem; // Slightly larger subtitle
+      line-height: 1.5;
+      text-align: left; // Changed from center to left align
+      font-weight: 400;
+    }
+  }
+}
+
+.step-form {
+  display: flex;
+  flex-direction: column;
+  
+  .full-width {
+    width: 100%;
+  }
+  
+  .form-row {
+    display: flex;
+    
+    mat-form-field {
+      flex: 1;
+    }
+    
+    @media (max-width: $screen-sm) {
+      flex-direction: column;
+    }
+  }
+  
+  // Custom styling for form fields
+  mat-form-field {
+    .mdc-text-field--outlined {
+      background: white;
+      border-radius: 12px;
+    }
+    
+    .mdc-text-field--filled {
+      background: white;
+      border-radius: 12px 12px 0 0;
+    }
+    
+    .mat-mdc-form-field-hint-wrapper {
+      padding-top: $spacing-xs;
+    }
+  }
+  
+  // Format option styling
+  .format-option {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    
+    mat-icon {
+      color: var(--primary-color);
+      font-size: 1.125rem !important;
+      width: 1.125rem !important;
+      height: 1.125rem !important;
+    }
+  }
+}
+
+// Step Actions
+.step-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: $spacing-lg;
+  gap: $spacing-md;
+  
+  button {
+    @extend .transition-fast;
+    border-radius: 50px;
+    padding: $spacing-sm $spacing-lg;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs; // Ensure icon and text are side by side
+    
+    mat-icon {
+      margin: 0; // Remove any default margins
+      font-size: 1.125rem !important;
+      width: 1.125rem !important;
+      height: 1.125rem !important;
+    }
+    
+    span {
+      white-space: nowrap;
+    }
+    
+    &[matStepperPrevious] {
+      border: 2px solid rgba(0, 0, 0, 0.1);
       
-      button {
-        @extend .transition-fast;
-        height: 48px;
-        font-size: 1rem;
-        font-weight: 500;
-        min-width: 120px;
+      &:hover:not(:disabled) {
+        background: rgba(0, 0, 0, 0.05);
+        border-color: rgba(0, 0, 0, 0.2);
       }
       
-      @media (max-width: $screen-sm) {
-        flex-direction: column-reverse;
+      &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+    }
+    
+    &[matStepperNext],
+    &.submit-btn {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      border: none;
+      color: white;
+      
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        filter: brightness(1.1);
+      }
+      
+      &:disabled {
+        background: rgba(0, 0, 0, 0.1);
+        color: rgba(0, 0, 0, 0.3);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        filter: none;
+      }
+    }
+  }
+  
+  @media (max-width: $screen-sm) {
+    flex-direction: row; // Keep buttons in row on mobile
+    
+    button {
+      flex: 1;
+      min-width: 120px;
+      justify-content: center;
+    }
+  }
+}
+
+// Cancel Section
+.cancel-section {
+  text-align: center;
+  margin-top: $spacing-lg;
+  
+  .cancel-btn {
+    @extend .transition-fast;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    padding: $spacing-sm $spacing-lg;
+    color: white;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-xs;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    mat-icon {
+      margin: 0;
+      font-size: 1rem !important;
+      width: 1rem !important;
+      height: 1rem !important;
+    }
+  }
+}
+
+// Enhanced Stepper customization (matching register component)
+::ng-deep {
+  .concept-stepper {
+    mat-stepper {
+      background: transparent;
+      
+      .mat-horizontal-stepper-header-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: $spacing-lg;
+        background: rgba(255, 255, 255, 0.95); // Higher opacity for better visibility
+        backdrop-filter: blur(20px);
+        border-radius: 16px;
+        padding: $spacing-md;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15); // Stronger shadow
+      }
+      
+      .mat-step-header {
+        border-radius: 12px;
+        padding: $spacing-sm;
+        flex: none;
+        transition: all 0.3s ease;
         
-        button {
-          width: 100%;
+        &.cdk-keyboard-focused,
+        &.cdk-program-focused,
+        &:hover {
+          background-color: rgba(102, 126, 234, 0.1);
         }
+      }
+      
+      .mat-step-icon {
+        background: linear-gradient(45deg, #667eea, #764ba2) !important;
+        color: white !important;
+        border-radius: 12px !important;
+        width: 32px !important;
+        height: 32px !important;
+        font-weight: 600;
+        font-size: 16px !important;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+      
+      .mat-step-icon-state-done {
+        background: linear-gradient(45deg, #4CAF50, #81C784) !important;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+      }
+      
+      .mat-step-icon-selected {
+        background: linear-gradient(45deg, #667eea, #764ba2) !important;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        transform: scale(1.05);
+      }
+      
+      .mat-step-label {
+        font-weight: 600;
+        color: white !important; // Changed to white for better visibility on gradient background
+        transition: all 0.3s ease;
+        
+        &.mat-step-label-active {
+          color: #FFD700 !important; // Gold color for active state to stand out on gradient
+          font-weight: 700;
+        }
+        
+        &.mat-step-label-selected {
+          color: #FFD700 !important; // Gold color for selected state
+          font-weight: 700;
+        }
+      }
+      
+      .mat-step-text-label {
+        font-size: 0.95rem;
+        margin-left: $spacing-sm;
+        color: inherit !important;
+      }
+      
+      .mat-step-content {
+        margin-top: 0;
+        padding: 0;
+      }
+      
+      .mat-stepper-horizontal-line {
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.2));
+        height: 2px;
+        margin: 0 $spacing-md;
+        top: 50% !important;
+        transform: translateY(-50%);
+        flex: 1;
+        border-radius: 1px;
+      }
+    }
+  }
+}
+
+// Additional responsive design
+@media (max-width: $screen-sm) {
+  .create-concept-container {
+    .hero-section {
+      min-height: 15vh;
+      padding: $spacing-sm;
+    }
+    
+    .form-section {
+      padding: 0 $spacing-sm $spacing-sm;
+    }
+    
+    .form-card {
+      padding: $spacing-md;
+      border-radius: 16px;
+      
+      .card-header {
+        .card-title {
+          font-size: 1.25rem; // Smaller on mobile but still prominent
+        }
+        
+        .card-subtitle {
+          font-size: 0.875rem; // Slightly smaller subtitle on mobile
+        }
+      }
+    }
+  }
+  
+  // Mobile stepper adjustments
+  ::ng-deep {
+    .concept-stepper {
+      .mat-horizontal-stepper-header-container {
+        padding: $spacing-sm;
+        margin-bottom: $spacing-md;
+      }
+      
+      .mat-step-text-label {
+        font-size: 0.85rem;
+        margin-left: $spacing-xs;
+      }
+      
+      .mat-stepper-horizontal-line {
+        margin: 0 $spacing-sm;
       }
     }
   }

@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 import { StateService } from '../../../../core/services/state.service';
 import { Concept, ConceptStatus } from '../../../../core/models/concept.model';
@@ -27,7 +28,8 @@ import { Observable, map, combineLatest } from 'rxjs';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatChipsModule
+    MatChipsModule,
+    MatTooltipModule
   ],
   templateUrl: './concepts-list.component.html',
   styleUrl: './concepts-list.component.scss'
@@ -105,8 +107,19 @@ export class ConceptsListComponent implements OnInit {
     this.router.navigate(['/concepts', conceptId]);
   }
 
-  editConcept(conceptId: string): void {
+  editConcept(event: Event, conceptId: string): void {
+    event.stopPropagation(); // Prevent card click
     this.router.navigate(['/concepts', conceptId, 'edit']);
+  }
+
+  shareConcept(event: Event, conceptId: string): void {
+    event.stopPropagation(); // Prevent card click
+    // TODO: Implement share functionality
+    console.log('Share concept:', conceptId);
+  }
+
+  trackByConcept(index: number, concept: Concept): string {
+    return concept.id;
   }
 
   getStatusIcon(status: ConceptStatus): string {
@@ -131,5 +144,15 @@ export class ConceptsListComponent implements OnInit {
 
   getStatusClass(status: ConceptStatus): string {
     return `status-${status.toLowerCase().replace('_', '-')}`;
+  }
+
+  getStatusDisplayName(status: ConceptStatus): string {
+    switch (status) {
+      case 'DRAFT': return 'Draft';
+      case 'IN_PROGRESS': return 'In Progress';
+      case 'COMPLETED': return 'Completed';
+      case 'ARCHIVED': return 'Archived';
+      default: return status;
+    }
   }
 } 

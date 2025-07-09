@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatStepperModule } from '@angular/material/stepper';
 import { StateService } from '../../../../core/services/state.service';
 import { Concept } from '../../../../core/models/concept.model';
 
@@ -24,13 +25,16 @@ import { Concept } from '../../../../core/models/concept.model';
     MatButtonModule,
     MatIconModule,
     MatSelectModule,
-    MatChipsModule
+    MatChipsModule,
+    MatStepperModule
   ],
   templateUrl: './create-concept.component.html',
   styleUrl: './create-concept.component.scss'
 })
 export class CreateConceptComponent implements OnInit {
-  conceptForm: FormGroup;
+  basicInfoForm: FormGroup;
+  eventDetailsForm: FormGroup;
+  additionalInfoForm: FormGroup;
   
   eventFormats = [
     { value: 'PHYSICAL', label: 'Physical Event' },
@@ -43,14 +47,20 @@ export class CreateConceptComponent implements OnInit {
     private stateService: StateService,
     private router: Router
   ) {
-    this.conceptForm = this.fb.group({
+    this.basicInfoForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
       description: ['', [Validators.required, Validators.minLength(10)]],
-      targetAudience: [''],
-      expectedCapacity: [''],
+      targetAudience: ['']
+    });
+
+    this.eventDetailsForm = this.fb.group({
       preferredFormat: ['HYBRID'],
+      expectedCapacity: [''],
       duration: [''],
-      theme: [''],
+      theme: ['']
+    });
+
+    this.additionalInfoForm = this.fb.group({
       budget: [''],
       tags: ['']
     });
@@ -59,31 +69,33 @@ export class CreateConceptComponent implements OnInit {
   ngOnInit(): void {}
 
   onSubmit(): void {
-    if (this.conceptForm.valid) {
-      const formValue = this.conceptForm.value;
+    if (this.basicInfoForm.valid && this.eventDetailsForm.valid && this.additionalInfoForm.valid) {
+      const basicInfo = this.basicInfoForm.value;
+      const eventDetails = this.eventDetailsForm.value;
+      const additionalInfo = this.additionalInfoForm.value;
       
       // Parse tags from comma-separated string
-      const tags = formValue.tags ? 
-        formValue.tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) : 
+      const tags = additionalInfo.tags ? 
+        additionalInfo.tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) : 
         [];
 
       const newConcept: Concept = {
         id: this.generateId(),
-        title: formValue.title,
-        description: formValue.description,
+        title: basicInfo.title,
+        description: basicInfo.description,
         status: 'DRAFT',
         eventDetails: {
-          format: formValue.preferredFormat,
-          capacity: formValue.expectedCapacity ? parseInt(formValue.expectedCapacity) : undefined,
-          duration: formValue.duration,
-          targetAudience: formValue.targetAudience,
+          format: eventDetails.preferredFormat,
+          capacity: eventDetails.expectedCapacity ? parseInt(eventDetails.expectedCapacity) : undefined,
+          duration: eventDetails.duration,
+          targetAudience: basicInfo.targetAudience,
           objectives: [],
-          theme: formValue.theme
+          theme: eventDetails.theme
         },
         agenda: [],
         speakers: [],
         tags: tags,
-        notes: `Budget: ${formValue.budget || 'Not specified'}`,
+        notes: `Budget: ${additionalInfo.budget || 'Not specified'}`,
         version: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -107,8 +119,8 @@ export class CreateConceptComponent implements OnInit {
     return Math.random().toString(36).substring(2, 15);
   }
 
-  getFieldErrorMessage(fieldName: string): string {
-    const field = this.conceptForm.get(fieldName);
+  getFieldErrorMessage(form: FormGroup, fieldName: string): string {
+    const field = form.get(fieldName);
     if (field?.hasError('required')) {
       return `${fieldName} is required`;
     }
@@ -117,5 +129,28 @@ export class CreateConceptComponent implements OnInit {
       return `Minimum ${minLength} characters required`;
     }
     return '';
+  }
+
+  getFormatIcon(format: string): string {
+    switch (format) {
+      case 'PHYSICAL': return 'place';
+      case 'VIRTUAL': return 'videocam';
+      case 'HYBRID': return 'hub';
+      default: return 'event';
+    }
+  }
+
+  getFormatLabel(format: string): string {
+    const formatObj = this.eventFormats.find(f => f.value === format);
+    return formatObj ? formatObj.label : format;
+  }
+
+  isStepValid(stepIndex: number): boolean {
+    switch (stepIndex) {
+      case 0: return this.basicInfoForm.valid;
+      case 1: return this.eventDetailsForm.valid;
+      case 2: return this.additionalInfoForm.valid;
+      default: return false;
+    }
   }
 } 

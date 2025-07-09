@@ -1,69 +1,198 @@
 <div class="create-concept-container">
-  <div class="header">
-    <button mat-icon-button (click)="onCancel()">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    <h1>Create New Concept</h1>
-  </div>
-
-  <mat-card class="concept-form-card">
-    <form [formGroup]="conceptForm" (ngSubmit)="onSubmit()">
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Event Title</mat-label>
-        <input matInput formControlName="title" placeholder="Enter event title">
-        <mat-error *ngIf="conceptForm.get('title')?.invalid && conceptForm.get('title')?.touched">
-          {{ getFieldErrorMessage('title') }}
-        </mat-error>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Description</mat-label>
-        <textarea matInput rows="4" formControlName="description" placeholder="Describe your event concept"></textarea>
-        <mat-error *ngIf="conceptForm.get('description')?.invalid && conceptForm.get('description')?.touched">
-          {{ getFieldErrorMessage('description') }}
-        </mat-error>
-      </mat-form-field>
-
-      <div class="form-row">
-        <mat-form-field appearance="outline">
-          <mat-label>Event Format</mat-label>
-          <mat-select formControlName="preferredFormat">
-            <mat-option *ngFor="let format of eventFormats" [value]="format.value">
-              {{ format.label }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Expected Capacity</mat-label>
-          <input matInput type="number" formControlName="expectedCapacity" placeholder="Number of attendees">
-        </mat-form-field>
+  <!-- Reduced Hero Header Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="welcome-text">
+        <h1 class="hero-title">
+          <mat-icon class="title-icon">add_circle</mat-icon>
+          Create New Concept
+        </h1>
+        <p class="hero-subtitle">Bring your event ideas to life with our intelligent planning assistant</p>
       </div>
-
-      <div class="form-row">
-        <mat-form-field appearance="outline">
-          <mat-label>Target Audience</mat-label>
-          <input matInput formControlName="targetAudience" placeholder="Who is this event for?">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Duration</mat-label>
-          <input matInput formControlName="duration" placeholder="e.g., 2 days, 4 hours">
-        </mat-form-field>
-      </div>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Tags</mat-label>
-        <input matInput formControlName="tags" placeholder="Enter tags separated by commas">
-        <mat-hint>e.g., technology, innovation, networking</mat-hint>
-      </mat-form-field>
-
-      <div class="form-actions">
-        <button mat-button type="button" (click)="onCancel()">Cancel</button>
-        <button mat-raised-button color="primary" type="submit" [disabled]="conceptForm.invalid">
-          Create Concept
+      <div class="hero-actions">
+        <button mat-stroked-button (click)="onCancel()" class="hero-back">
+          <mat-icon>arrow_back</mat-icon>
+          Back to Concepts
         </button>
       </div>
-    </form>
-  </mat-card>
+    </div>
+  </section>
+
+  <!-- Multi-Step Form Section -->
+  <section class="form-section">
+    <div class="form-container">
+      <mat-stepper [linear]="true" #stepper class="concept-stepper">
+        
+        <!-- Step 1: Basic Information -->
+        <mat-step [stepControl]="basicInfoForm" [completed]="isStepValid(0)">
+          <ng-template matStepLabel>Basic Information</ng-template>
+          <div class="form-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <mat-icon>info</mat-icon>
+                Tell us about your event
+              </h2>
+              <p class="card-subtitle">Start with the essentials - what's your event about?</p>
+            </div>
+            
+            <form [formGroup]="basicInfoForm" class="step-form">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Event Title</mat-label>
+                <input matInput formControlName="title" placeholder="Enter a compelling event title">
+                <mat-error *ngIf="basicInfoForm.get('title')?.invalid && basicInfoForm.get('title')?.touched">
+                  {{ getFieldErrorMessage(basicInfoForm, 'title') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Description</mat-label>
+                <textarea matInput rows="4" formControlName="description" 
+                          placeholder="Describe your event concept, goals, and vision"></textarea>
+                <mat-error *ngIf="basicInfoForm.get('description')?.invalid && basicInfoForm.get('description')?.touched">
+                  {{ getFieldErrorMessage(basicInfoForm, 'description') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Target Audience</mat-label>
+                <input matInput formControlName="targetAudience" 
+                       placeholder="Who is this event designed for?">
+                <mat-hint>e.g., Tech professionals, students, entrepreneurs</mat-hint>
+              </mat-form-field>
+
+              <div class="step-actions">
+                <button mat-button matStepperPrevious type="button" disabled>Previous</button>
+                <button mat-raised-button matStepperNext type="button" color="primary"
+                        [disabled]="!isStepValid(0)">
+                  <span>Next</span>
+                  <mat-icon>navigate_next</mat-icon>
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-step>
+
+        <!-- Step 2: Event Details -->
+        <mat-step [stepControl]="eventDetailsForm" [completed]="isStepValid(1)">
+          <ng-template matStepLabel>Event Details</ng-template>
+          <div class="form-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <mat-icon>settings</mat-icon>
+                Configure your event
+              </h2>
+              <p class="card-subtitle">Set up the technical aspects and logistics</p>
+            </div>
+            
+            <form [formGroup]="eventDetailsForm" class="step-form">
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Event Format</mat-label>
+                  <mat-select formControlName="preferredFormat">
+                    <mat-select-trigger>
+                      <div class="format-option" *ngIf="eventDetailsForm.get('preferredFormat')?.value">
+                        <mat-icon>{{ getFormatIcon(eventDetailsForm.get('preferredFormat')?.value) }}</mat-icon>
+                        <span>{{ getFormatLabel(eventDetailsForm.get('preferredFormat')?.value) }}</span>
+                      </div>
+                    </mat-select-trigger>
+                    <mat-option *ngFor="let format of eventFormats" [value]="format.value">
+                      <div class="format-option">
+                        <mat-icon>{{ getFormatIcon(format.value) }}</mat-icon>
+                        <span>{{ format.label }}</span>
+                      </div>
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Expected Capacity</mat-label>
+                  <input matInput type="number" formControlName="expectedCapacity" 
+                         placeholder="Number of attendees">
+                  <mat-hint>Estimated number of participants</mat-hint>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Duration</mat-label>
+                  <input matInput formControlName="duration" 
+                         placeholder="e.g., 2 days, 4 hours, 1 week">
+                  <mat-hint>How long will your event run?</mat-hint>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Theme (Optional)</mat-label>
+                  <input matInput formControlName="theme" 
+                         placeholder="Event theme or topic">
+                </mat-form-field>
+              </div>
+
+              <div class="step-actions">
+                <button mat-button matStepperPrevious type="button">
+                  <mat-icon>navigate_before</mat-icon>
+                  <span>Previous</span>
+                </button>
+                <button mat-raised-button matStepperNext type="button" color="primary">
+                  <span>Next</span>
+                  <mat-icon>navigate_next</mat-icon>
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-step>
+
+        <!-- Step 3: Additional Information -->
+        <mat-step [stepControl]="additionalInfoForm" [completed]="isStepValid(2)">
+          <ng-template matStepLabel>Additional Info</ng-template>
+          <div class="form-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <mat-icon>tune</mat-icon>
+                Final touches
+              </h2>
+              <p class="card-subtitle">Add budget information and tags to help organize your concept</p>
+            </div>
+            
+            <form [formGroup]="additionalInfoForm" class="step-form">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Budget (Optional)</mat-label>
+                <input matInput formControlName="budget" 
+                       placeholder="Estimated budget">
+                <mat-hint>This helps us suggest appropriate options</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Tags</mat-label>
+                <input matInput formControlName="tags" 
+                       placeholder="Enter tags separated by commas">
+                <mat-hint>e.g., technology, innovation, networking</mat-hint>
+              </mat-form-field>
+
+              <div class="step-actions">
+                <button mat-button matStepperPrevious type="button">
+                  <mat-icon>navigate_before</mat-icon>
+                  <span>Previous</span>
+                </button>
+                <button mat-raised-button color="primary" (click)="onSubmit()" 
+                        [disabled]="!basicInfoForm.valid || !eventDetailsForm.valid || !additionalInfoForm.valid"
+                        class="submit-btn">
+                  <mat-icon>add_circle</mat-icon>
+                  <span>Create Concept</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-step>
+
+      </mat-stepper>
+
+      <!-- Cancel Action -->
+      <div class="cancel-section">
+        <button mat-stroked-button (click)="onCancel()" class="cancel-btn">
+          <mat-icon>close</mat-icon>
+          <span>Cancel</span>
+        </button>
+      </div>
+    </div>
+  </section>
 </div> 
