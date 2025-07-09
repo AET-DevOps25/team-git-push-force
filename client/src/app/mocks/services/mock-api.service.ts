@@ -36,6 +36,8 @@ import { ProcessedDocument, DocumentUploadResult } from '../../core/models/docum
 })
 export class MockApiService {
   
+  constructor() {}  // Remove AuthService injection to avoid circular dependency
+  
   // Session state
   private currentUser: User | null = null;
   private isAuthenticated = false;
@@ -124,15 +126,15 @@ export class MockApiService {
   }
 
   getCurrentUser(): Observable<User> {
-    if (!this.isAuthenticated || !this.currentUser) {
+    if (!this.checkAuthenticationState() || !this.currentUser) {
       return this.createDelayedError('Not authenticated', 401);
     }
     return this.createDelayedResponse(this.currentUser);
   }
 
   // Concept methods
-  getConcepts(filters?: any): Observable<Concept[]> {
-    if (!this.isAuthenticated) {
+  getConcepts(filters?: any): Observable<{content: Concept[], totalElements: number, totalPages: number}> {
+    if (!this.checkAuthenticationState()) {
       return this.createDelayedError('Not authenticated', 401);
     }
 
@@ -149,11 +151,24 @@ export class MockApiService {
       );
     }
 
-    return this.createDelayedResponse(filteredConcepts);
+    // Return paginated response format
+    const page = filters?.page || 0;
+    const size = filters?.size || 10;
+    const startIndex = page * size;
+    const endIndex = startIndex + size;
+    const paginatedConcepts = filteredConcepts.slice(startIndex, endIndex);
+    
+    const response = {
+      content: paginatedConcepts,
+      totalElements: filteredConcepts.length,
+      totalPages: Math.ceil(filteredConcepts.length / size)
+    };
+
+    return this.createDelayedResponse(response);
   }
 
   getConcept(id: string): Observable<Concept> {
-    if (!this.isAuthenticated) {
+    if (!this.checkAuthenticationState()) {
       return this.createDelayedError('Not authenticated', 401);
     }
 
@@ -166,7 +181,7 @@ export class MockApiService {
   }
 
   createConcept(conceptData: CreateConceptRequest): Observable<Concept> {
-    if (!this.isAuthenticated || !this.currentUser) {
+    if (!this.checkAuthenticationState() || !this.currentUser) {
       return this.createDelayedError('Not authenticated', 401);
     }
 
@@ -202,7 +217,7 @@ export class MockApiService {
   }
 
   updateConcept(id: string, updateData: Partial<Concept>): Observable<Concept> {
-    if (!this.isAuthenticated || !this.currentUser) {
+    if (!this.checkAuthenticationState() || !this.currentUser) {
       return this.createDelayedError('Not authenticated', 401);
     }
 
@@ -224,7 +239,7 @@ export class MockApiService {
   }
 
   deleteConcept(id: string): Observable<any> {
-    if (!this.isAuthenticated) {
+    if (!this.checkAuthenticationState()) {
       return this.createDelayedError('Not authenticated', 401);
     }
 
@@ -239,7 +254,7 @@ export class MockApiService {
 
   // Chat methods
   sendChatMessage(request: ChatRequest): Observable<ChatResponse> {
-    if (!this.isAuthenticated) {
+    if (!this.checkAuthenticationState()) {
       return this.createDelayedError('Not authenticated', 401);
     }
 
@@ -277,7 +292,7 @@ export class MockApiService {
   }
 
   getChatHistory(conceptId?: string): Observable<ChatMessage[]> {
-    if (!this.isAuthenticated) {
+    if (!this.checkAuthenticationState()) {
       return this.createDelayedError('Not authenticated', 401);
     }
 
@@ -292,7 +307,7 @@ export class MockApiService {
 
   // Document methods
   uploadDocument(file: File): Observable<DocumentUploadResult> {
-    if (!this.isAuthenticated) {
+    if (!this.checkAuthenticationState()) {
       return this.createDelayedError('Not authenticated', 401);
     }
 
@@ -301,7 +316,7 @@ export class MockApiService {
   }
 
   getDocuments(filters?: any): Observable<ProcessedDocument[]> {
-    if (!this.isAuthenticated) {
+    if (!this.checkAuthenticationState()) {
       return this.createDelayedError('Not authenticated', 401);
     }
 
@@ -315,7 +330,7 @@ export class MockApiService {
   }
 
   deleteDocument(id: string): Observable<any> {
-    if (!this.isAuthenticated) {
+    if (!this.checkAuthenticationState()) {
       return this.createDelayedError('Not authenticated', 401);
     }
 
@@ -342,6 +357,41 @@ export class MockApiService {
     })).pipe(
       delay(environment.mockDelay || 500)
     );
+  }
+
+  /**
+   * Check authentication state by looking at stored tokens and user data
+   * Trust the AuthService's authentication - if there's a token and user, we're authenticated
+   */
+  private checkAuthenticationState(): boolean {
+    // If already authenticated in memory, return true
+    if (this.isAuthenticated && this.currentUser) {
+      return true;
+    }
+
+    // Check localStorage for stored authentication data
+    const storedToken = localStorage.getItem('access_token');
+    const storedUser = localStorage.getItem('current_user');
+
+    if (!storedToken || !storedUser) {
+      this.currentUser = null;
+      this.isAuthenticated = false;
+      return false;
+    }
+
+    // If we have both token and user data, trust that AuthService has validated this
+    // AuthService handles token expiration and validation
+    try {
+      this.currentUser = JSON.parse(storedUser);
+      this.isAuthenticated = true;
+      this.sessionToken = storedToken;
+      return true;
+    } catch (error) {
+      console.error('Failed to parse stored user data:', error);
+      this.currentUser = null;
+      this.isAuthenticated = false;
+      return false;
+    }
   }
 
   // Utility methods for testing

@@ -105,7 +105,7 @@ export class ApiService {
       return this.mockApiService.getCurrentUser() as Observable<T>;
     }
     
-    // Concept endpoints (new API paths)
+    // Concept endpoints
     if (endpoint === '/api/concepts' && method === 'GET') {
       return this.mockApiService.getConcepts(params) as Observable<T>;
     }

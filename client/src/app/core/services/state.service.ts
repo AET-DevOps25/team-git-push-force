@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ChatMessage, Concept, User } from '../models';
+import { ConceptService } from './concept.service';
 
 export interface LoadingState {
   [key: string]: boolean;
@@ -10,6 +11,7 @@ export interface LoadingState {
 export interface AppState {
   user: User | null;
   concepts: Concept[];
+  conceptsLoaded: boolean;
   currentConcept: Concept | null;
   chatMessages: ChatMessage[];
   loading: LoadingState;
@@ -23,6 +25,7 @@ export class StateService {
   private readonly initialState: AppState = {
     user: null,
     concepts: [],
+    conceptsLoaded: false,
     currentConcept: null,
     chatMessages: [],
     loading: {},
@@ -30,6 +33,8 @@ export class StateService {
   };
 
   private state$ = new BehaviorSubject<AppState>(this.initialState);
+
+  constructor(private conceptService: ConceptService) {}
 
   // Selectors
   getState(): Observable<AppState> {
@@ -41,7 +46,13 @@ export class StateService {
   }
 
   getConcepts(): Observable<Concept[]> {
+    // Automatically load concepts if not cached
+    this.loadConceptsIfNeeded();
     return this.state$.pipe(map(state => state.concepts));
+  }
+
+  areConceptsLoaded(): boolean {
+    return this.state$.value.conceptsLoaded;
   }
 
   getCurrentConcept(): Observable<Concept | null> {
@@ -60,13 +71,32 @@ export class StateService {
     return this.state$.pipe(map(state => state.error));
   }
 
+  // Private method to handle concept loading with caching
+  private loadConceptsIfNeeded(): void {
+    if (!this.areConceptsLoaded() && !this.state$.value.loading['concepts']) {
+      this.setLoading('concepts', true);
+      this.conceptService.getConcepts().subscribe({
+        next: (response: {content: Concept[], totalElements: number, totalPages: number}) => {
+          this.setConcepts(response.content);
+          this.setLoading('concepts', false);
+          console.log(`Loaded ${response.content.length} concepts (${response.totalElements} total)`);
+        },
+        error: (error: any) => {
+          this.setLoading('concepts', false);
+          console.error('Error loading concepts:', error);
+          this.setError('Failed to load concepts');
+        }
+      });
+    }
+  }
+
   // Actions
   setUser(user: User | null): void {
     this.updateState({ user });
   }
 
   setConcepts(concepts: Concept[]): void {
-    this.updateState({ concepts });
+    this.updateState({ concepts, conceptsLoaded: true });
   }
 
   addConcept(concept: Concept): void {
@@ -118,6 +148,12 @@ export class StateService {
 
   reset(): void {
     this.state$.next(this.initialState);
+  }
+
+  // Method to force refresh concepts
+  refreshConcepts(): void {
+    this.updateState({ conceptsLoaded: false });
+    this.loadConceptsIfNeeded();
   }
 
   private updateState(partialState: Partial<AppState>): void {

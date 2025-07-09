@@ -112,13 +112,6 @@ export class AuthService {
     const isExpired = token ? this.isTokenExpired(token) : true;
     const result = hasToken && !isExpired;
     
-    console.log('🔍 isAuthenticated() check:', {
-      hasToken,
-      tokenPrefix: token ? token.substring(0, 20) + '...' : 'none',
-      isExpired,
-      result
-    });
-    
     return result;
   }
 

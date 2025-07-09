@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -9,7 +9,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { StateService } from '../../core/services/state.service';
 import { Concept } from '../../core/models/concept.model';
 import { ChatInterfaceComponent } from '../../shared/components/common/chat-interface/chat-interface.component';
-import { Observable } from 'rxjs';
+import { Observable, Subject, combineLatest } from 'rxjs';
+import { map, takeUntil, filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-concept-detail',
@@ -26,9 +27,10 @@ import { Observable } from 'rxjs';
   templateUrl: './concept-detail.component.html',
   styleUrl: './concept-detail.component.scss'
 })
-export class ConceptDetailComponent implements OnInit {
+export class ConceptDetailComponent implements OnInit, OnDestroy {
   concept$: Observable<Concept | null>;
   conceptId: string;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private route: ActivatedRoute,
@@ -36,24 +38,47 @@ export class ConceptDetailComponent implements OnInit {
     private stateService: StateService
   ) {
     this.conceptId = this.route.snapshot.params['id'];
-    this.concept$ = this.stateService.getCurrentConcept();
+    
+    // Set up concept observable that automatically finds the concept by ID
+    this.concept$ = combineLatest([
+      this.stateService.getConcepts(),
+      this.stateService.getCurrentConcept()
+    ]).pipe(
+      map(([concepts, currentConcept]) => {
+        // If current concept matches our ID, use it
+        if (currentConcept?.id === this.conceptId) {
+          return currentConcept;
+        }
+        
+        // Otherwise find it in the concepts list
+        const foundConcept = concepts.find(c => c.id === this.conceptId);
+        if (foundConcept && foundConcept.id !== currentConcept?.id) {
+          // Set it as current concept if it's different
+          this.stateService.setCurrentConcept(foundConcept);
+        }
+        
+        return foundConcept || null;
+      }),
+      takeUntil(this.destroy$)
+    );
   }
 
   ngOnInit(): void {
-    this.loadConcept();
-  }
-
-  private loadConcept(): void {
-    // Get concept from state
-    this.stateService.getConcepts().subscribe(concepts => {
-      const concept = concepts.find(c => c.id === this.conceptId);
-      if (concept) {
-        this.stateService.setCurrentConcept(concept);
-      } else {
-        // Concept not found, redirect to concepts list
+    // Check if concept exists, if not redirect
+    this.concept$.pipe(
+      filter(concept => concept === null), // Only emit when concept is definitely null (after loading)
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      // Only redirect if concepts are loaded but concept is still not found
+      if (this.stateService.areConceptsLoaded()) {
         this.router.navigate(['/concepts']);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   goBack(): void {

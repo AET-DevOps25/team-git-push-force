@@ -112,12 +112,6 @@ export class ConceptsListComponent implements OnInit {
     this.router.navigate(['/concepts', conceptId, 'edit']);
   }
 
-  shareConcept(event: Event, conceptId: string): void {
-    event.stopPropagation(); // Prevent card click
-    // TODO: Implement share functionality
-    console.log('Share concept:', conceptId);
-  }
-
   trackByConcept(index: number, concept: Concept): string {
     return concept.id;
   }

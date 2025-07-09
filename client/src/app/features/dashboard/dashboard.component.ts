@@ -5,7 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatGridListModule } from '@angular/material/grid-list';
-import { StateService, ConceptService } from '../../core/services';
+import { StateService } from '../../core/services';
 import { User } from '../../core/models/user.model';
 import { Concept } from '../../core/models/concept.model';
 import { Observable, map } from 'rxjs';
@@ -23,7 +23,7 @@ import { Observable, map } from 'rxjs';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent {
   user$: Observable<User | null>;
   concepts$: Observable<Concept[]>;
   conceptsCount$: Observable<number>;
@@ -33,7 +33,6 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private stateService: StateService,
-    private conceptService: ConceptService,
     private router: Router
   ) {
     this.user$ = this.stateService.getUser();
@@ -59,24 +58,6 @@ export class DashboardComponent implements OnInit {
     );
   }
 
-  ngOnInit(): void {
-    this.loadUserConcepts();
-  }
-
-  private loadUserConcepts(): void {
-    // Load concepts using the ConceptService instead of mock data
-    this.conceptService.getConcepts().subscribe({
-      next: (response) => {
-        // Concepts are automatically updated in state via the service
-        console.log(`Loaded ${response.content.length} concepts (${response.totalElements} total)`);
-      },
-      error: (error) => {
-        console.error('Error loading concepts:', error);
-        this.stateService.setError('Failed to load concepts');
-      }
-    });
-  }
-
   // Navigation methods
   createConcept(): void {
     this.router.navigate(['/concepts/create']);
@@ -94,12 +75,6 @@ export class DashboardComponent implements OnInit {
   editConcept(event: Event, conceptId: string): void {
     event.stopPropagation();
     this.router.navigate(['/concepts', conceptId, 'edit']);
-  }
-
-  shareConcept(event: Event, conceptId: string): void {
-    event.stopPropagation();
-    // TODO: Implement sharing functionality
-    console.log('Share concept:', conceptId);
   }
 
   // Helper methods
