@@ -12,25 +12,25 @@ spec:
   {{- if .Values.ingress.tls }}
   tls:
     - hosts:
-        - "aieventconcepter.student.k8s.aet.cit.tum.de"
+        - "{{ .Values.ingress.host }}"
       secretName: "ai-event-concepter-tls"
   {{- end }}
   rules:
-    - host: "aieventconcepter.student.k8s.aet.cit.tum.de"
+    - host: "{{ .Values.ingress.host }}"
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: client-service
+                name: client-svc
                 port:
                   number: {{ .Values.client.service.port }}
           - path: /api
             pathType: Prefix
             backend:
               service:
-                name: server-service
+                name: gateway
                 port:
-                  number: {{ .Values.server.service.port }}
+                  number: {{ .Values.gateway.service.port }}
 {{- end }}

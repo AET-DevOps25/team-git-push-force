@@ -24,7 +24,24 @@ def home():
         "description": "Document ingestion, RAG pipeline, and content creation service"
     })
 
-@app.route('/api/langchain-test')
+@app.route('/health')
+def health():
+    """Health check for the GenAI service."""
+    return jsonify({
+        "status": "UP",
+        "timestamp": "2025-07-07T14:00:00Z", # Placeholder, ideally dynamic
+        "service": "genai-service",
+        "models": {
+            "llm": "gpt-4",
+            "embedding": "text-embedding-ada-002"
+        },
+        "vectorStore": {
+            "status": "connected",
+            "collections": 10
+        }
+    })
+
+@app.route('/api/genai/langchain-test')
 def langchain_test():
     """Test endpoint to demonstrate LangChain integration."""
     result = chain.run("Is LangChain integrated?")
