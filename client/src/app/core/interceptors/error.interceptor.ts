@@ -18,7 +18,7 @@ export class ErrorInterceptor implements HttpInterceptor {
           // Try to refresh token
           return this.authService.refreshToken().pipe(
             switchMap(response => {
-              if (response) {
+              if (response && response.accessToken) {
                 // Retry original request with new token
                 const newToken = this.authService.getToken();
                 const authReq = req.clone({

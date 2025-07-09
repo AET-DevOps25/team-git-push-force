@@ -105,16 +105,22 @@ describe('ApiService', () => {
       });
 
       it('should convert number parameters to strings', () => {
-        service.get('/test', { id: 123, count: 0 }).subscribe();
+        service.get('/test', { id: 123, count: 0 }).subscribe(data => {
+          expect(data).toEqual({});
+        });
 
         const req = httpMock.expectOne('https://api.test.com/test?id=123&count=0');
+        expect(req.request.method).toBe('GET');
         req.flush({});
       });
 
       it('should handle boolean parameters', () => {
-        service.get('/test', { active: true, archived: false }).subscribe();
+        service.get('/test', { active: true, archived: false }).subscribe(data => {
+          expect(data).toEqual({});
+        });
 
         const req = httpMock.expectOne('https://api.test.com/test?active=true&archived=false');
+        expect(req.request.method).toBe('GET');
         req.flush({});
       });
     });
