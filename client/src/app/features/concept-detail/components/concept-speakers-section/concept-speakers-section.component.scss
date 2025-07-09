@@ -1,0 +1,305 @@
+@use '../../../../styles/abstracts/variables' as vars;
+
+// Expansion panel styling
+mat-expansion-panel {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px !important;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.1),
+    0 8px 25px rgba(102, 126, 234, 0.08);
+  margin-bottom: vars.$spacing-lg !important;
+  overflow: hidden;
+  
+  &:before {
+    display: none; // Remove default expansion panel border
+  }
+  
+  .mat-expansion-panel-header {
+    padding: vars.$spacing-lg vars.$spacing-lg vars.$spacing-lg vars.$spacing-lg;
+    border-radius: 20px 20px 0 0 !important;
+    
+    &.mat-expanded {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .mat-expansion-panel-header-title {
+      display: flex;
+      align-items: center;
+      gap: vars.$spacing-md;
+      font-weight: 600;
+      font-size: 1.125rem;
+      
+      .section-icon {
+        width: 24px;
+        height: 24px;
+        color: #667eea;
+        flex-shrink: 0;
+      }
+      
+      .suggestion-indicator {
+        color: #667eea;
+        font-size: 1.125rem !important;
+        width: 1.125rem !important;
+        height: 1.125rem !important;
+        animation: pulse-glow 2s ease-in-out infinite;
+        margin-left: vars.$spacing-sm;
+      }
+
+      .completion-icon {
+        margin-left: auto;
+        font-size: 1.25rem !important;
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        
+        &.complete {
+          color: #4CAF50;
+        }
+        
+        &.incomplete {
+          color: #FF9800;
+        }
+        
+        &.has-suggestions {
+          color: #667eea;
+          animation: pulse-glow 2s ease-in-out infinite;
+        }
+      }
+    }
+  }
+  
+  .mat-expansion-panel-content {
+    .mat-expansion-panel-body {
+      padding: 0 vars.$spacing-lg vars.$spacing-lg vars.$spacing-lg;
+    }
+  }
+}
+
+// Animations
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.8;
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  }
+}
+
+// Panel content styling
+.panel-content {
+  padding-top: vars.$spacing-sm;
+}
+
+// Empty states
+.empty-state {
+  text-align: center;
+  padding: vars.$spacing-xl;
+  color: var(--text-muted);
+  
+  mat-icon {
+    font-size: 3rem !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    margin-bottom: vars.$spacing-md;
+    color: rgba(102, 126, 234, 0.3);
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+}
+
+// Suggestion header
+.suggestion-header {
+  display: flex;
+  align-items: center;
+  gap: vars.$spacing-sm;
+  color: #667eea;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: vars.$spacing-lg 0 vars.$spacing-md 0;
+  
+  mat-icon {
+    font-size: 1.125rem !important;
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+  }
+}
+
+.suggested-speakers {
+  margin-top: vars.$spacing-lg;
+  padding-top: vars.$spacing-lg;
+  border-top: 1px dashed rgba(102, 126, 234, 0.3);
+}
+
+// Speakers styling
+.speakers-grid {
+  display: flex;
+  flex-direction: column;
+  gap: vars.$spacing-md;
+  
+  .speaker-card {
+    padding: vars.$spacing-md;
+    background: rgba(102, 126, 234, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    
+    &.suggested {
+      background: rgba(102, 126, 234, 0.05);
+      border: 1px dashed rgba(102, 126, 234, 0.3);
+      
+      .speaker-avatar.suggested {
+        background: rgba(102, 126, 234, 0.1);
+        
+        mat-icon {
+          color: #667eea;
+        }
+      }
+      
+      .suggestion-actions {
+        display: flex;
+        gap: vars.$spacing-xs;
+        align-items: center;
+        
+        button {
+          width: 36px;
+          height: 36px;
+          min-width: 36px;
+          min-height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+          border: none;
+          padding: 0;
+          
+          &[color="primary"] {
+            background: rgba(76, 175, 80, 0.1);
+            
+            mat-icon {
+              color: #4caf50;
+              font-size: 1.125rem !important;
+              width: 1.125rem !important;
+              height: 1.125rem !important;
+              line-height: 1;
+            }
+            
+            &:hover {
+              background: rgba(76, 175, 80, 0.2);
+            }
+          }
+          
+          &[color="warn"] {
+            background: rgba(244, 67, 54, 0.1);
+            
+            mat-icon {
+              color: #f44336;
+              font-size: 1.125rem !important;
+              width: 1.125rem !important;
+              height: 1.125rem !important;
+              line-height: 1;
+            }
+            
+            &:hover {
+              background: rgba(244, 67, 54, 0.2);
+            }
+          }
+        }
+      }
+    }
+    
+    .speaker-header {
+      display: flex;
+      align-items: center;
+      gap: vars.$spacing-md;
+      margin-bottom: vars.$spacing-sm;
+      
+      .speaker-avatar {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        
+        mat-icon {
+          color: white;
+          font-size: 1.5rem !important;
+          width: 1.5rem !important;
+          height: 1.5rem !important;
+        }
+      }
+      
+      .speaker-info {
+        flex: 1;
+        
+        .speaker-name {
+          margin: 0 0 4px 0;
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--text-primary);
+        }
+        
+        .speaker-expertise {
+          margin: 0;
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+        }
+      }
+      
+      .speaker-status {
+        flex-shrink: 0;
+        
+        mat-icon {
+          font-size: 1.25rem !important;
+          width: 1.25rem !important;
+          height: 1.25rem !important;
+          
+          &.confirmed {
+            color: #4CAF50;
+          }
+          
+          &.pending {
+            color: #FF9800;
+          }
+        }
+      }
+    }
+    
+    .speaker-details {
+      .suggested-topic {
+        margin: 0 0 vars.$spacing-xs 0;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+      
+      .speaker-bio {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+    }
+  }
+}
+
+// Responsive adjustments for suggestions
+@media (max-width: vars.$screen-md) {
+  .speaker-card.suggested .speaker-header {
+    flex-wrap: wrap;
+    gap: vars.$spacing-sm;
+    
+    .suggestion-actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+} 
