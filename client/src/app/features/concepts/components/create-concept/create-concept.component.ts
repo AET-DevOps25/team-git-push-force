@@ -10,8 +10,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatStepperModule } from '@angular/material/stepper';
-import { StateService } from '../../../../core/services/state.service';
-import { Concept } from '../../../../core/models/concept.model';
+import { StateService, ConceptService } from '../../../../core/services';
+import { CreateConceptRequest } from '../../../../core/models/concept.model';
 
 @Component({
   selector: 'app-create-concept',
@@ -45,6 +45,7 @@ export class CreateConceptComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private stateService: StateService,
+    private conceptService: ConceptService,
     private router: Router
   ) {
     this.basicInfoForm = this.fb.group({
@@ -79,44 +80,37 @@ export class CreateConceptComponent implements OnInit {
         additionalInfo.tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) : 
         [];
 
-      const newConcept: Concept = {
-        id: this.generateId(),
+      const conceptRequest: CreateConceptRequest = {
         title: basicInfo.title,
         description: basicInfo.description,
-        status: 'DRAFT',
-        eventDetails: {
-          format: eventDetails.preferredFormat,
-          capacity: eventDetails.expectedCapacity ? parseInt(eventDetails.expectedCapacity) : undefined,
+        initialRequirements: {
+          preferredFormat: eventDetails.preferredFormat,
+          expectedCapacity: eventDetails.expectedCapacity ? parseInt(eventDetails.expectedCapacity) : undefined,
           duration: eventDetails.duration,
           targetAudience: basicInfo.targetAudience,
-          objectives: [],
-          theme: eventDetails.theme
+          theme: eventDetails.theme,
+          budget: additionalInfo.budget
         },
-        agenda: [],
-        speakers: [],
-        tags: tags,
-        notes: `Budget: ${additionalInfo.budget || 'Not specified'}`,
-        version: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: 'current-user', // In real app, get from auth
-        lastModifiedBy: 'current-user'
+        tags: tags
       };
 
-      // Add to state
-      this.stateService.addConcept(newConcept);
-      
-      // Navigate to the new concept
-      this.router.navigate(['/concepts', newConcept.id]);
+      // Create concept using the service
+      this.conceptService.createConcept(conceptRequest).subscribe({
+        next: (concept) => {
+          console.log('Concept created successfully:', concept);
+          // Navigate to the new concept
+          this.router.navigate(['/concepts', concept.id]);
+        },
+        error: (error) => {
+          console.error('Error creating concept:', error);
+          this.stateService.setError('Failed to create concept. Please try again.');
+        }
+      });
     }
   }
 
   onCancel(): void {
     this.router.navigate(['/concepts']);
-  }
-
-  private generateId(): string {
-    return Math.random().toString(36).substring(2, 15);
   }
 
   getFieldErrorMessage(form: FormGroup, fieldName: string): string {

@@ -85,6 +85,15 @@ export class StateService {
     }
   }
 
+  removeConcept(conceptId: string): void {
+    const concepts = this.state$.value.concepts.filter(concept => concept.id !== conceptId);
+    this.updateState({ concepts });
+    
+    if (this.state$.value.currentConcept?.id === conceptId) {
+      this.updateState({ currentConcept: null });
+    }
+  }
+
   setCurrentConcept(concept: Concept | null): void {
     this.updateState({ currentConcept: concept });
   }

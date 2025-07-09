@@ -89,6 +89,7 @@ export class ApiService {
 
 
   private handleMockRequest<T>(method: string, endpoint: string, data?: any, params?: any): Observable<T> {
+    // Auth endpoints
     if (endpoint === '/auth/login' && method === 'POST') {
       return this.mockApiService.login(data.email, data.password) as Observable<T>;
     }
@@ -98,47 +99,64 @@ export class ApiService {
     if (endpoint === '/auth/logout' && method === 'POST') {
       return this.mockApiService.logout() as Observable<T>;
     }
-    if (endpoint === '/users/me' && method === 'GET') {
+    
+    // User endpoints
+    if (endpoint === '/api/users/profile' && method === 'GET') {
       return this.mockApiService.getCurrentUser() as Observable<T>;
     }
-    if (endpoint === '/concepts' && method === 'GET') {
+    
+    // Concept endpoints (new API paths)
+    if (endpoint === '/api/concepts' && method === 'GET') {
       return this.mockApiService.getConcepts(params) as Observable<T>;
     }
-    if (endpoint === '/concepts' && method === 'POST') {
+    if (endpoint === '/api/concepts' && method === 'POST') {
       return this.mockApiService.createConcept(data) as Observable<T>;
     }
-    if (endpoint.includes('/concepts/') && method === 'GET') {
+    if (endpoint.includes('/api/concepts/') && method === 'GET' && !endpoint.includes('/pdf')) {
       const id = endpoint.split('/').pop();
       return this.mockApiService.getConcept(id!) as Observable<T>;
     }
-    if (endpoint.includes('/concepts/') && method === 'PUT') {
+    if (endpoint.includes('/api/concepts/') && method === 'PUT') {
       const id = endpoint.split('/').pop();
       return this.mockApiService.updateConcept(id!, data) as Observable<T>;
     }
-    if (endpoint.includes('/concepts/') && method === 'DELETE') {
-      const id = endpoint.split('/').pop();
+    if (endpoint.includes('/api/concepts/') && method === 'DELETE') {
+      const id = endpoint.split('/').pop()?.split('?')[0]; // Remove query params
       return this.mockApiService.deleteConcept(id!) as Observable<T>;
     }
-    if (endpoint === '/chat/send' && method === 'POST') {
+    
+    // GenAI Chat endpoints (new API paths)
+    if (endpoint === '/api/genai/chat' && method === 'POST') {
       return this.mockApiService.sendChatMessage(data) as Observable<T>;
     }
-    if (endpoint === '/chat/history' && method === 'GET') {
-      return this.mockApiService.getChatHistory(params?.conceptId) as Observable<T>;
+    if (endpoint === '/api/genai/chat/initialize' && method === 'POST') {
+      // Mock chat initialization
+      return { 
+        message: `Welcome! I'm here to help you develop your event concept "${data.conceptTitle || 'your event'}".`,
+        suggestions: ['Tell me more about your target audience', 'What format are you considering?', 'Help me with the agenda'],
+        conversationId: data.conceptId
+      } as any;
     }
-    if (endpoint === '/documents/upload' && method === 'POST') {
-      // Extract the file from FormData for mock service
-      const file = data.get('file') as File;
-      return this.mockApiService.uploadDocument(file) as Observable<T>;
+    
+    // GenAI Document endpoints (new API paths)
+    if (endpoint.includes('/api/genai/documents') && method === 'POST' && endpoint.includes('conceptId=')) {
+      // Extract files from FormData for mock service - use first file for mock
+      const files = data.getAll('files') as File[];
+      if (files.length > 0) {
+        return this.mockApiService.uploadDocument(files[0]) as Observable<T>;
+      }
+      return throwError(() => ({ status: 400, error: { message: 'No files provided' } }));
     }
-    if (endpoint === '/documents' && method === 'GET') {
-      return this.mockApiService.getDocuments(params) as Observable<T>;
+    if (endpoint.includes('/api/genai/concepts/') && endpoint.includes('/documents') && method === 'GET') {
+      const conceptId = endpoint.split('/')[4]; // Extract conceptId from path
+      return this.mockApiService.getDocuments({ conceptId, status: params?.status }) as Observable<T>;
     }
-    if (endpoint.includes('/documents/') && method === 'DELETE') {
+    if (endpoint.includes('/api/genai/documents/') && method === 'DELETE') {
       const id = endpoint.split('/').pop();
       return this.mockApiService.deleteDocument(id!) as Observable<T>;
     }
 
-    return throwError(() => ({ status: 404, error: { message: 'Mock endpoint not found' } }));
+    return throwError(() => ({ status: 404, error: { message: `Mock endpoint not found: ${method} ${endpoint}` } }));
   }
 
   private handleError(error: any): Observable<never> {

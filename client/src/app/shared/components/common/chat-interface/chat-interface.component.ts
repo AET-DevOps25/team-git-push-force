@@ -13,6 +13,8 @@ import { TextFieldModule } from '@angular/cdk/text-field';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ChatMessage, ChatRequest } from '../../../../core/models';
+import { Concept } from '../../../../core/models/concept.model';
+import { ChatService } from '../../../../core/services';
 
 @Component({
   selector: 'app-chat-interface',
@@ -34,6 +36,8 @@ import { ChatMessage, ChatRequest } from '../../../../core/models';
   styleUrl: './chat-interface.component.scss'
 })
 export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewChecked {
+  @Input() concept!: Concept;
+  @Input() conversationId?: string;
   @Input() messages: ChatMessage[] = [];
   @Input() suggestions: string[] = [];
   @Input() isLoading: boolean = false;
@@ -55,6 +59,8 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
   inputRows = 1;
   private destroy$ = new Subject<void>();
   private shouldScrollToBottom = true;
+
+  constructor(private chatService: ChatService) {}
 
   ngOnInit(): void {
     this.messageControl.valueChanges
@@ -79,11 +85,21 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
   sendMessage(): void {
     if (this.canSendMessage()) {
       const message = this.messageControl.value?.trim();
-      if (message) {
-        this.messageSent.emit(message);
-        this.messageControl.reset();
-        this.inputRows = 1;
-        this.shouldScrollToBottom = true;
+      if (message && this.concept) {
+        this.isLoading = true;
+        this.chatService.sendMessage(message, this.concept, this.conversationId).subscribe({
+          next: (response) => {
+            this.isLoading = false;
+            this.messageSent.emit(message);
+            this.messageControl.reset();
+            this.inputRows = 1;
+            this.shouldScrollToBottom = true;
+          },
+          error: (error) => {
+            this.isLoading = false;
+            console.error('Error sending message:', error);
+          }
+        });
       }
     }
   }
