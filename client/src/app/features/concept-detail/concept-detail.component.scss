@@ -1,5 +1,5 @@
-@import '../../styles/abstracts/variables';
-@import '../../styles/abstracts/effects';
+@use '../../styles/abstracts/variables' as vars;
+@use '../../styles/abstracts/effects';
 
 .concept-detail-container {
   min-height: 100vh;
@@ -26,34 +26,34 @@
 .concept-content {
   position: relative;
   z-index: 2;
-  padding: $spacing-lg;
+  padding: vars.$spacing-lg;
   
-  @media (min-width: $screen-lg) {
-    padding: $spacing-xl;
+  @media (min-width: vars.$screen-lg) {
+    padding: vars.$spacing-xl;
   }
 }
 
-// Header section - made slimmer
+// Header section with theme
 .header-section {
-  margin-bottom: $spacing-lg;
+  margin-bottom: vars.$spacing-lg;
   
   .header-card {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 20px;
-    padding: $spacing-md $spacing-lg;
+    padding: vars.$spacing-md vars.$spacing-lg;
     box-shadow: 
       0 20px 60px rgba(0, 0, 0, 0.1),
       0 8px 25px rgba(102, 126, 234, 0.08);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: $spacing-md;
+    gap: vars.$spacing-md;
     
-    @media (max-width: $screen-lg) {
-      padding: $spacing-sm $spacing-md;
+    @media (max-width: vars.$screen-lg) {
+      padding: vars.$spacing-sm vars.$spacing-md;
       flex-direction: column;
       align-items: stretch;
     }
@@ -61,10 +61,10 @@
   
   .header-left {
     display: flex;
-    align-items: center;
-    gap: $spacing-md;
+    align-items: flex-start;
+    gap: vars.$spacing-md;
     flex: 1;
-    min-width: 0; // Allows flex items to shrink
+    min-width: 0;
     
     .back-button {
       @extend .transition-fast;
@@ -73,10 +73,11 @@
       border-radius: 12px;
       background: rgba(102, 126, 234, 0.1);
       color: #667eea;
-      flex-shrink: 0; // Prevent button from shrinking
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
+      margin-top: 4px; // Align with title
       
       &:hover {
         background: rgba(102, 126, 234, 0.2);
@@ -92,40 +93,41 @@
     
     .header-info {
       flex: 1;
-      min-width: 0; // Allows content to shrink
+      min-width: 0;
       
-      .title-row {
-        display: flex;
-        align-items: center;
-        gap: $spacing-md;
-        flex-wrap: wrap;
-        
-        .concept-title {
-          font-size: 1.5rem;
-          font-weight: 700;
-          margin: 0;
-          background: linear-gradient(45deg, #667eea, #764ba2);
-          background-clip: text;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          flex-shrink: 0; // Prevent title from shrinking too much
-          
-          @media (max-width: $screen-md) {
-            font-size: 1.25rem;
-          }
-        }
-        
-        .status-badge {
-          display: inline-flex;
+              .title-row {
+          display: flex;
           align-items: center;
-          gap: $spacing-xs;
-          padding: $spacing-xs $spacing-sm;
+          gap: vars.$spacing-md;
+          flex-wrap: wrap;
+          margin-bottom: vars.$spacing-xs;
+          
+          .concept-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            flex-shrink: 0;
+            
+            @media (max-width: vars.$screen-md) {
+              font-size: 1.25rem;
+            }
+          }
+          
+          .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: vars.$spacing-xs;
+            padding: vars.$spacing-xs vars.$spacing-sm;
           border-radius: 16px;
           font-size: 0.75rem;
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          flex-shrink: 0; // Prevent badge from shrinking
+          flex-shrink: 0;
           
           &.status-draft {
             background: rgba(255, 152, 0, 0.15);
@@ -172,20 +174,45 @@
           }
         }
       }
+      
+              .theme-row {
+          display: flex;
+          align-items: center;
+          gap: vars.$spacing-sm;
+          padding: vars.$spacing-sm 0;
+        
+        .theme-icon {
+          color: #667eea;
+          font-size: 1.125rem !important;
+          width: 1.125rem !important;
+          height: 1.125rem !important;
+        }
+        
+        .theme-text {
+          font-size: 1.125rem;
+          font-weight: 500;
+          font-style: italic;
+          color: var(--text-secondary);
+          background: linear-gradient(45deg, #667eea, #764ba2);
+          background-clip: text;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+      }
     }
   }
   
   .header-actions {
-    flex-shrink: 0; // Prevent actions from shrinking
+    flex-shrink: 0;
     
-    .action-button {
-      @extend .transition-fast;
-      padding: $spacing-sm $spacing-md;
-      border-radius: 12px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: $spacing-xs;
+          .action-button {
+        @extend .transition-fast;
+        padding: vars.$spacing-sm vars.$spacing-md;
+        border-radius: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: vars.$spacing-xs;
       
       mat-icon {
         font-size: 1rem !important;
@@ -206,28 +233,421 @@
       }
     }
     
-    @media (max-width: $screen-md) {
+    @media (max-width: vars.$screen-md) {
       justify-content: center;
       width: 100%;
     }
   }
 }
 
-// Content layout - ensure full width usage
+// Content layout
 .content-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: $spacing-xl;
+  gap: vars.$spacing-xl;
   width: 100%;
-  max-width: none; // Remove max-width constraint
+  max-width: none;
   
-  @media (max-width: $screen-lg) {
+  @media (max-width: vars.$screen-lg) {
     grid-template-columns: 1fr;
-    gap: $spacing-lg;
+    gap: vars.$spacing-lg;
   }
 }
 
-// Glass card base style - ensure full width
+// Concept panel with accordions
+.concept-panel {
+  width: 100%;
+  
+  .concept-accordion {
+    background: transparent;
+    box-shadow: none;
+    
+    mat-expansion-panel {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px !important;
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.1),
+        0 8px 25px rgba(102, 126, 234, 0.08);
+      margin-bottom: vars.$spacing-lg !important;
+      overflow: hidden;
+      
+      &:before {
+        display: none; // Remove default expansion panel border
+      }
+      
+             .mat-expansion-panel-header {
+         padding: vars.$spacing-lg vars.$spacing-lg vars.$spacing-lg vars.$spacing-lg;
+        border-radius: 20px 20px 0 0 !important;
+        
+        &.mat-expanded {
+          background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+          border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+                 .mat-expansion-panel-header-title {
+           display: flex;
+           align-items: center;
+           gap: vars.$spacing-md;
+          font-weight: 600;
+          font-size: 1.125rem;
+          
+          .section-icon {
+            width: 24px;
+            height: 24px;
+            color: #667eea;
+            flex-shrink: 0;
+          }
+          
+          .completion-icon {
+            margin-left: auto;
+            font-size: 1.25rem !important;
+            width: 1.25rem !important;
+            height: 1.25rem !important;
+            
+            &.complete {
+              color: #4CAF50;
+            }
+            
+            &.incomplete {
+              color: #FF9800;
+            }
+          }
+        }
+      }
+      
+             .mat-expansion-panel-content {
+         .mat-expansion-panel-body {
+           padding: 0 vars.$spacing-lg vars.$spacing-lg vars.$spacing-lg;
+        }
+      }
+    }
+  }
+}
+
+// Panel content styling
+.panel-content {
+  .detail-grid {
+    display: flex;
+    flex-direction: column;
+    gap: vars.$spacing-lg;
+  }
+  
+  .detail-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: vars.$spacing-lg;
+    
+    @media (max-width: vars.$screen-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .detail-item {
+    .detail-label {
+      display: flex;
+      align-items: center;
+      gap: vars.$spacing-sm;
+      margin-bottom: vars.$spacing-sm;
+      
+      mat-icon {
+        color: #667eea;
+        font-size: 1.125rem !important;
+        width: 1.125rem !important;
+        height: 1.125rem !important;
+      }
+      
+      strong {
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+    
+    .detail-value {
+      margin: 0 0 0 calc(1.125rem + #{vars.$spacing-sm});
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+    
+    .objectives-list {
+      margin: 0 0 0 calc(1.125rem + #{vars.$spacing-sm});
+      padding-left: vars.$spacing-md;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      
+      li {
+        margin-bottom: vars.$spacing-xs;
+      }
+    }
+    
+    .tags-container {
+      margin-left: calc(1.125rem + #{vars.$spacing-sm});
+      display: flex;
+      flex-wrap: wrap;
+      gap: vars.$spacing-xs;
+      
+      .tag {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        padding: vars.$spacing-xs vars.$spacing-sm;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+      }
+    }
+  }
+}
+
+// Agenda styling
+.agenda-container {
+  display: flex;
+  flex-direction: column;
+  gap: vars.$spacing-md;
+  
+  .agenda-item {
+    display: flex;
+    gap: vars.$spacing-md;
+    padding: vars.$spacing-md;
+    background: rgba(102, 126, 234, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    
+    .agenda-time {
+      display: flex;
+      align-items: center;
+      gap: vars.$spacing-sm;
+      min-width: 120px;
+      color: #667eea;
+      font-weight: 600;
+      font-size: 0.875rem;
+      
+      .time-icon {
+        font-size: 1rem !important;
+        width: 1rem !important;
+        height: 1rem !important;
+      }
+    }
+    
+    .agenda-content {
+      flex: 1;
+      
+      .agenda-header {
+        display: flex;
+        align-items: center;
+        gap: vars.$spacing-sm;
+        margin-bottom: vars.$spacing-xs;
+        
+        .type-icon {
+          color: #667eea;
+          font-size: 1.125rem !important;
+          width: 1.125rem !important;
+          height: 1.125rem !important;
+        }
+        
+        .agenda-title {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          flex: 1;
+        }
+        
+        .agenda-duration {
+          background: rgba(102, 126, 234, 0.1);
+          color: #667eea;
+          padding: 2px vars.$spacing-xs;
+          border-radius: 8px;
+          font-size: 0.75rem;
+          font-weight: 600;
+        }
+      }
+      
+      .agenda-description {
+        margin: 0 0 vars.$spacing-xs 0;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+      
+      .agenda-speaker {
+        display: flex;
+        align-items: center;
+        gap: vars.$spacing-xs;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        
+        mat-icon {
+          font-size: 0.875rem !important;
+          width: 0.875rem !important;
+          height: 0.875rem !important;
+        }
+      }
+    }
+  }
+}
+
+// Speakers styling
+.speakers-grid {
+  display: flex;
+  flex-direction: column;
+  gap: vars.$spacing-md;
+  
+  .speaker-card {
+    padding: vars.$spacing-md;
+    background: rgba(102, 126, 234, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    
+    .speaker-header {
+      display: flex;
+      align-items: center;
+      gap: vars.$spacing-md;
+      margin-bottom: vars.$spacing-sm;
+      
+      .speaker-avatar {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        
+        mat-icon {
+          color: white;
+          font-size: 1.5rem !important;
+          width: 1.5rem !important;
+          height: 1.5rem !important;
+        }
+      }
+      
+      .speaker-info {
+        flex: 1;
+        
+        .speaker-name {
+          margin: 0 0 4px 0;
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--text-primary);
+        }
+        
+        .speaker-expertise {
+          margin: 0;
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+        }
+      }
+      
+      .speaker-status {
+        flex-shrink: 0;
+        
+        mat-icon {
+          font-size: 1.25rem !important;
+          width: 1.25rem !important;
+          height: 1.25rem !important;
+          
+          &.confirmed {
+            color: #4CAF50;
+          }
+          
+          &.pending {
+            color: #FF9800;
+          }
+        }
+      }
+    }
+    
+    .speaker-details {
+      .suggested-topic {
+        margin: 0 0 vars.$spacing-xs 0;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+      
+      .speaker-bio {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+    }
+  }
+}
+
+// Pricing styling
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: vars.$spacing-md;
+  
+  .pricing-card {
+    padding: vars.$spacing-md;
+    background: rgba(102, 126, 234, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    text-align: center;
+    
+    .pricing-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: vars.$spacing-sm;
+      margin-bottom: vars.$spacing-sm;
+      
+      mat-icon {
+        color: #667eea;
+        font-size: 1.125rem !important;
+        width: 1.125rem !important;
+        height: 1.125rem !important;
+      }
+      
+      h4 {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+    
+    .pricing-amount {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #667eea;
+    }
+  }
+}
+
+// Empty states
+.empty-state {
+  text-align: center;
+  padding: vars.$spacing-xl;
+  color: var(--text-muted);
+  
+  mat-icon {
+    font-size: 3rem !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    margin-bottom: vars.$spacing-md;
+    color: rgba(102, 126, 234, 0.3);
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+}
+
+// Glass card base style for chat panel
 .glass-card {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
@@ -237,13 +657,13 @@
     0 20px 60px rgba(0, 0, 0, 0.1),
     0 8px 25px rgba(102, 126, 234, 0.08);
   overflow: hidden;
-  width: 100%; // Ensure full width
+  width: 100%;
   
   .card-header {
     display: flex;
     align-items: center;
-    gap: $spacing-md;
-    padding: $spacing-lg $spacing-lg $spacing-md;
+    gap: vars.$spacing-md;
+    padding: vars.$spacing-lg vars.$spacing-lg vars.$spacing-md;
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     
@@ -278,7 +698,7 @@
       flex: 1;
       
       h2 {
-        margin-bottom: $spacing-xs;
+        margin-bottom: vars.$spacing-xs;
       }
       
       p {
@@ -290,132 +710,15 @@
   }
   
   .card-content {
-    padding: $spacing-lg;
-  }
-}
-
-// Concept panel - ensure full width
-.concept-panel {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-lg;
-  width: 100%;
-  
-  .info-card {
-    width: 100%;
+    padding: vars.$spacing-lg;
     
-    .detail-item {
-      margin-bottom: $spacing-lg;
-      
-      &:last-child {
-        margin-bottom: 0;
-      }
-      
-      .detail-label {
-        display: flex;
-        align-items: center;
-        gap: $spacing-sm;
-        margin-bottom: $spacing-sm;
-        
-        mat-icon {
-          color: #667eea;
-          font-size: 1.125rem !important;
-          width: 1.125rem !important;
-          height: 1.125rem !important;
-        }
-        
-        strong {
-          color: var(--text-primary);
-          font-weight: 600;
-          font-size: 0.9rem;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-      }
-      
-      .detail-value {
-        margin: 0 0 0 calc(1.125rem + #{$spacing-sm});
-        color: var(--text-secondary);
-        line-height: 1.6;
-        font-size: 1rem;
-      }
-      
-      .tags-container {
-        margin-left: calc(1.125rem + #{$spacing-sm});
-        display: flex;
-        flex-wrap: wrap;
-        gap: $spacing-xs;
-        
-        .tag {
-          background: rgba(102, 126, 234, 0.1);
-          color: #667eea;
-          padding: $spacing-xs $spacing-sm;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          border: 1px solid rgba(102, 126, 234, 0.2);
-        }
-      }
-    }
-  }
-  
-  .meta-card {
-    width: 100%;
-    
-    .meta-info {
-      .meta-item {
-        display: flex;
-        align-items: center;
-        gap: $spacing-md;
-        margin-bottom: $spacing-md;
-        
-        &:last-child {
-          margin-bottom: 0;
-        }
-        
-        .meta-icon {
-          width: 36px;
-          height: 36px;
-          background: rgba(102, 126, 234, 0.1);
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          
-          mat-icon {
-            color: #667eea;
-            font-size: 1rem !important;
-            width: 1rem !important;
-            height: 1rem !important;
-          }
-        }
-        
-        .meta-content {
-          display: flex;
-          flex-direction: column;
-          
-          .meta-label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            margin-bottom: 2px;
-          }
-          
-          .meta-value {
-            font-size: 1rem;
-            color: var(--text-primary);
-            font-weight: 500;
-          }
-        }
-      }
+    &.chat-content {
+      padding: 0;
     }
   }
 }
 
-// Chat panel - ensure full width
+// Chat panel
 .chat-panel {
   width: 100%;
   
@@ -424,15 +727,11 @@
     min-height: 600px;
     width: 100%;
     
-    .chat-content {
-      padding: 0;
-      
-      app-chat-interface {
-        display: block;
-        height: 100%;
-        min-height: 500px;
-        width: 100%;
-      }
+    app-chat-interface {
+      display: block;
+      height: 100%;
+      min-height: 500px;
+      width: 100%;
     }
   }
 }
@@ -445,7 +744,7 @@
   justify-content: center;
   align-items: center;
   min-height: 80vh;
-  padding: $spacing-xl;
+  padding: vars.$spacing-xl;
   
   .loading-card {
     max-width: 400px;
@@ -460,7 +759,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto $spacing-lg;
+        margin: 0 auto vars.$spacing-lg;
         
         mat-icon {
           font-size: 2.5rem !important;
@@ -475,7 +774,7 @@
         font-size: 1.5rem;
         font-weight: 600;
         color: var(--text-primary);
-        margin: 0 0 $spacing-md 0;
+        margin: 0 0 vars.$spacing-md 0;
       }
       
       p {

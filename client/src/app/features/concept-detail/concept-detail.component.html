@@ -1,6 +1,6 @@
 <div class="concept-detail-container">
   <div *ngIf="concept$ | async as concept" class="concept-content">
-    <!-- Enhanced Header -->
+    <!-- Enhanced Header with Theme -->
     <div class="header-section">
       <div class="header-card">
         <div class="header-left">
@@ -15,6 +15,10 @@
                 <span>{{ getStatusDisplayName(concept.status) }}</span>
               </div>
             </div>
+            <div class="theme-row" *ngIf="concept.eventDetails?.theme">
+              <mat-icon class="theme-icon">auto_awesome</mat-icon>
+              <span class="theme-text">{{ concept.eventDetails?.theme }}</span>
+            </div>
           </div>
         </div>
         <div class="header-actions">
@@ -28,86 +32,278 @@
 
     <!-- Enhanced Split Layout -->
     <div class="content-layout">
-      <!-- Left Panel: Concept Information -->
+      <!-- Left Panel: Comprehensive Concept View -->
       <div class="concept-panel">
-        <div class="info-card glass-card">
-          <div class="card-header">
-            <mat-icon class="header-icon">event_note</mat-icon>
-            <h2>Event Details</h2>
-          </div>
-          <div class="card-content">
-            <div class="detail-item">
-              <div class="detail-label">
-                <mat-icon>description</mat-icon>
-                <strong>Description</strong>
-              </div>
-              <p class="detail-value">{{ concept.description }}</p>
-            </div>
-            
-            <div class="detail-item" *ngIf="concept.eventDetails?.targetAudience">
-              <div class="detail-label">
-                <mat-icon>group</mat-icon>
-                <strong>Target Audience</strong>
-              </div>
-              <p class="detail-value">{{ concept.eventDetails?.targetAudience }}</p>
-            </div>
-            
-            <div class="detail-item" *ngIf="concept.eventDetails?.format">
-              <div class="detail-label">
-                <mat-icon>category</mat-icon>
-                <strong>Format</strong>
-              </div>
-              <p class="detail-value">{{ concept.eventDetails?.format }}</p>
-            </div>
-            
-            <div class="detail-item" *ngIf="concept.eventDetails?.capacity">
-              <div class="detail-label">
-                <mat-icon>people</mat-icon>
-                <strong>Expected Capacity</strong>
-              </div>
-              <p class="detail-value">{{ concept.eventDetails?.capacity }} attendees</p>
-            </div>
-            
-            <div class="detail-item" *ngIf="concept.tags.length > 0">
-              <div class="detail-label">
-                <mat-icon>local_offer</mat-icon>
-                <strong>Tags</strong>
-              </div>
-              <div class="tags-container">
-                <span *ngFor="let tag of concept.tags" class="tag">{{ tag }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="meta-card glass-card">
-          <div class="card-header">
-            <mat-icon class="header-icon">schedule</mat-icon>
-            <h3>Timeline</h3>
-          </div>
-          <div class="card-content">
-            <div class="meta-info">
-              <div class="meta-item">
-                <div class="meta-icon">
-                  <mat-icon>add_circle</mat-icon>
+        <mat-accordion class="concept-accordion">
+          
+          <!-- Event Foundation -->
+          <mat-expansion-panel [expanded]="shouldExpandFoundation(concept)" class="foundation-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon class="section-icon">foundation</mat-icon>
+                <span>Event Foundation</span>
+                <mat-icon class="completion-icon" 
+                          [class.complete]="isFoundationComplete(concept)"
+                          [class.incomplete]="!isFoundationComplete(concept)">
+                  {{ isFoundationComplete(concept) ? 'check_circle' : 'radio_button_unchecked' }}
+                </mat-icon>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <div class="panel-content">
+              <div class="detail-grid">
+                <div class="detail-item" *ngIf="concept.description">
+                  <div class="detail-label">
+                    <mat-icon>description</mat-icon>
+                    <strong>Description</strong>
+                  </div>
+                  <p class="detail-value">{{ concept.description }}</p>
                 </div>
-                <div class="meta-content">
-                  <span class="meta-label">Created</span>
-                  <span class="meta-value">{{ concept.createdAt | date:'MMM d, y' }}</span>
+
+                                 <div class="detail-item" *ngIf="concept.eventDetails?.objectives?.length">
+                   <div class="detail-label">
+                     <mat-icon>flag</mat-icon>
+                     <strong>Objectives</strong>
+                   </div>
+                   <ul class="objectives-list">
+                     <li *ngFor="let objective of concept.eventDetails?.objectives">{{ objective }}</li>
+                   </ul>
+                 </div>
+
+                                 <div class="detail-item" *ngIf="concept.eventDetails?.targetAudience">
+                   <div class="detail-label">
+                     <mat-icon>group</mat-icon>
+                     <strong>Target Audience</strong>
+                   </div>
+                   <p class="detail-value">{{ concept.eventDetails?.targetAudience }}</p>
+                 </div>
+
+                <div class="detail-row">
+                                     <div class="detail-item" *ngIf="concept.eventDetails?.format">
+                     <div class="detail-label">
+                       <mat-icon>category</mat-icon>
+                       <strong>Format</strong>
+                     </div>
+                     <p class="detail-value">{{ concept.eventDetails?.format }}</p>
+                   </div>
+ 
+                   <div class="detail-item" *ngIf="concept.eventDetails?.capacity">
+                     <div class="detail-label">
+                       <mat-icon>people</mat-icon>
+                       <strong>Capacity</strong>
+                     </div>
+                     <p class="detail-value">{{ concept.eventDetails?.capacity }} attendees</p>
+                   </div>
                 </div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-icon">
-                  <mat-icon>update</mat-icon>
+
+                <div class="detail-row" *ngIf="concept.eventDetails?.startDate || concept.eventDetails?.endDate">
+                                     <div class="detail-item" *ngIf="concept.eventDetails?.startDate">
+                     <div class="detail-label">
+                       <mat-icon>schedule</mat-icon>
+                       <strong>Start Date</strong>
+                     </div>
+                     <p class="detail-value">{{ concept.eventDetails?.startDate | date:'MMM d, y' }}</p>
+                   </div>
+ 
+                   <div class="detail-item" *ngIf="concept.eventDetails?.endDate">
+                     <div class="detail-label">
+                       <mat-icon>event</mat-icon>
+                       <strong>End Date</strong>
+                     </div>
+                     <p class="detail-value">{{ concept.eventDetails?.endDate | date:'MMM d, y' }}</p>
+                   </div>
                 </div>
-                <div class="meta-content">
-                  <span class="meta-label">Last Updated</span>
-                  <span class="meta-value">{{ concept.updatedAt | date:'MMM d, y' }}</span>
+
+                                 <div class="detail-item" *ngIf="concept.eventDetails?.location">
+                   <div class="detail-label">
+                     <mat-icon>place</mat-icon>
+                     <strong>Location</strong>
+                   </div>
+                   <p class="detail-value">{{ concept.eventDetails?.location }}</p>
+                 </div>
+
+                <div class="detail-item" *ngIf="concept.tags.length > 0">
+                  <div class="detail-label">
+                    <mat-icon>local_offer</mat-icon>
+                    <strong>Tags</strong>
+                  </div>
+                  <div class="tags-container">
+                    <span *ngFor="let tag of concept.tags" class="tag">{{ tag }}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </mat-expansion-panel>
+
+          <!-- Event Timeline & Agenda -->
+          <mat-expansion-panel [expanded]="shouldExpandTimeline(concept)" class="timeline-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon class="section-icon">schedule</mat-icon>
+                <span>Event Timeline & Agenda</span>
+                <mat-icon class="completion-icon" 
+                          [class.complete]="isTimelineComplete(concept)"
+                          [class.incomplete]="!isTimelineComplete(concept)">
+                  {{ isTimelineComplete(concept) ? 'check_circle' : 'radio_button_unchecked' }}
+                </mat-icon>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <div class="panel-content">
+              <div class="agenda-container" *ngIf="concept.agenda?.length; else noAgenda">
+                <div class="agenda-item" *ngFor="let item of concept.agenda">
+                  <div class="agenda-time">
+                    <mat-icon class="time-icon">access_time</mat-icon>
+                    <span>{{ formatAgendaTime(item.time) }}</span>
+                  </div>
+                  <div class="agenda-content">
+                    <div class="agenda-header">
+                      <mat-icon class="type-icon">{{ getAgendaTypeIcon(item.type) }}</mat-icon>
+                      <h4 class="agenda-title">{{ item.title }}</h4>
+                      <span class="agenda-duration">{{ formatDuration(item.duration) }}</span>
+                    </div>
+                    <p class="agenda-description" *ngIf="item.description">{{ item.description }}</p>
+                    <div class="agenda-speaker" *ngIf="item.speaker">
+                      <mat-icon>person</mat-icon>
+                      <span>{{ item.speaker }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <ng-template #noAgenda>
+                <div class="empty-state">
+                  <mat-icon>schedule</mat-icon>
+                  <p>No agenda items yet. The AI will help you create a detailed timeline.</p>
+                </div>
+              </ng-template>
+            </div>
+          </mat-expansion-panel>
+
+          <!-- Speaker Portfolio -->
+          <mat-expansion-panel [expanded]="shouldExpandSpeakers(concept)" class="speakers-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon class="section-icon">mic</mat-icon>
+                <span>Speaker Portfolio</span>
+                <mat-icon class="completion-icon" 
+                          [class.complete]="isSpeakersComplete(concept)"
+                          [class.incomplete]="!isSpeakersComplete(concept)">
+                  {{ isSpeakersComplete(concept) ? 'check_circle' : 'radio_button_unchecked' }}
+                </mat-icon>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <div class="panel-content">
+              <div class="speakers-grid" *ngIf="concept.speakers?.length; else noSpeakers">
+                <div class="speaker-card" *ngFor="let speaker of concept.speakers">
+                  <div class="speaker-header">
+                    <div class="speaker-avatar">
+                      <mat-icon>person</mat-icon>
+                    </div>
+                    <div class="speaker-info">
+                      <h4 class="speaker-name">{{ speaker.name }}</h4>
+                      <p class="speaker-expertise">{{ speaker.expertise }}</p>
+                    </div>
+                    <div class="speaker-status">
+                      <mat-icon [class.confirmed]="speaker.confirmed" 
+                                [class.pending]="!speaker.confirmed">
+                        {{ speaker.confirmed ? 'check_circle' : 'schedule' }}
+                      </mat-icon>
+                    </div>
+                  </div>
+                  <div class="speaker-details" *ngIf="speaker.suggestedTopic || speaker.bio">
+                    <p class="suggested-topic" *ngIf="speaker.suggestedTopic">
+                      <strong>Suggested Topic:</strong> {{ speaker.suggestedTopic }}
+                    </p>
+                    <p class="speaker-bio" *ngIf="speaker.bio">{{ speaker.bio }}</p>
+                  </div>
+                </div>
+              </div>
+              <ng-template #noSpeakers>
+                <div class="empty-state">
+                  <mat-icon>mic</mat-icon>
+                  <p>No speakers suggested yet. The AI will recommend speakers based on your event theme.</p>
+                </div>
+              </ng-template>
+            </div>
+          </mat-expansion-panel>
+
+          <!-- Pricing Strategy -->
+          <mat-expansion-panel [expanded]="shouldExpandPricing(concept)" class="pricing-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon class="section-icon">attach_money</mat-icon>
+                <span>Pricing Strategy</span>
+                <mat-icon class="completion-icon" 
+                          [class.complete]="isPricingComplete(concept)"
+                          [class.incomplete]="!isPricingComplete(concept)">
+                  {{ isPricingComplete(concept) ? 'check_circle' : 'radio_button_unchecked' }}
+                </mat-icon>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <div class="panel-content">
+              <div class="pricing-grid" *ngIf="concept.pricing; else noPricing">
+                <div class="pricing-card" *ngIf="concept.pricing.earlyBird">
+                  <div class="pricing-header">
+                    <mat-icon>schedule</mat-icon>
+                    <h4>Early Bird</h4>
+                  </div>
+                  <div class="pricing-amount">
+                    {{ concept.pricing.currency }} {{ concept.pricing.earlyBird }}
+                  </div>
+                </div>
+
+                <div class="pricing-card" *ngIf="concept.pricing.regular">
+                  <div class="pricing-header">
+                    <mat-icon>confirmation_number</mat-icon>
+                    <h4>Regular</h4>
+                  </div>
+                  <div class="pricing-amount">
+                    {{ concept.pricing.currency }} {{ concept.pricing.regular }}
+                  </div>
+                </div>
+
+                <div class="pricing-card" *ngIf="concept.pricing.vip">
+                  <div class="pricing-header">
+                    <mat-icon>star</mat-icon>
+                    <h4>VIP</h4>
+                  </div>
+                  <div class="pricing-amount">
+                    {{ concept.pricing.currency }} {{ concept.pricing.vip }}
+                  </div>
+                </div>
+
+                <div class="pricing-card" *ngIf="concept.pricing.student">
+                  <div class="pricing-header">
+                    <mat-icon>school</mat-icon>
+                    <h4>Student</h4>
+                  </div>
+                  <div class="pricing-amount">
+                    {{ concept.pricing.currency }} {{ concept.pricing.student }}
+                  </div>
+                </div>
+
+                <div class="pricing-card" *ngIf="concept.pricing.group">
+                  <div class="pricing-header">
+                    <mat-icon>group</mat-icon>
+                    <h4>Group (5+)</h4>
+                  </div>
+                  <div class="pricing-amount">
+                    {{ concept.pricing.currency }} {{ concept.pricing.group }}
+                  </div>
+                </div>
+              </div>
+              <ng-template #noPricing>
+                <div class="empty-state">
+                  <mat-icon>attach_money</mat-icon>
+                  <p>No pricing strategy yet. The AI will suggest ticket pricing based on your event details.</p>
+                </div>
+              </ng-template>
+            </div>
+          </mat-expansion-panel>
+
+        </mat-accordion>
       </div>
 
       <!-- Right Panel: AI Chat -->
@@ -117,11 +313,11 @@
             <mat-icon class="header-icon">smart_toy</mat-icon>
             <div class="header-text">
               <h2>AI Assistant</h2>
-              <p>Get suggestions and refine your concept</p>
+              <p>Co-develop your concept with AI</p>
             </div>
           </div>
           <div class="card-content chat-content">
-            <app-chat-interface></app-chat-interface>
+            <app-chat-interface [concept]="concept"></app-chat-interface>
           </div>
         </div>
       </div>
