@@ -1,99 +1,143 @@
-<div class="concept-detail-container" *ngIf="concept$ | async as concept">
-  <!-- Header -->
-  <div class="header">
-    <button mat-icon-button (click)="goBack()">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    <div class="header-info">
-      <h1>{{ concept.title }}</h1>
-      <div class="status-badge" [ngClass]="getStatusClass(concept.status)">
-        <mat-icon [color]="getStatusColor(concept.status)">{{ getStatusIcon(concept.status) }}</mat-icon>
-        <span>{{ concept.status.replace('_', ' ') }}</span>
+<div class="concept-detail-container">
+  <div *ngIf="concept$ | async as concept" class="concept-content">
+    <!-- Enhanced Header -->
+    <div class="header-section">
+      <div class="header-card">
+        <div class="header-left">
+          <button mat-icon-button (click)="goBack()" class="back-button">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <div class="header-info">
+            <div class="title-row">
+              <h1 class="concept-title">{{ concept.title }}</h1>
+              <div class="status-badge" [ngClass]="getStatusClass(concept.status)">
+                <mat-icon [color]="getStatusColor(concept.status)">{{ getStatusIcon(concept.status) }}</mat-icon>
+                <span>{{ getStatusDisplayName(concept.status) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button mat-raised-button color="primary" (click)="exportPDF()" class="action-button export-btn">
+            <mat-icon>file_download</mat-icon>
+            <span>Export PDF</span>
+          </button>
+        </div>
       </div>
     </div>
-    <div class="header-actions">
-      <button mat-outlined-button (click)="editConcept()">
-        <mat-icon>edit</mat-icon>
-        Edit
-      </button>
-      <button mat-raised-button color="primary" (click)="exportPDF()">
-        <mat-icon>file_download</mat-icon>
-        Export PDF
-      </button>
+
+    <!-- Enhanced Split Layout -->
+    <div class="content-layout">
+      <!-- Left Panel: Concept Information -->
+      <div class="concept-panel">
+        <div class="info-card glass-card">
+          <div class="card-header">
+            <mat-icon class="header-icon">event_note</mat-icon>
+            <h2>Event Details</h2>
+          </div>
+          <div class="card-content">
+            <div class="detail-item">
+              <div class="detail-label">
+                <mat-icon>description</mat-icon>
+                <strong>Description</strong>
+              </div>
+              <p class="detail-value">{{ concept.description }}</p>
+            </div>
+            
+            <div class="detail-item" *ngIf="concept.eventDetails?.targetAudience">
+              <div class="detail-label">
+                <mat-icon>group</mat-icon>
+                <strong>Target Audience</strong>
+              </div>
+              <p class="detail-value">{{ concept.eventDetails?.targetAudience }}</p>
+            </div>
+            
+            <div class="detail-item" *ngIf="concept.eventDetails?.format">
+              <div class="detail-label">
+                <mat-icon>category</mat-icon>
+                <strong>Format</strong>
+              </div>
+              <p class="detail-value">{{ concept.eventDetails?.format }}</p>
+            </div>
+            
+            <div class="detail-item" *ngIf="concept.eventDetails?.capacity">
+              <div class="detail-label">
+                <mat-icon>people</mat-icon>
+                <strong>Expected Capacity</strong>
+              </div>
+              <p class="detail-value">{{ concept.eventDetails?.capacity }} attendees</p>
+            </div>
+            
+            <div class="detail-item" *ngIf="concept.tags.length > 0">
+              <div class="detail-label">
+                <mat-icon>local_offer</mat-icon>
+                <strong>Tags</strong>
+              </div>
+              <div class="tags-container">
+                <span *ngFor="let tag of concept.tags" class="tag">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="meta-card glass-card">
+          <div class="card-header">
+            <mat-icon class="header-icon">schedule</mat-icon>
+            <h3>Timeline</h3>
+          </div>
+          <div class="card-content">
+            <div class="meta-info">
+              <div class="meta-item">
+                <div class="meta-icon">
+                  <mat-icon>add_circle</mat-icon>
+                </div>
+                <div class="meta-content">
+                  <span class="meta-label">Created</span>
+                  <span class="meta-value">{{ concept.createdAt | date:'MMM d, y' }}</span>
+                </div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-icon">
+                  <mat-icon>update</mat-icon>
+                </div>
+                <div class="meta-content">
+                  <span class="meta-label">Last Updated</span>
+                  <span class="meta-value">{{ concept.updatedAt | date:'MMM d, y' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: AI Chat -->
+      <div class="chat-panel">
+        <div class="chat-card glass-card">
+          <div class="card-header">
+            <mat-icon class="header-icon">smart_toy</mat-icon>
+            <div class="header-text">
+              <h2>AI Assistant</h2>
+              <p>Get suggestions and refine your concept</p>
+            </div>
+          </div>
+          <div class="card-content chat-content">
+            <app-chat-interface></app-chat-interface>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Split Layout -->
-  <div class="content-layout">
-    <!-- Left Panel: Concept Information -->
-    <div class="concept-panel">
-      <mat-card class="info-card">
-        <mat-card-header>
-          <mat-card-title>Event Details</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="detail-item">
-            <strong>Description:</strong>
-            <p>{{ concept.description }}</p>
-          </div>
-          
-          <div class="detail-item" *ngIf="concept.eventDetails?.targetAudience">
-            <strong>Target Audience:</strong>
-            <p>{{ concept.eventDetails?.targetAudience }}</p>
-          </div>
-          
-          <div class="detail-item" *ngIf="concept.eventDetails?.format">
-            <strong>Format:</strong>
-            <p>{{ concept.eventDetails?.format }}</p>
-          </div>
-          
-          <div class="detail-item" *ngIf="concept.eventDetails?.capacity">
-            <strong>Expected Capacity:</strong>
-            <p>{{ concept.eventDetails?.capacity }} attendees</p>
-          </div>
-          
-          <div class="detail-item" *ngIf="concept.tags.length > 0">
-            <strong>Tags:</strong>
-            <mat-chip-listbox>
-              <mat-chip *ngFor="let tag of concept.tags">{{ tag }}</mat-chip>
-            </mat-chip-listbox>
-          </div>
-        </mat-card-content>
-      </mat-card>
-      
-      <mat-card class="meta-card">
-        <mat-card-content>
-          <div class="meta-info">
-            <div class="meta-item">
-              <mat-icon>schedule</mat-icon>
-              <span>Created: {{ concept.createdAt | date:'MMM d, y' }}</span>
-            </div>
-            <div class="meta-item">
-              <mat-icon>update</mat-icon>
-              <span>Updated: {{ concept.updatedAt | date:'MMM d, y' }}</span>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    <!-- Right Panel: AI Chat -->
-    <div class="chat-panel">
-      <mat-card class="chat-card">
-        <mat-card-header>
-          <mat-card-title>AI Assistant</mat-card-title>
-          <mat-card-subtitle>Get suggestions and refine your concept</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          <app-chat-interface></app-chat-interface>
-        </mat-card-content>
-      </mat-card>
+  <!-- Enhanced Loading State -->
+  <div *ngIf="!(concept$ | async)" class="loading-state">
+    <div class="loading-card glass-card">
+      <div class="loading-content">
+        <div class="loading-icon">
+          <mat-icon>event_note</mat-icon>
+        </div>
+        <h3>Loading concept...</h3>
+        <p>Please wait while we fetch your event details</p>
+      </div>
     </div>
   </div>
-</div>
-
-<!-- Loading State -->
-<div *ngIf="!(concept$ | async)" class="loading-state">
-  <mat-icon>event_note</mat-icon>
-  <p>Loading concept...</p>
 </div> 

@@ -117,4 +117,14 @@ export class ConceptDetailComponent implements OnInit, OnDestroy {
   getStatusClass(status: string): string {
     return `status-${status.toLowerCase().replace('_', '-')}`;
   }
+
+  getStatusDisplayName(status: string): string {
+    switch (status) {
+      case 'DRAFT': return 'Draft';
+      case 'IN_PROGRESS': return 'In Progress';
+      case 'COMPLETED': return 'Completed';
+      case 'ARCHIVED': return 'Archived';
+      default: return status.replace('_', ' ');
+    }
+  }
 } 
