@@ -1,98 +1,133 @@
 <div class="dashboard-container">
-  <!-- Welcome Section -->
-  <section class="welcome-section">
-    <h1 class="welcome-title" *ngIf="user$ | async as user">
-      Welcome back, {{ user.firstName }}! 👋
-    </h1>
-    <p class="welcome-subtitle">Let's create amazing events together</p>
+  <!-- Hero Welcome Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="welcome-text">
+        <h1 class="hero-title" *ngIf="user$ | async as user">
+          Welcome back, <span class="user-name">{{ user.firstName }}</span>! 
+          <span class="wave-emoji">👋</span>
+        </h1>
+        <p class="hero-subtitle">Ready to create something amazing? Let's bring your event ideas to life.</p>
+      </div>
+      <div class="hero-actions">
+        <button mat-raised-button color="primary" (click)="createConcept()" class="hero-cta">
+          <mat-icon>add_circle</mat-icon>
+          Create New Concept
+        </button>
+      </div>
+    </div>
+    <div class="hero-illustration">
+      <div class="floating-card card-1">
+        <mat-icon>event</mat-icon>
+      </div>
+      <div class="floating-card card-2">
+        <mat-icon>lightbulb</mat-icon>
+      </div>
+      <div class="floating-card card-3">
+        <mat-icon>auto_awesome</mat-icon>
+      </div>
+    </div>
   </section>
   
-  <!-- Stats Section -->
-  <section class="stats-section">
-    <div class="stats-grid">
-      <mat-card class="stat-card">
-        <mat-icon class="stat-icon">event_note</mat-icon>
-        <span class="stat-number">{{ (conceptsCount$ | async) || 0 }}</span>
-        <span class="stat-label">Total Concepts</span>
-      </mat-card>
+  <!-- Status Bar -->
+  <section class="status-bar">
+    <div class="status-items">
+      <div class="status-item">
+        <span class="status-number">{{ (conceptsCount$ | async) || 0 }}</span>
+        <span class="status-label">Total Concepts</span>
+      </div>
       
-      <mat-card class="stat-card">
-        <mat-icon class="stat-icon">trending_up</mat-icon>
-        <span class="stat-number">{{ (inProgressCount$ | async) || 0 }}</span>
-        <span class="stat-label">In Progress</span>
-      </mat-card>
+      <div class="status-item">
+        <span class="status-number">{{ (inProgressCount$ | async) || 0 }}</span>
+        <span class="status-label">In Progress</span>
+      </div>
       
-      <mat-card class="stat-card">
-        <mat-icon class="stat-icon">auto_awesome</mat-icon>
-        <span class="stat-number">AI</span>
-        <span class="stat-label">Powered</span>
-      </mat-card>
+      <div class="status-item">
+        <span class="status-number">{{ (completedCount$ | async) || 0 }}</span>
+        <span class="status-label">Completed</span>
+      </div>
     </div>
   </section>
   
   <!-- Recent Concepts Section -->
   <section class="recent-section">
     <div class="section-header">
-      <h2>Recent Concepts</h2>
-      <button mat-text-button color="primary" (click)="viewAllConcepts()">
-        View All
+      <div class="header-content">
+        <h2 class="section-title">Recent Concepts</h2>
+        <p class="section-description">Your latest event ideas and projects</p>
+      </div>
+      <button mat-outlined-button color="primary" (click)="viewAllConcepts()" class="view-all-btn">
+        <span>View All</span>
         <mat-icon>arrow_forward</mat-icon>
       </button>
     </div>
     
-    <div class="concepts-grid" *ngIf="recentConcepts$ | async as recentConcepts">
-      <mat-card 
-        *ngFor="let concept of recentConcepts" 
-        class="concept-card"
-        (click)="viewConcept(concept.id)">
-        
-        <mat-card-header>
-          <div mat-card-avatar class="concept-avatar">
-            <mat-icon [color]="getStatusColor(concept.status)">
-              {{ getStatusIcon(concept.status) }}
-            </mat-icon>
-          </div>
-          <mat-card-title>{{ concept.title }}</mat-card-title>
-          <mat-card-subtitle>{{ concept.description | slice:0:50 }}...</mat-card-subtitle>
-        </mat-card-header>
-        
-        <mat-card-content>
-          <div class="concept-meta">
-            <span class="status-badge" [class]="'status-' + concept.status.toLowerCase()">
-              {{ concept.status.replace('_', ' ') }}
-            </span>
-            <span class="concept-date">
-              {{ concept.updatedAt | date:'MMM d' }}
-            </span>
+    <div class="concepts-container" *ngIf="recentConcepts$ | async as recentConcepts">
+      <div class="concepts-grid" *ngIf="recentConcepts.length > 0">
+        <mat-card 
+          *ngFor="let concept of recentConcepts; trackBy: trackByConcept" 
+          class="concept-card"
+          (click)="viewConcept(concept.id)">
+          
+          <div class="concept-header">
+            <div class="concept-avatar" [class]="'status-' + concept.status.toLowerCase().replace('_', '-')">
+              <mat-icon>{{ getStatusIcon(concept.status) }}</mat-icon>
+            </div>
+            <div class="concept-meta-top">
+              <span class="concept-date">{{ concept.updatedAt | date:'MMM d, yyyy' }}</span>
+              <div class="status-indicator" [class]="'status-' + concept.status.toLowerCase().replace('_', '-')"></div>
+            </div>
           </div>
           
-          <div class="concept-tags" *ngIf="concept.tags.length > 0">
-            <span *ngFor="let tag of concept.tags.slice(0, 2)" class="tag">
-              {{ tag }}
-            </span>
+          <div class="concept-content">
+            <h3 class="concept-title">{{ concept.title }}</h3>
+            <p class="concept-description">{{ concept.description }}</p>
+            
+            <div class="concept-tags" *ngIf="concept.tags.length > 0">
+              <span *ngFor="let tag of concept.tags.slice(0, 3)" class="tag">
+                {{ tag }}
+              </span>
+              <span *ngIf="concept.tags.length > 3" class="tag-more">
+                +{{ concept.tags.length - 3 }}
+              </span>
+            </div>
           </div>
-        </mat-card-content>
-      </mat-card>
+          
+          <div class="concept-footer">
+            <span class="status-badge" [class]="'status-' + concept.status.toLowerCase().replace('_', '-')">
+              {{ getStatusDisplayName(concept.status) }}
+            </span>
+            <div class="concept-actions">
+              <button mat-icon-button (click)="editConcept($event, concept.id)" class="action-btn">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button (click)="shareConcept($event, concept.id)" class="action-btn">
+                <mat-icon>share</mat-icon>
+              </button>
+            </div>
+          </div>
+        </mat-card>
+      </div>
       
-      <!-- Empty State -->
+      <!-- Enhanced Empty State -->
       <div *ngIf="recentConcepts.length === 0" class="empty-state">
-        <mat-icon class="empty-icon">event_note</mat-icon>
-        <h3>No concepts yet</h3>
-        <p>Create your first event concept to get started</p>
+        <div class="empty-illustration">
+          <div class="empty-icon-bg">
+            <mat-icon class="empty-icon">lightbulb_outline</mat-icon>
+          </div>
+        </div>
+        <div class="empty-content">
+          <h3 class="empty-title">Ready to spark some ideas?</h3>
+          <p class="empty-description">
+            Create your first event concept and let our AI help you bring it to life. 
+            From conferences to workshops, we'll help you plan something amazing.
+          </p>
+          <button mat-raised-button color="primary" (click)="createConcept()" class="empty-cta">
+            <mat-icon>add_circle</mat-icon>
+            Create Your First Concept
+          </button>
+        </div>
       </div>
     </div>
-  </section>
-  
-  <!-- Actions Section -->
-  <section class="actions-section">
-    <button mat-raised-button color="primary" (click)="createConcept()" class="primary-action">
-      <mat-icon>add</mat-icon>
-      Create New Concept
-    </button>
-    
-    <button mat-outlined-button (click)="viewAllConcepts()" class="secondary-action">
-      <mat-icon>list</mat-icon>
-      Browse All Concepts
-    </button>
   </section>
 </div> 
