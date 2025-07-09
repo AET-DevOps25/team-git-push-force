@@ -47,96 +47,98 @@ export const MOCK_CHAT_MESSAGES: ChatMessage[] = [
 
 export const MOCK_CHAT_RESPONSES: Record<string, ChatResponse> = {
   'ai_conference_help': {
-    response: 'I\'d be happy to help you create an AI conference! Based on your requirements for 300 attendees with technical and business tracks, here\'s what I recommend:\n\n**Event Structure:**\n- Duration: 2-3 days\n- Format: Hybrid (in-person + virtual)\n- Venue capacity: 350-400 (allowing for networking space)\n\n**Track Organization:**\n- Day 1: Business strategy and ROI focus\n- Day 2: Technical deep-dives and implementation\n- Day 3: Workshops and hands-on sessions\n\nWould you like me to develop specific agendas for each track?',
-    suggestions: [
-      'Create detailed day-by-day agenda',
-      'Suggest potential keynote speakers',
-      'Develop pricing strategy',
-      'Plan networking activities',
-      'Design workshop formats'
-    ],
+    response: 'Great idea for an AI conference! For 300 attendees with technical and business tracks, I suggest a 2-day hybrid format. This would allow both in-person engagement and broader virtual reach.',
+    suggestions: [],
     followUpQuestions: [
-      'What\'s your target budget range for this event?',
-      'Do you have a preferred location or region?',
-      'Are there specific AI topics you want to emphasize?',
-      'What\'s your timeline for planning and execution?'
+      'What\'s your target budget?',
+      'Do you have a preferred location?',
+      'What specific AI topics interest you most?'
     ],
-    conceptSuggestion: {
-      title: 'AI Innovation Summit 2024',
-      description: 'A comprehensive conference exploring AI applications in business and technology',
-      eventDetails: {
-        format: 'HYBRID',
-        capacity: 300,
-        duration: '3 days',
-        targetAudience: 'Tech professionals, business leaders, AI practitioners'
-      },
-      agenda: [
-        {
-          time: '09:00',
-          title: 'Opening Keynote: The Business of AI',
-          type: 'KEYNOTE',
-          duration: 60
-        },
-        {
-          time: '10:00',
-          title: 'AI Strategy Workshop',
-          type: 'WORKSHOP',
-          duration: 90
-        }
-      ]
-    },
     conceptUpdates: {
       suggestions: [
         {
           field: 'eventDetails.format',
           currentValue: 'PHYSICAL',
           suggestedValue: 'HYBRID',
-          reasoning: 'Hybrid format allows for broader audience reach and flexibility'
+          reasoning: 'Hybrid format allows for broader audience reach and flexibility, especially for AI conferences where remote participation is common'
         },
         {
           field: 'eventDetails.capacity',
-          currentValue: '250',
+          currentValue: '200',
           suggestedValue: '300',
-          reasoning: 'Increased capacity based on projected demand for AI content'
+          reasoning: 'Increased capacity to accommodate the growing interest in AI topics and allow for networking opportunities'
+        },
+        {
+          field: 'eventDetails.duration',
+          currentValue: '1 day',
+          suggestedValue: '2 days',
+          reasoning: 'Two days allows proper separation of business and technical tracks with adequate networking time'
         }
       ]
     },
-    sources: [
-      {
-        documentId: 'doc-1',
-        filename: 'AI_Conference_Best_Practices.pdf',
-        pageNumber: 15,
-        section: 'Event Planning Guidelines',
-        confidence: 0.92
-      }
-    ],
-    confidence: 0.89,
-    tokens: {
-      prompt: 156,
-      response: 203,
-      total: 359
-    }
+    confidence: 0.85
   },
   'speaker_suggestions': {
-    response: 'Here are some excellent speaker suggestions for your AI conference:\n\n**Keynote Speakers:**\n- Andrew Ng (AI Fund) - AI strategy and implementation\n- Fei-Fei Li (Stanford) - AI ethics and responsible development\n- Jensen Huang (NVIDIA) - AI infrastructure and hardware\n\n**Technical Track:**\n- OpenAI research team members\n- Google DeepMind researchers\n- Industry ML engineers from top tech companies\n\n**Business Track:**\n- Chief AI Officers from Fortune 500 companies\n- AI consultants from McKinsey, BCG\n- Successful AI startup founders\n\nI recommend reaching out 6-8 months in advance for top-tier speakers.',
-    suggestions: [
-      'Create speaker outreach timeline',
-      'Develop speaker agreement templates',
-      'Plan speaker travel and accommodation',
-      'Design speaker promotion strategy'
-    ],
+    response: 'For an AI conference, I recommend reaching out to industry leaders, researchers, and practitioners. Here are some speaker categories to consider.',
+    suggestions: [],
     followUpQuestions: [
       'What\'s your speaker budget range?',
-      'Do you prefer academic or industry speakers?',
-      'Are there specific companies you want represented?',
-      'Would you like help with speaker outreach emails?'
+      'Any specific companies you want to target?',
+      'Preference for academic vs industry speakers?'
     ],
-    confidence: 0.87,
-    tokens: {
-      prompt: 89,
-      response: 178,
-      total: 267
-    }
+    conceptSuggestion: {
+      speakers: [
+        {
+          name: 'Dr. Sarah Chen',
+          expertise: 'Machine Learning Research',
+          suggestedTopic: 'The Future of AI in Enterprise',
+          bio: 'Leading AI researcher with 10+ years in industry applications'
+        },
+        {
+          name: 'Marcus Rodriguez',
+          expertise: 'AI Product Strategy',
+          suggestedTopic: 'Building AI Products That Scale',
+          bio: 'Former Google AI PM, now Chief Product Officer at AI startup'
+        }
+      ],
+      reasoning: 'Mix of academic and industry perspectives provides balanced content for both technical and business tracks'
+    },
+    confidence: 0.80
+  },
+  'agenda_help': {
+    response: 'Here\'s a suggested agenda structure that balances business and technical content across two days.',
+    suggestions: [],
+    followUpQuestions: [
+      'How long should each session be?',
+      'Do you want parallel tracks?',
+      'Any specific topics to emphasize?'
+    ],
+    conceptSuggestion: {
+      agenda: [
+        {
+          time: '09:00',
+          title: 'Opening Keynote: AI Transformation',
+          type: 'KEYNOTE',
+          duration: 60,
+          description: 'Setting the stage for AI adoption in business'
+        },
+        {
+          time: '10:30',
+          title: 'Coffee & Networking',
+          type: 'BREAK',
+          duration: 30
+        },
+        {
+          time: '11:00',
+          title: 'AI ROI Workshop',
+          type: 'WORKSHOP',
+          duration: 90,
+          description: 'Hands-on session on measuring AI project success'
+        }
+      ],
+      reasoning: 'Balanced mix of presentations, workshops, and networking opportunities'
+    },
+    confidence: 0.88
   }
 };
 
@@ -146,35 +148,67 @@ export const MOCK_CHAT_RESPONSES: Record<string, ChatResponse> = {
 export const generateMockChatResponse = (userMessage: string, conceptId?: string): ChatResponse => {
   const lowercaseMessage = userMessage.toLowerCase();
   
+  // Simple keyword-based routing for mock responses
   if (lowercaseMessage.includes('speaker') || lowercaseMessage.includes('keynote')) {
     return MOCK_CHAT_RESPONSES['speaker_suggestions'];
   }
   
-  if (lowercaseMessage.includes('ai') || lowercaseMessage.includes('conference') || lowercaseMessage.includes('tech')) {
+  if (lowercaseMessage.includes('agenda') || lowercaseMessage.includes('schedule') || lowercaseMessage.includes('timeline')) {
+    // Context-aware agenda suggestions based on existing agenda
+    return {
+      response: 'I can help enhance your agenda! Based on your current schedule, I suggest some improvements and additions.',
+      suggestions: [],
+      followUpQuestions: [
+        'Would you like more networking time?',
+        'Should we add interactive workshops?',
+        'Do you want to adjust session timing?'
+      ],
+      conceptSuggestion: {
+        agenda: [
+          {
+            time: '12:45',
+            title: 'Networking Lunch & Exhibition',
+            type: 'NETWORKING',
+            duration: 75,
+            description: 'Extended networking opportunity with sponsor exhibition'
+          },
+          {
+            time: '14:15',
+            title: 'Interactive AI Demo Lab',
+            type: 'WORKSHOP',
+            duration: 90,
+            description: 'Hands-on demonstrations of latest AI tools and platforms'
+          }
+        ],
+        reasoning: 'Added longer networking session and interactive demos to balance theoretical content with practical engagement'
+      },
+      conceptUpdates: {
+        suggestions: [
+          {
+            field: 'agenda[0].duration',
+            currentValue: '90',
+            suggestedValue: '75',
+            reasoning: 'Shorter opening keynote allows for more interactive sessions and better audience engagement'
+          }
+        ]
+      },
+      confidence: 0.88
+    };
+  }
+  
+  if (lowercaseMessage.includes('ai') || lowercaseMessage.includes('conference') || lowercaseMessage.includes('tech') || lowercaseMessage.includes('event')) {
     return MOCK_CHAT_RESPONSES['ai_conference_help'];
   }
   
-  // Default response
+  // Default response for any other message
   return {
-    response: `Thank you for your question about "${userMessage}". I'm here to help you develop and refine your event concept. Based on what you've shared, I can provide suggestions for:\n\n- Event structure and format\n- Speaker recommendations\n- Agenda development\n- Pricing strategies\n- Marketing approaches\n\nWhat specific aspect would you like to explore further?`,
-    suggestions: [
-      'Develop event agenda',
-      'Suggest speakers and topics',
-      'Create pricing structure',
-      'Plan marketing strategy',
-      'Design attendee experience'
-    ],
+    response: `Thanks for your question! I can help you with event planning. Here are some areas I can assist with:\n\n• Event structure and format\n• Speaker recommendations\n• Agenda development\n• Pricing strategies\n• Marketing approaches\n\nWhat would you like to focus on?`,
+    suggestions: [],
     followUpQuestions: [
-      'What\'s the main goal of your event?',
+      'What\'s your main event goal?',
       'Who is your target audience?',
-      'What\'s your preferred event format?',
-      'Do you have a specific budget in mind?'
+      'What\'s your preferred format?'
     ],
-    confidence: 0.75,
-    tokens: {
-      prompt: userMessage.length,
-      response: 150,
-      total: userMessage.length + 150
-    }
+    confidence: 0.75
   };
 }; 

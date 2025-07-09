@@ -7,14 +7,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { ChatMessage, ChatRequest } from '../../../../core/models';
+import { ChatMessage, ChatRequest, ChatResponse } from '../../../../core/models';
 import { Concept } from '../../../../core/models/concept.model';
-import { ChatService } from '../../../../core/services';
+import { ChatService, StateService } from '../../../../core/services';
 
 @Component({
   selector: 'app-chat-interface',
@@ -28,7 +27,6 @@ import { ChatService } from '../../../../core/services';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatChipsModule,
     MatTooltipModule,
     TextFieldModule
   ],
@@ -38,18 +36,20 @@ import { ChatService } from '../../../../core/services';
 export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewChecked {
   @Input() concept!: Concept;
   @Input() conversationId?: string;
-  @Input() messages: ChatMessage[] = [];
-  @Input() suggestions: string[] = [];
-  @Input() isLoading: boolean = false;
   @Input() maxMessageLength: number = 2000;
   @Input() placeholder: string = 'Ask me anything about your event concept...';
   
   @Output() messageSent = new EventEmitter<string>();
   @Output() chatCleared = new EventEmitter<void>();
   @Output() chatExported = new EventEmitter<ChatMessage[]>();
+  @Output() suggestionsReceived = new EventEmitter<ChatResponse>();
   
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
   @ViewChild('messageTextarea') messageTextarea!: ElementRef;
+  
+  messages: ChatMessage[] = [];
+  isLoading: boolean = false;
+  latestChatResponse?: ChatResponse;
   
   messageControl = new FormControl('', [
     Validators.required,
@@ -60,13 +60,38 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
   private destroy$ = new Subject<void>();
   private shouldScrollToBottom = true;
 
-  constructor(private chatService: ChatService) {}
+  constructor(
+    private chatService: ChatService,
+    private stateService: StateService
+  ) {}
 
   ngOnInit(): void {
     this.messageControl.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
         this.adjustTextareaHeight();
+      });
+
+    // Subscribe to chat messages from state
+    const currentConversationId = this.conversationId || this.concept?.id;
+    
+    this.stateService.getChatMessages(currentConversationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(messages => {
+        this.messages = messages;
+        this.shouldScrollToBottom = true;
+        
+        // Add welcome message if this is the first time and no messages exist
+        if (messages.length === 0 && currentConversationId) {
+          this.addWelcomeMessage(currentConversationId);
+        }
+      });
+
+    // Subscribe to loading state
+    this.stateService.isLoading('chat')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(loading => {
+        this.isLoading = loading;
       });
   }
 
@@ -86,27 +111,23 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
     if (this.canSendMessage()) {
       const message = this.messageControl.value?.trim();
       if (message && this.concept) {
-        this.isLoading = true;
-        this.chatService.sendMessage(message, this.concept, this.conversationId).subscribe({
+        const currentConversationId = this.conversationId || this.concept.id;
+        this.chatService.sendMessage(message, this.concept, currentConversationId).subscribe({
           next: (response) => {
-            this.isLoading = false;
+            this.latestChatResponse = response;
+            this.suggestionsReceived.emit(response);
             this.messageSent.emit(message);
             this.messageControl.reset();
             this.inputRows = 1;
             this.shouldScrollToBottom = true;
           },
           error: (error) => {
-            this.isLoading = false;
             console.error('Error sending message:', error);
+            // TODO: Show user-friendly error message
           }
         });
       }
     }
-  }
-
-  sendSuggestion(suggestion: string): void {
-    this.messageSent.emit(suggestion);
-    this.shouldScrollToBottom = true;
   }
 
   clearChat(): void {
@@ -116,6 +137,8 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
   exportChat(): void {
     this.chatExported.emit(this.messages);
   }
+
+
 
   onEnterKey(event: KeyboardEvent): void {
     if (event.key === 'Enter') {
@@ -154,15 +177,20 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
       .replace(/\n/g, '<br>');
   }
 
-  formatTime(timestamp: Date): string {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  }
-
   trackByMessage(index: number, message: ChatMessage): string {
     return message.id || `${message.role}-${index}`;
+  }
+
+  private addWelcomeMessage(conversationId: string): void {
+    const welcomeMessage: ChatMessage = {
+      id: `welcome-${Date.now()}`,
+      role: 'assistant',
+      content: 'Hi! I\'m your AI assistant for event conceptualization. I can help you brainstorm event ideas, refine concepts, suggest speakers, and provide feedback on your event plans. What would you like to work on today?',
+      timestamp: new Date(),
+      conversationId: conversationId
+    };
+    
+    this.stateService.addChatMessage(welcomeMessage);
   }
 
   private scrollToBottom(): void {

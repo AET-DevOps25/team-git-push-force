@@ -59,8 +59,15 @@ export class StateService {
     return this.state$.pipe(map(state => state.currentConcept));
   }
 
-  getChatMessages(): Observable<ChatMessage[]> {
-    return this.state$.pipe(map(state => state.chatMessages));
+  getChatMessages(conversationId?: string): Observable<ChatMessage[]> {
+    return this.state$.pipe(
+      map(state => {
+        if (conversationId) {
+          return state.chatMessages.filter(msg => msg.conversationId === conversationId);
+        }
+        return state.chatMessages;
+      })
+    );
   }
 
   isLoading(key: string): Observable<boolean> {

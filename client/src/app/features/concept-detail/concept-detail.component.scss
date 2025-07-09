@@ -300,6 +300,15 @@
             flex-shrink: 0;
           }
           
+          .suggestion-indicator {
+            color: #667eea;
+            font-size: 1.125rem !important;
+            width: 1.125rem !important;
+            height: 1.125rem !important;
+            animation: pulse-glow 2s ease-in-out infinite;
+            margin-left: vars.$spacing-sm;
+          }
+
           .completion-icon {
             margin-left: auto;
             font-size: 1.25rem !important;
@@ -312,6 +321,11 @@
             
             &.incomplete {
               color: #FF9800;
+            }
+            
+            &.has-suggestions {
+              color: #667eea;
+              animation: pulse-glow 2s ease-in-out infinite;
             }
           }
         }
@@ -328,6 +342,8 @@
 
 // Panel content styling
 .panel-content {
+  padding-top: vars.$spacing-sm;
+
   .detail-grid {
     display: flex;
     flex-direction: column;
@@ -466,6 +482,79 @@
           font-size: 0.75rem;
           font-weight: 600;
         }
+        
+        .inline-suggestion {
+          display: flex;
+          align-items: center;
+          gap: vars.$spacing-xs;
+          margin-left: vars.$spacing-sm;
+          
+          .suggestion-arrow {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.875rem;
+          }
+          
+          .suggested-duration {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            padding: 2px vars.$spacing-xs;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px dashed #4caf50;
+          }
+          
+          .suggestion-actions {
+            display: flex;
+            gap: 4px;
+            margin-left: vars.$spacing-xs;
+            
+            button {
+              width: 28px;
+              height: 28px;
+              min-width: 28px;
+              min-height: 28px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 6px;
+              border: none;
+              padding: 0;
+              
+              mat-icon {
+                font-size: 1rem !important;
+                width: 1rem !important;
+                height: 1rem !important;
+                line-height: 1;
+              }
+              
+              &[color="primary"] {
+                background: rgba(76, 175, 80, 0.1);
+                
+                mat-icon {
+                  color: #4caf50;
+                }
+                
+                &:hover {
+                  background: rgba(76, 175, 80, 0.2);
+                }
+              }
+              
+              &[color="warn"] {
+                background: rgba(244, 67, 54, 0.1);
+                
+                mat-icon {
+                  color: #f44336;
+                }
+                
+                &:hover {
+                  background: rgba(244, 67, 54, 0.2);
+                }
+              }
+            }
+          }
+        }
       }
       
       .agenda-description {
@@ -486,6 +575,30 @@
           font-size: 0.875rem !important;
           width: 0.875rem !important;
           height: 0.875rem !important;
+        }
+      }
+      
+      .suggestion-reason {
+        display: flex;
+        align-items: center;
+        gap: vars.$spacing-xs;
+        margin-top: vars.$spacing-sm;
+        padding: vars.$spacing-xs;
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: 6px;
+        border-left: 3px solid #667eea;
+        
+        mat-icon {
+          color: #667eea;
+          font-size: 0.875rem !important;
+          width: 0.875rem !important;
+          height: 0.875rem !important;
+        }
+        
+        span {
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          line-height: 1.4;
         }
       }
     }
@@ -786,6 +899,275 @@
   }
 }
 
+// Suggestion Styling
+.suggestion-item {
+  margin-top: vars.$spacing-sm;
+  margin-left: calc(1.125rem + #{vars.$spacing-sm});
+  
+  .suggestion-content {
+    background: rgba(102, 126, 234, 0.05);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 8px;
+    padding: vars.$spacing-sm;
+    
+    .suggestion-change {
+      display: flex;
+      align-items: center;
+      gap: vars.$spacing-sm;
+      margin-bottom: vars.$spacing-xs;
+      
+      .current {
+        color: #f57c00;
+        font-weight: 500;
+        font-size: 0.875rem;
+      }
+      
+      .arrow {
+        color: #667eea;
+        font-size: 1rem !important;
+        width: 1rem !important;
+        height: 1rem !important;
+      }
+      
+      .suggested {
+        color: #4caf50;
+        font-weight: 600;
+        font-size: 0.875rem;
+      }
+    }
+    
+    .suggestion-reason {
+      margin: 0 0 vars.$spacing-sm 0;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+    
+    .suggestion-actions {
+      display: flex;
+      gap: vars.$spacing-xs;
+      align-items: center;
+      
+      button {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: none;
+        padding: 0;
+        
+        &[color="primary"] {
+          background: rgba(76, 175, 80, 0.1);
+          
+          mat-icon {
+            color: #4caf50;
+            font-size: 1rem !important;
+            width: 1rem !important;
+            height: 1rem !important;
+            line-height: 1;
+          }
+          
+          &:hover {
+            background: rgba(76, 175, 80, 0.2);
+          }
+        }
+        
+        &[color="warn"] {
+          background: rgba(244, 67, 54, 0.1);
+          
+          mat-icon {
+            color: #f44336;
+            font-size: 1rem !important;
+            width: 1rem !important;
+            height: 1rem !important;
+            line-height: 1;
+          }
+          
+          &:hover {
+            background: rgba(244, 67, 54, 0.2);
+          }
+        }
+      }
+    }
+  }
+}
+
+.suggestion-header {
+  display: flex;
+  align-items: center;
+  gap: vars.$spacing-sm;
+  color: #667eea;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: vars.$spacing-lg 0 vars.$spacing-md 0;
+  
+  mat-icon {
+    font-size: 1.125rem !important;
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+  }
+}
+
+.suggested-speakers, 
+.suggested-agenda {
+  margin-top: vars.$spacing-lg;
+  padding-top: vars.$spacing-lg;
+  border-top: 1px dashed rgba(102, 126, 234, 0.3);
+}
+
+.speaker-card.suggested {
+  background: rgba(102, 126, 234, 0.05);
+  border: 1px dashed rgba(102, 126, 234, 0.3);
+  
+  .speaker-avatar.suggested {
+    background: rgba(102, 126, 234, 0.1);
+    
+    mat-icon {
+      color: #667eea;
+    }
+  }
+  
+  .suggestion-actions {
+    display: flex;
+    gap: vars.$spacing-xs;
+    align-items: center;
+    
+    button {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: none;
+      padding: 0;
+      
+      &[color="primary"] {
+        background: rgba(76, 175, 80, 0.1);
+        
+        mat-icon {
+          color: #4caf50;
+          font-size: 1.125rem !important;
+          width: 1.125rem !important;
+          height: 1.125rem !important;
+          line-height: 1;
+        }
+        
+        &:hover {
+          background: rgba(76, 175, 80, 0.2);
+        }
+      }
+      
+      &[color="warn"] {
+        background: rgba(244, 67, 54, 0.1);
+        
+        mat-icon {
+          color: #f44336;
+          font-size: 1.125rem !important;
+          width: 1.125rem !important;
+          height: 1.125rem !important;
+          line-height: 1;
+        }
+        
+        &:hover {
+          background: rgba(244, 67, 54, 0.2);
+        }
+      }
+    }
+  }
+}
+
+.agenda-item.suggested {
+  background: rgba(102, 126, 234, 0.05);
+  border: 1px dashed rgba(102, 126, 234, 0.3);
+  
+  .agenda-time .time-icon {
+    color: #667eea;
+  }
+  
+  .agenda-header .suggestion-actions {
+    display: flex;
+    gap: vars.$spacing-xs;
+    margin-left: auto;
+    align-items: center;
+    
+    button {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: none;
+      padding: 0;
+      
+      &[color="primary"] {
+        background: rgba(76, 175, 80, 0.1);
+        
+        mat-icon {
+          color: #4caf50;
+          font-size: 1rem !important;
+          width: 1rem !important;
+          height: 1rem !important;
+          line-height: 1;
+        }
+        
+        &:hover {
+          background: rgba(76, 175, 80, 0.2);
+        }
+      }
+      
+      &[color="warn"] {
+        background: rgba(244, 67, 54, 0.1);
+        
+        mat-icon {
+          color: #f44336;
+          font-size: 1rem !important;
+          width: 1rem !important;
+          height: 1rem !important;
+          line-height: 1;
+        }
+        
+        &:hover {
+          background: rgba(244, 67, 54, 0.2);
+        }
+      }
+    }
+  }
+}
+
+// Responsive adjustments for suggestions
+@media (max-width: vars.$screen-md) {
+  .suggestion-item .suggestion-content .suggestion-change {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: vars.$spacing-xs;
+    
+    .arrow {
+      transform: rotate(90deg);
+    }
+  }
+  
+  .speaker-card.suggested .speaker-header,
+  .agenda-item.suggested .agenda-header {
+    flex-wrap: wrap;
+    gap: vars.$spacing-sm;
+    
+    .suggestion-actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+}
+
 // Animations
 @keyframes pulse {
   0%, 100% {
@@ -795,5 +1177,16 @@
   50% {
     opacity: 0.7;
     transform: scale(1.1);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.8;
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
   }
 } 

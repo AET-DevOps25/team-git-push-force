@@ -258,37 +258,12 @@ export class MockApiService {
       return this.createDelayedError('Not authenticated', 401);
     }
 
-    // Create user message
-    const userMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      role: 'user',
-      content: request.message,
-      timestamp: new Date(),
-      conversationId: request.conversationId || 'general'
-    };
-
-    this.chatMessages.push(userMessage);
-
-    // Generate AI response
+    // Generate AI response based on user message
     const aiResponse = generateMockChatResponse(request.message, request.conversationId);
     
-    const aiMessage: ChatMessage = {
-      id: `msg-${Date.now() + 1}`,
-      role: 'assistant',
-      content: aiResponse.response,
-      timestamp: new Date(),
-      conversationId: request.conversationId || 'general'
-    };
-
-    this.chatMessages.push(aiMessage);
-
-    const response: ChatResponse = {
-      ...aiResponse,
-      // Add the created message to the response
-      message: aiMessage
-    } as any;
-
-    return this.createDelayedResponse(response);
+    // The actual message handling is done in the ChatService
+    // We just return the AI response here
+    return this.createDelayedResponse(aiResponse);
   }
 
   getChatHistory(conceptId?: string): Observable<ChatMessage[]> {

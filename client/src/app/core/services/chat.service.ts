@@ -84,14 +84,17 @@ export class ChatService {
     return this.apiService.post<ChatResponse>('/api/genai/chat', request)
       .pipe(
         tap(response => {
+          const currentConversationId = conversationId || concept.id;
+          
           // Add user message to state
           const userMessage: ChatMessage = {
             id: `msg-${Date.now()}`,
             role: 'user',
             content: message,
             timestamp: new Date(),
-            conversationId: conversationId || concept.id
+            conversationId: currentConversationId
           };
+          
           this.stateService.addChatMessage(userMessage);
 
           // Add AI response to state
@@ -100,7 +103,7 @@ export class ChatService {
             role: 'assistant',
             content: response.response,
             timestamp: new Date(),
-            conversationId: conversationId || concept.id
+            conversationId: currentConversationId
           };
           this.stateService.addChatMessage(aiMessage);
           

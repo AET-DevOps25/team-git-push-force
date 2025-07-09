@@ -1,7 +1,7 @@
 @use '../../../../styles/abstracts/variables' as vars;
 
 .chat-container {
-  height: 100%;
+  height: 600px; // Fixed height to prevent layout issues
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -12,7 +12,6 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 500px;
 }
 
 // Messages Container
@@ -156,52 +155,7 @@
   }
 }
 
-.message-time {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: vars.$spacing-xs;
-  opacity: 0.7;
-}
 
-// Suggestions
-.suggestions {
-  padding: 0 vars.$spacing-lg vars.$spacing-md;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  background: rgba(102, 126, 234, 0.02);
-  
-  .suggestions-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-    margin-bottom: vars.$spacing-sm;
-  }
-  
-  mat-chip-set {
-    display: flex;
-    flex-wrap: wrap;
-    gap: vars.$spacing-xs;
-    
-    mat-chip {
-      background: rgba(102, 126, 234, 0.1);
-      color: #667eea;
-      border: 1px solid rgba(102, 126, 234, 0.2);
-      border-radius: 16px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      padding: vars.$spacing-xs vars.$spacing-sm;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      
-      &:hover {
-        background: rgba(102, 126, 234, 0.2);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-      }
-    }
-  }
-}
 
 // Chat Input
 .chat-input {
@@ -305,7 +259,7 @@
 @media (max-width: vars.$screen-md) {
   .chat-container {
     border-radius: 16px;
-    min-height: 400px;
+    height: 500px; // Smaller fixed height on tablets
   }
   
   .messages-list {
@@ -332,10 +286,6 @@
     }
   }
   
-  .suggestions {
-    padding: 0 vars.$spacing-md vars.$spacing-sm;
-  }
-  
   .chat-input {
     padding: vars.$spacing-md;
     flex-direction: column;
@@ -353,7 +303,7 @@
 @media (max-width: vars.$screen-sm) {
   .chat-container {
     border-radius: 12px;
-    min-height: 350px;
+    height: 400px; // Smaller fixed height on mobile
   }
   
   .message-text {
