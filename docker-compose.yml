@@ -6,19 +6,20 @@ services:
     ports:
       - "3000:80"
     depends_on:
-      - server
+      - gateway
     networks:
       - frontend-network
       - backend-network
 
   # API Gateway (Spring Boot)
-  server:
+  gateway:
     build:
-      context: ./server
+      context: ./gateway
     ports:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_MAIN_WEB_APPLICATION_TYPE=reactive
       - USER_SERVICE_URL=http://user-svc:8080
       - CONCEPT_SERVICE_URL=http://concept-svc:8080
       - GENAI_SERVICE_URL=http://genai-svc:8083

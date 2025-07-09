@@ -380,10 +380,13 @@ sketch
 
 ## OpenAPI Generator ###
 /client/src/api/
-/server/src/main/java/generated/
+/gateway/src/main/java/de/tum/aet/devops25/api/generated/
 /concept-svc/src/main/java/generated/
 /user-svc/src/main/java/generated/
 /genai-svc/client/
+
+# OpenAPI Generator CLI configuration
+openapitools.json
 
 ### Infrastructure ###
 # Terraform
