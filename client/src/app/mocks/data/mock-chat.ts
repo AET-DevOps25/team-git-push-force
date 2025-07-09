@@ -140,25 +140,7 @@ export const MOCK_CHAT_RESPONSES: Record<string, ChatResponse> = {
   }
 };
 
-export const MOCK_CONVERSATION_HISTORY: Record<string, ChatMessage[]> = {
-  'concept-1': MOCK_CHAT_MESSAGES.filter(msg => msg.conversationId === 'conv-1'),
-  'concept-2': [
-    {
-      id: 'msg-7',
-      role: 'user',
-      content: 'I need help planning a sustainability workshop for business owners. It should be practical and actionable.',
-      timestamp: new Date('2024-01-12T14:20:00Z'),
-      conversationId: 'conv-2'
-    },
-    {
-      id: 'msg-8',
-      role: 'assistant',
-      content: 'Great idea! A practical sustainability workshop is exactly what many businesses need. Here\'s my recommendation for a focused, actionable format:\n\n**Workshop Structure (1 day):**\n- Morning: Sustainability frameworks and business case\n- Afternoon: Hands-on sustainability assessment and planning\n\n**Key Elements:**\n- Interactive sustainability audit tools\n- Real case studies and success stories\n- Actionable takeaway templates\n- Peer learning and collaboration\n\nWould you like me to develop a detailed agenda or focus on specific sustainability areas like energy, waste, or supply chain?',
-      timestamp: new Date('2024-01-12T14:20:45Z'),
-      conversationId: 'conv-2'
-    }
-  ]
-};
+// Removed MOCK_CONVERSATION_HISTORY as it was unused - conversation history is managed in the interceptor/service layer
 
 // Helper functions for mock chat
 export const generateMockChatResponse = (userMessage: string, conceptId?: string): ChatResponse => {

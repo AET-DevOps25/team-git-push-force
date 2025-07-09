@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
-import { catchError, delay } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { MockApiService } from '../../mocks/services/mock-api.service';
 
@@ -23,7 +23,6 @@ export class ApiService {
   ) {}
 
   get<T>(endpoint: string, params?: any): Observable<T> {
-    // Use mock API if enabled
     if (environment.useMockApi) {
       return this.handleMockRequest<T>('GET', endpoint, null, params);
     }
@@ -44,7 +43,6 @@ export class ApiService {
   }
 
   post<T>(endpoint: string, data: any): Observable<T> {
-    // Use mock API if enabled
     if (environment.useMockApi) {
       return this.handleMockRequest<T>('POST', endpoint, data);
     }
@@ -56,7 +54,6 @@ export class ApiService {
   }
 
   put<T>(endpoint: string, data: any): Observable<T> {
-    // Use mock API if enabled
     if (environment.useMockApi) {
       return this.handleMockRequest<T>('PUT', endpoint, data);
     }
@@ -68,7 +65,6 @@ export class ApiService {
   }
 
   delete<T>(endpoint: string): Observable<T> {
-    // Use mock API if enabled
     if (environment.useMockApi) {
       return this.handleMockRequest<T>('DELETE', endpoint);
     }
@@ -80,7 +76,6 @@ export class ApiService {
   }
 
   upload<T>(endpoint: string, formData: FormData): Observable<T> {
-    // Use mock API if enabled
     if (environment.useMockApi) {
       return this.handleMockRequest<T>('POST', endpoint, formData);
     }
@@ -91,10 +86,9 @@ export class ApiService {
       );
   }
 
+
+
   private handleMockRequest<T>(method: string, endpoint: string, data?: any, params?: any): Observable<T> {
-    console.log('🚀 Using Mock API:', method, endpoint);
-    
-    // Route to appropriate mock service method
     if (endpoint === '/auth/login' && method === 'POST') {
       return this.mockApiService.login(data.email, data.password) as Observable<T>;
     }
@@ -142,8 +136,6 @@ export class ApiService {
       return this.mockApiService.deleteDocument(id!) as Observable<T>;
     }
 
-    // Fallback for unknown endpoints
-    console.warn('🤔 Unknown mock endpoint:', method, endpoint);
     return throwError(() => ({ status: 404, error: { message: 'Mock endpoint not found' } }));
   }
 

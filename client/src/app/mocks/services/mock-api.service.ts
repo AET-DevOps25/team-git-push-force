@@ -10,9 +10,7 @@ import {
   DEFAULT_MOCK_USER 
 } from '../data/mock-users';
 import { 
-  MOCK_CONCEPTS, 
-  getConceptsByUser, 
-  getConceptsByStatus 
+  MOCK_CONCEPTS 
 } from '../data/mock-concepts';
 import { 
   MOCK_CHAT_MESSAGES, 

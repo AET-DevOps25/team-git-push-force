@@ -55,32 +55,7 @@ export const MOCK_DOCUMENTS: ProcessedDocument[] = [
   }
 ];
 
-export const MOCK_UPLOAD_RESULTS: DocumentUploadResult[] = [
-  {
-    documentId: 'doc-7',
-    filename: 'speaker_profiles.pdf',
-    size: 1876543,
-    mimeType: 'application/pdf',
-    uploadedAt: new Date('2024-01-15T16:00:00Z'),
-    status: 'QUEUED'
-  },
-  {
-    documentId: 'doc-8',
-    filename: 'venue_options.docx',
-    size: 987654,
-    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    uploadedAt: new Date('2024-01-15T16:05:00Z'),
-    status: 'PROCESSING'
-  },
-  {
-    documentId: 'doc-9',
-    filename: 'budget_analysis.pdf',
-    size: 2345678,
-    mimeType: 'application/pdf',
-    uploadedAt: new Date('2024-01-15T16:10:00Z'),
-    status: 'COMPLETED'
-  }
-];
+// Removed MOCK_UPLOAD_RESULTS as it was unused
 
 // Helper functions for document mocking
 export const generateMockUploadResult = (file: File): DocumentUploadResult => {

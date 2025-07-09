@@ -300,12 +300,4 @@ export const MOCK_CONCEPTS: Concept[] = [
   }
 ];
 
-// Helper function to get concepts by user
-export const getConceptsByUser = (userId: string): Concept[] => {
-  return MOCK_CONCEPTS.filter(concept => concept.userId === userId);
-};
-
-// Helper function to get concepts by status
-export const getConceptsByStatus = (status: ConceptStatus): Concept[] => {
-  return MOCK_CONCEPTS.filter(concept => concept.status === status);
-}; 
+// Removed unused helper functions - filtering is handled in the service layer 

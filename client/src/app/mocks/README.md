@@ -46,21 +46,17 @@ The mock system is **automatically enabled** when `environment.useMockApi` is `t
 export const environment = {
   useMockApi: true,           // Enable/disable mock API
   mockDelay: 800,             // Response delay in ms
-  mockApiConfig: {
-    networkDelay: true,       // Simulate network delays
-    simulateErrors: false,    // Occasionally return errors
-    errorRate: 0.1,          // Error rate when enabled
-    autoLogin: true,         // Auto-login on app start
-    defaultUser: 'demo@concepter.com',
-    verboseLogging: true     // Detailed console logging
-  }
+  enableLogging: true
 };
 ```
 
-### Two Mock Implementations
+### Implementation
 
-1. **MockHttpInterceptor** (Default) - Intercepts HTTP calls
-2. **MockApiService** - Direct service injection for unit tests
+The mock system uses **direct service injection** approach:
+
+- **ApiService** checks `environment.useMockApi` and routes to `MockApiService` when enabled
+- **MockApiService** provides all mock functionality with realistic data and behavior
+- Production uses real HTTP calls with AuthInterceptor and ErrorInterceptor
 
 ## 🔧 Usage Examples
 
@@ -148,36 +144,10 @@ The mock chat system provides intelligent responses based on message content:
 - Create/update/delete operations affect mock data
 - Realistic version tracking and timestamps
 
-### Error Simulation
-```typescript
-// Enable in environment
-mockApiConfig: {
-  simulateErrors: true,
-  errorRate: 0.1  // 10% of requests will fail
-}
-```
-
 ### Network Delays
 - Configurable response delays (800ms default)
 - Simulates real network conditions
-- Can be disabled for faster testing
-
-## 🔍 Debugging
-
-### Console Logging
-When `verboseLogging` is enabled, you'll see:
-```
-🚀 Mock API intercepted: POST /auth/login
-✅ Mock API response: 200 { user: {...} }
-```
-
-### Mock State Inspection
-```typescript
-// Check current mock state (only with MockApiService)
-const state = mockApiService.getMockState();
-console.log('Current user:', state.currentUser);
-console.log('Concepts count:', state.conceptsCount);
-```
+- Can be disabled by setting `mockDelay: 0`
 
 ## 📁 File Structure
 
@@ -190,8 +160,7 @@ src/app/mocks/
 │   ├── mock-documents.ts     # Document upload simulation
 │   └── index.ts              # Data exports
 ├── services/
-│   ├── mock-http.interceptor.ts   # HTTP interception
-│   ├── mock-api.service.ts        # Direct service alternative
+│   ├── mock-api.service.ts        # Primary mock implementation
 │   └── index.ts                   # Service exports
 ├── index.ts                   # Main exports
 └── README.md                  # This file
@@ -203,7 +172,7 @@ To switch to a real backend:
 
 1. Set `environment.useMockApi = false`
 2. Update `environment.apiUrl` to your backend URL
-3. The app will use real HTTP calls instead of mock data
+3. The app will use real HTTP calls with proper interceptors
 
 ```typescript
 // src/environments/environment.prod.ts
@@ -217,27 +186,31 @@ export const environment = {
 ## 💡 Best Practices
 
 1. **Development**: Use mocks for rapid UI development
-2. **Testing**: MockApiService for unit tests, interceptor for integration
-3. **Demos**: Enable auto-login for smooth demonstrations  
-4. **Debugging**: Use verbose logging to trace API interactions
-5. **Performance**: Reduce mockDelay for faster development cycles
+2. **Testing**: Direct service injection provides predictable behavior
+3. **Performance**: Reduce mockDelay for faster development cycles
+4. **Debugging**: Clear service boundaries make issues easier to trace
 
 ## 🆘 Troubleshooting
 
 ### Mock API not working?
 - Check `environment.useMockApi` is `true`
-- Verify interceptor is registered in `app.config.ts`
+- Verify ApiService is routing to MockApiService
 - Look for console errors in developer tools
 
 ### Authentication issues?
-- Use provided test credentials
-- Check network tab for actual HTTP requests
-- Verify token storage in browser developer tools
+- Use provided test credentials exactly as listed
+- Mock tokens start with 'mock-token-' and never expire
+- Check localStorage for stored auth data
 
 ### Missing data?
 - Mock data resets on browser refresh
-- Use provided helper functions to seed test data
-- Check console for mock state information
+- All operations are in-memory only during session
+- Changes persist only within the current browser session
+
+## 🚧 Known Limitations
+
+- Mock data is session-only (resets on refresh)
+- No persistent storage simulation
 
 ---
 

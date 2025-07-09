@@ -6,7 +6,6 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 
-// Import interceptors (only for production)
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 import { ErrorInterceptor } from './core/interceptors/error.interceptor';
 
@@ -19,7 +18,6 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideAnimationsAsync(),
     
-    // Only add interceptors for production (mock API handles everything in dev)
     ...(!environment.useMockApi ? [
       {
         provide: HTTP_INTERCEPTORS,
