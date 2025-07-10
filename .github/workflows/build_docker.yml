@@ -98,6 +98,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Set executable permissions for gradlew
+        run: chmod +x ${{ matrix.service }}/gradlew
+
       - name: Build and test with Gradle
         run: cd ${{ matrix.service }} && ./gradlew build test
 
