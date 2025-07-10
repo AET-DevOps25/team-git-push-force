@@ -55,6 +55,11 @@ public class UserController implements UserRegistrationApi {
         entity.setLastName(registerUserRequest.getLastName());
         entity.setActive(true);
 
+        // Set timestamps
+        OffsetDateTime now = OffsetDateTime.now();
+        entity.setCreatedAt(now);
+        entity.setUpdatedAt(now);
+
         // Hash the password
         String hashedPassword = passwordEncoder.encode(registerUserRequest.getPassword());
         entity.setPasswordHash(hashedPassword);
@@ -73,8 +78,8 @@ public class UserController implements UserRegistrationApi {
                 .lastName(saved.getLastName())
                 .isActive(saved.isActive())
                 .preferences(UserPreferencesMapper.toDto(saved.getPreferences()))
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now());
+                .createdAt(saved.getCreatedAt())
+                .updatedAt(saved.getUpdatedAt());
 
         return ResponseEntity.status(201).body(user);
     }
@@ -90,6 +95,15 @@ public class UserController implements UserRegistrationApi {
         health.put("status", "UP");
         health.put("timestamp", OffsetDateTime.now().toString());
         health.put("service", "user-service");
+
+        try {
+            // This will throw if DB is down
+            long userCount = userRepository.count();
+            health.put("database", "UP");
+        } catch (Exception e) {
+            health.put("database", "DOWN");
+        }
+
         return health;
     }
 
@@ -103,6 +117,11 @@ public class UserController implements UserRegistrationApi {
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPasswordHash())) {
             return ResponseEntity.status(401).build();
         }
+
+        // Update lastLoginAt
+        user.setLastLoginAt(OffsetDateTime.now());
+        userRepository.save(user);
+
         // Generate JWT
         SecretKey key = Keys.hmacShaKeyFor(JWT_SECRET.getBytes());
         String token = Jwts.builder()
@@ -134,8 +153,8 @@ public class UserController implements UserRegistrationApi {
                 .lastName(userEntity.getLastName())
                 .isActive(userEntity.isActive())
                 .preferences(UserPreferencesMapper.toDto(userEntity.getPreferences()))
-                .createdAt(OffsetDateTime.now()) // You might want to store these in your entity
-                .updatedAt(OffsetDateTime.now());
+                .createdAt(userEntity.getCreatedAt())
+                .updatedAt(userEntity.getUpdatedAt());
 
         return ResponseEntity.ok(user);
     }
@@ -186,8 +205,11 @@ public class UserController implements UserRegistrationApi {
 
             user.setPreferences(existingPrefs);
         }
-        // Add more fields as needed
 
+        // Update the updatedAt timestamp
+        user.setUpdatedAt(OffsetDateTime.now());
+
+        // Add more fields as needed
         userRepository.save(user);
 
         return ResponseEntity.ok("Profile updated successfully");
