@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-svc-db
+spec:
+  selector:
+    app: user-svc-db-selector
+  ports:
+    - port: {{ .Values.userdb.service.port }}
+      targetPort: {{ .Values.userdb.service.targetPort }}
+  type: {{ .Values.userdb.service.type }}
