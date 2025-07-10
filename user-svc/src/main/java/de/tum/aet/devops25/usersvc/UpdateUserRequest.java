@@ -5,6 +5,15 @@ public class UpdateUserRequest {
     private String firstName;
     private String lastName;
     private String email;
+    private de.tum.aet.devops25.api.generated.model.UserPreferences preferences;
+
+    public de.tum.aet.devops25.api.generated.model.UserPreferences getPreferences() {
+        return preferences;
+    }
+
+    public void setPreferences(de.tum.aet.devops25.api.generated.model.UserPreferences preferences) {
+        this.preferences = preferences;
+    }
 
     public String getFirstName() {
         return firstName;

@@ -59,6 +59,10 @@ public class UserController implements UserRegistrationApi {
         String hashedPassword = passwordEncoder.encode(registerUserRequest.getPassword());
         entity.setPasswordHash(hashedPassword);
 
+        if (registerUserRequest.getPreferences() != null) {
+            entity.setPreferences(UserPreferencesMapper.toEntity(registerUserRequest.getPreferences()));
+        }
+
         UserEntity saved = userRepository.save(entity);
 
         // Map to API User model
@@ -68,6 +72,7 @@ public class UserController implements UserRegistrationApi {
                 .firstName(saved.getFirstName())
                 .lastName(saved.getLastName())
                 .isActive(saved.isActive())
+                .preferences(UserPreferencesMapper.toDto(saved.getPreferences()))
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now());
 
@@ -110,10 +115,29 @@ public class UserController implements UserRegistrationApi {
     }
 
     @GetMapping("/api/users/profile")
-    public String getProfile() {
+    public ResponseEntity<User> getProfile() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String userId = (String) auth.getPrincipal();
-        return "Your user ID from JWT: " + userId;
+
+        Optional<UserEntity> userOpt = userRepository.findById(UUID.fromString(userId));
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).build();
+        }
+
+        UserEntity userEntity = userOpt.get();
+
+        // Map to API User model
+        User user = new User()
+                .id(userEntity.getId())
+                .email(userEntity.getEmail())
+                .firstName(userEntity.getFirstName())
+                .lastName(userEntity.getLastName())
+                .isActive(userEntity.isActive())
+                .preferences(UserPreferencesMapper.toDto(userEntity.getPreferences()))
+                .createdAt(OffsetDateTime.now()) // You might want to store these in your entity
+                .updatedAt(OffsetDateTime.now());
+
+        return ResponseEntity.ok(user);
     }
 
     @PutMapping("/api/users/profile")
@@ -136,6 +160,31 @@ public class UserController implements UserRegistrationApi {
         }
         if (updateRequest.getEmail() != null) {
             user.setEmail(updateRequest.getEmail());
+        }
+        if (updateRequest.getPreferences() != null) {
+            // Get existing preferences or create new ones
+            UserPreferences existingPrefs = user.getPreferences();
+            if (existingPrefs == null) {
+                existingPrefs = new UserPreferences();
+            }
+
+            // Merge new preferences with existing ones (partial update)
+            de.tum.aet.devops25.api.generated.model.UserPreferences newPrefs = updateRequest.getPreferences();
+
+            if (newPrefs.getPreferredEventFormat() != null) {
+                existingPrefs.setPreferredEventFormat(newPrefs.getPreferredEventFormat().getValue());
+            }
+            if (newPrefs.getIndustry() != null) {
+                existingPrefs.setIndustry(newPrefs.getIndustry());
+            }
+            if (newPrefs.getLanguage() != null) {
+                existingPrefs.setLanguage(newPrefs.getLanguage());
+            }
+            if (newPrefs.getTimezone() != null) {
+                existingPrefs.setTimezone(newPrefs.getTimezone());
+            }
+
+            user.setPreferences(existingPrefs);
         }
         // Add more fields as needed
 

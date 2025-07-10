@@ -3,6 +3,7 @@ package de.tum.aet.devops25.usersvc;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,6 +32,9 @@ public class UserEntity {
 
     @Column(nullable = false)
     private String passwordHash;
+
+    @Embedded
+    private UserPreferences preferences;
 
     // Getters and setters
     public UUID getId() {
@@ -79,5 +83,13 @@ public class UserEntity {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public UserPreferences getPreferences() {
+        return preferences;
+    }
+
+    public void setPreferences(UserPreferences preferences) {
+        this.preferences = preferences;
     }
 }
