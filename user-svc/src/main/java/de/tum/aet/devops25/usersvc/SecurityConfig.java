@@ -11,10 +11,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Proper way to disable CSRF in Spring Security 6+
+                .csrf(csrf -> csrf.disable()) // Disable CSRF for APIs
+                .headers(headers -> headers
+                .frameOptions(frameOptions -> frameOptions.sameOrigin()) // Allow frames from same origin
+                )
                 .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/users/register", "/").permitAll()
-                .anyRequest().authenticated()
+                .requestMatchers("/", "/api/users/register", "/health").permitAll() // Public endpoints
+                .anyRequest().authenticated() // All others require auth
                 );
         return http.build();
     }
