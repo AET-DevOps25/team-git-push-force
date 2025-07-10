@@ -28,10 +28,6 @@ generate_java() {
   echo "Generating Java code..."
   check_command openapi-generator-cli
 
-  # Create output directories
-  create_dir "user-svc/src/main/java/generated"
-  create_dir "concept-svc/src/main/java/generated"
-
   # Generate code for API Gateway
   openapi-generator-cli generate \
     -i api/gateway.yaml \
@@ -46,7 +42,7 @@ generate_java() {
   openapi-generator-cli generate \
     -i api/user-service.yaml \
     -g spring \
-    -o user-svc/src/main/java/generated \
+    -o user-svc \
     --skip-validate-spec \
     --api-package de.tum.aet.devops25.api.generated.controller \
     --model-package de.tum.aet.devops25.api.generated.model \
@@ -56,7 +52,7 @@ generate_java() {
   openapi-generator-cli generate \
     -i api/concept-service.yaml \
     -g spring \
-    -o concept-svc/src/main/java/generated \
+    -o concept-svc \
     --skip-validate-spec \
     --api-package de.tum.aet.devops25.api.generated.controller \
     --model-package de.tum.aet.devops25.api.generated.model \

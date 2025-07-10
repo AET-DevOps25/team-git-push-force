@@ -25,6 +25,19 @@ We follow an API-first approach to development:
 
 ## Usage
 
+### Installation
+
+Install the required tools for linting and code generation:
+
+```bash
+# Install Redocly CLI for linting OpenAPI specs
+npm install -g @redocly/cli@latest
+
+# Install OpenAPI Generator tools
+npm install -g @openapitools/openapi-generator-cli
+pip install openapi-python-client
+```
+
 ### Linting OpenAPI Specs
 
 ```bash
@@ -41,6 +54,38 @@ This will generate:
 - Java controllers and models for Spring Boot services
 - Python client for the GenAI service
 - TypeScript SDK for the web client
+
+#### Generated Code Locations
+
+The code generation script places files in the following locations:
+
+- **Java (Spring Boot)**: 
+  - Gateway: `gateway/src/main/java/de/tum/aet/devops25/api/generated/`
+  - User Service: `user-svc/src/main/java/de/tum/aet/devops25/api/generated/`
+  - Concept Service: `concept-svc/src/main/java/de/tum/aet/devops25/api/generated/`
+
+- **Python Client**:
+  - GenAI Service: `genai-svc/client/`
+
+- **TypeScript SDK**:
+  - Web Client: `client/src/api/generated.ts`
+
+#### Code Generation Options
+
+The script supports generating code for specific languages:
+
+```bash
+# Generate only Java code
+./api/scripts/gen-all.sh java
+
+# Generate only Python client
+./api/scripts/gen-all.sh python
+
+# Generate only TypeScript SDK
+./api/scripts/gen-all.sh typescript
+```
+
+Running the script without arguments generates code for all languages.
 
 ## Versioning
 
