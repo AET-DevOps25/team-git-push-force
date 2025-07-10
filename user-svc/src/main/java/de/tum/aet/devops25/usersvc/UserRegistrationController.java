@@ -1,6 +1,8 @@
 package de.tum.aet.devops25.usersvc;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +12,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.aet.devops25.api.generated.controller.UserRegistrationApi;
 import de.tum.aet.devops25.api.generated.model.RegisterUserRequest;
@@ -64,5 +68,33 @@ public class UserRegistrationController implements UserRegistrationApi {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String userId = (String) auth.getPrincipal();
         return "Your user ID from JWT: " + userId;
+    }
+
+    @PutMapping("/api/users/profile")
+    public ResponseEntity<?> updateProfile(@RequestBody UpdateUserRequest updateRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = (String) authentication.getPrincipal();
+
+        Optional<UserEntity> userOpt = userRepository.findById(UUID.fromString(userId));
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("User not found");
+        }
+        UserEntity user = userOpt.get();
+
+        // Update fields
+        if (updateRequest.getFirstName() != null) {
+            user.setFirstName(updateRequest.getFirstName());
+        }
+        if (updateRequest.getLastName() != null) {
+            user.setLastName(updateRequest.getLastName());
+        }
+        if (updateRequest.getEmail() != null) {
+            user.setEmail(updateRequest.getEmail());
+        }
+        // Add more fields as needed
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Profile updated successfully");
     }
 }
