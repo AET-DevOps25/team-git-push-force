@@ -1,0 +1,89 @@
+groups:
+  - name: ai-event-concepter-alerts
+    rules:
+      # High error rate alerts
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "High error rate detected"
+          description: "Service {{ $labels.service }} has error rate of {{ $value }} errors per second"
+
+      # Service down alerts
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "Service is down"
+          description: "Service {{ $labels.service }} has been down for more than 1 minute"
+
+      # High response time alerts
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 2m
+        labels:
+          severity: warning
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time for {{ $labels.service }} is {{ $value }}s"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (jvm_memory_used_bytes / jvm_memory_max_bytes) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "High memory usage"
+          description: "Service {{ $labels.service }} is using {{ $value | humanizePercentage }} of available memory"
+
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "High CPU usage"
+          description: "Service {{ $labels.service }} CPU usage is {{ $value }}%"
+
+      # Database connection issues
+      - alert: DatabaseConnectionIssues
+        expr: hikaricp_connections_active / hikaricp_connections_max > 0.9
+        for: 2m
+        labels:
+          severity: warning
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "Database connection pool nearly full"
+          description: "Service {{ $labels.service }} is using {{ $value | humanizePercentage }} of database connections"
+
+      # Application startup issues
+      - alert: ApplicationStartupFailure
+        expr: time() - process_start_time_seconds > 300 and up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "Application failed to start"
+          description: "Service {{ $labels.service }} has been trying to start for more than 5 minutes"
+
+      # Version tracking
+      - alert: VersionMismatch
+        expr: info{name="app_version"} != info{name="app_version", instance=~".*"}
+        for: 0m
+        labels:
+          severity: info
+        annotations:
+          summary: "Version mismatch detected"
+          description: "Different versions of the application are running" 

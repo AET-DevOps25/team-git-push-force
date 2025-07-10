@@ -1,0 +1,217 @@
+{
+    "__inputs": [
+        {
+            "name": "DS_PROMETHEUS",
+            "label": "Prometheus",
+            "description": "",
+            "type": "datasource",
+            "pluginId": "prometheus",
+            "pluginName": "Prometheus"
+        }
+    ],
+    "__requires": [
+        {
+            "type": "grafana",
+            "id": "grafana",
+            "name": "Grafana",
+            "version": "8.0.0"
+        },
+        {
+            "type": "datasource",
+            "id": "prometheus",
+            "name": "Prometheus",
+            "version": "1.0.0"
+        }
+    ],
+    "id": null,
+    "title": "AI Event Concepter - Application Overview",
+    "uid": "ai-event-concepter",
+    "tags": [
+        "ai-event-concepter",
+        "microservices",
+        "monitoring"
+    ],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+        {
+            "id": 1,
+            "title": "Service Health Overview",
+            "type": "stat",
+            "targets": [
+                {
+                    "expr": "up",
+                    "legendFormat": "{{service}}",
+                    "datasource": "${DS_PROMETHEUS}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": 0
+                            },
+                            {
+                                "color": "green",
+                                "value": 1
+                            }
+                        ]
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            }
+        },
+        {
+            "id": 2,
+            "title": "Request Rate",
+            "type": "graph",
+            "targets": [
+                {
+                    "expr": "rate(http_requests_total[5m])",
+                    "legendFormat": "{{service}} - {{method}} {{path}}",
+                    "datasource": "${DS_PROMETHEUS}"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 0
+            }
+        },
+        {
+            "id": 3,
+            "title": "Response Time (95th percentile)",
+            "type": "graph",
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+                    "legendFormat": "{{service}}",
+                    "datasource": "${DS_PROMETHEUS}"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 8
+            }
+        },
+        {
+            "id": 4,
+            "title": "Error Rate",
+            "type": "graph",
+            "targets": [
+                {
+                    "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
+                    "legendFormat": "{{service}} - 5xx errors",
+                    "datasource": "${DS_PROMETHEUS}"
+                },
+                {
+                    "expr": "rate(http_requests_total{status=~\"4..\"}[5m])",
+                    "legendFormat": "{{service}} - 4xx errors",
+                    "datasource": "${DS_PROMETHEUS}"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 8
+            }
+        },
+        {
+            "id": 5,
+            "title": "Memory Usage",
+            "type": "graph",
+            "targets": [
+                {
+                    "expr": "jvm_memory_used_bytes / jvm_memory_max_bytes * 100",
+                    "legendFormat": "{{service}} - {{area}}",
+                    "datasource": "${DS_PROMETHEUS}"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 16
+            }
+        },
+        {
+            "id": 6,
+            "title": "CPU Usage",
+            "type": "graph",
+            "targets": [
+                {
+                    "expr": "rate(process_cpu_seconds_total[5m]) * 100",
+                    "legendFormat": "{{service}}",
+                    "datasource": "${DS_PROMETHEUS}"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 16
+            }
+        },
+        {
+            "id": 7,
+            "title": "Database Connections",
+            "type": "graph",
+            "targets": [
+                {
+                    "expr": "hikaricp_connections_active",
+                    "legendFormat": "{{service}} - Active",
+                    "datasource": "${DS_PROMETHEUS}"
+                },
+                {
+                    "expr": "hikaricp_connections_idle",
+                    "legendFormat": "{{service}} - Idle",
+                    "datasource": "${DS_PROMETHEUS}"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 24
+            }
+        },
+        {
+            "id": 8,
+            "title": "Application Version",
+            "type": "table",
+            "targets": [
+                {
+                    "expr": "info{name=\"app_version\"}",
+                    "format": "table",
+                    "instant": true,
+                    "datasource": "${DS_PROMETHEUS}"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 24
+            }
+        }
+    ],
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "refresh": "30s"
+}
