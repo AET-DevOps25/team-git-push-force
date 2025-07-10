@@ -1,5 +1,6 @@
 package de.tum.aet.devops25.usersvc;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -35,6 +36,15 @@ public class UserEntity {
 
     @Embedded
     private UserPreferences preferences;
+
+    @Column(nullable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(nullable = false)
+    private OffsetDateTime updatedAt;
+
+    @Column
+    private OffsetDateTime lastLoginAt;
 
     // Getters and setters
     public UUID getId() {
@@ -91,5 +101,29 @@ public class UserEntity {
 
     public void setPreferences(UserPreferences preferences) {
         this.preferences = preferences;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(OffsetDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public OffsetDateTime getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public void setLastLoginAt(OffsetDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
     }
 }
