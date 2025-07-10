@@ -10,6 +10,7 @@ import java.util.UUID;
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,7 +23,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.aet.devops25.api.generated.controller.UserRegistrationApi;
+import de.tum.aet.devops25.api.generated.model.ErrorResponse;
 import de.tum.aet.devops25.api.generated.model.RegisterUserRequest;
+import de.tum.aet.devops25.api.generated.model.UpdateUserRequest;
 import de.tum.aet.devops25.api.generated.model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -45,7 +48,7 @@ public class UserController implements UserRegistrationApi {
     public ResponseEntity<User> registerUser(RegisterUserRequest registerUserRequest) {
         // Check if user already exists
         if (userRepository.findByEmail(registerUserRequest.getEmail()).isPresent()) {
-            return ResponseEntity.status(409).build(); // Conflict: user already exists
+            throw new UserAlreadyExistsException("User with this email already exists");
         }
 
         // Create and save new user
@@ -108,14 +111,26 @@ public class UserController implements UserRegistrationApi {
     }
 
     @PostMapping("/api/users/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         Optional<UserEntity> userOpt = userRepository.findByEmail(loginRequest.getEmail());
         if (userOpt.isEmpty()) {
-            return ResponseEntity.status(401).build();
+            ErrorResponse error = new ErrorResponse()
+                    .error("INVALID_CREDENTIALS")
+                    .message("Invalid email or password")
+                    .path("/api/users/login")
+                    .status(401)
+                    .timestamp(OffsetDateTime.now());
+            return ResponseEntity.status(401).body(error);
         }
         UserEntity user = userOpt.get();
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPasswordHash())) {
-            return ResponseEntity.status(401).build();
+            ErrorResponse error = new ErrorResponse()
+                    .error("INVALID_CREDENTIALS")
+                    .message("Invalid email or password")
+                    .path("/api/users/login")
+                    .status(401)
+                    .timestamp(OffsetDateTime.now());
+            return ResponseEntity.status(401).body(error);
         }
 
         // Update lastLoginAt
@@ -140,13 +155,19 @@ public class UserController implements UserRegistrationApi {
     }
 
     @GetMapping("/api/users/profile")
-    public ResponseEntity<User> getProfile() {
+    public ResponseEntity<?> getProfile() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String userId = (String) auth.getPrincipal();
 
         Optional<UserEntity> userOpt = userRepository.findById(UUID.fromString(userId));
         if (userOpt.isEmpty()) {
-            return ResponseEntity.status(404).build();
+            ErrorResponse error = new ErrorResponse()
+                    .error("USER_NOT_FOUND")
+                    .message("User not found")
+                    .path("/api/users/profile")
+                    .status(404)
+                    .timestamp(OffsetDateTime.now());
+            return ResponseEntity.status(404).body(error);
         }
 
         UserEntity userEntity = userOpt.get();
@@ -185,7 +206,13 @@ public class UserController implements UserRegistrationApi {
 
         Optional<UserEntity> userOpt = userRepository.findById(UUID.fromString(userId));
         if (userOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("User not found");
+            ErrorResponse error = new ErrorResponse()
+                    .error("USER_NOT_FOUND")
+                    .message("User not found")
+                    .path("/api/users/profile")
+                    .status(404)
+                    .timestamp(OffsetDateTime.now());
+            return ResponseEntity.status(404).body(error);
         }
         UserEntity user = userOpt.get();
 
@@ -196,8 +223,8 @@ public class UserController implements UserRegistrationApi {
         if (updateRequest.getLastName() != null) {
             user.setLastName(updateRequest.getLastName());
         }
-        if (updateRequest.getEmail() != null) {
-            user.setEmail(updateRequest.getEmail());
+        if (updateRequest.getIsActive() != null) {
+            user.setActive(updateRequest.getIsActive());
         }
         if (updateRequest.getPreferences() != null) {
             // Get existing preferences or create new ones
@@ -229,14 +256,30 @@ public class UserController implements UserRegistrationApi {
         user.setUpdatedAt(OffsetDateTime.now());
 
         // Add more fields as needed
-        userRepository.save(user);
+        UserEntity savedUser = userRepository.save(user);
 
-        return ResponseEntity.ok("Profile updated successfully");
+        // Map to API User model and return
+        User userResponse = new User()
+                .id(savedUser.getId())
+                .email(savedUser.getEmail())
+                .firstName(savedUser.getFirstName())
+                .lastName(savedUser.getLastName())
+                .isActive(savedUser.isActive())
+                .preferences(UserPreferencesMapper.toDto(savedUser.getPreferences()))
+                .createdAt(savedUser.getCreatedAt())
+                .updatedAt(savedUser.getUpdatedAt());
+
+        // Handle lastLoginAt properly
+        if (savedUser.getLastLoginAt() != null) {
+            userResponse.lastLoginAt(savedUser.getLastLoginAt());
+        }
+
+        return ResponseEntity.ok(userResponse);
     }
 
     @PostMapping("/api/users/logout")
     public ResponseEntity<?> logout() {
-        // For stateless JWT, just return 200 OK.
-        return ResponseEntity.ok("Logged out successfully");
+        // For stateless JWT, just return 200 OK with a simple message
+        return ResponseEntity.ok().body("Logged out successfully");
     }
 }
