@@ -56,19 +56,25 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gateway-code
-          path: ./gateway
+          path: |
+            ./gateway
+            ./gateway/gradle/wrapper/
 
       - name: Upload user-svc artifact
         uses: actions/upload-artifact@v4
         with:
           name: user-svc-code
-          path: ./user-svc
+          path: |
+            ./user-svc
+            ./user-svc/gradle/wrapper/
 
       - name: Upload concept-svc artifact
         uses: actions/upload-artifact@v4
         with:
           name: concept-svc-code
-          path: ./concept-svc
+          path: |
+            ./concept-svc
+            ./concept-svc/gradle/wrapper/
 
       - name: Upload genai-svc artifact
         uses: actions/upload-artifact@v4
