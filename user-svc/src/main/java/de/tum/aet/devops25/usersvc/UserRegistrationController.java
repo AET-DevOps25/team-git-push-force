@@ -4,8 +4,11 @@ import java.time.OffsetDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.aet.devops25.api.generated.controller.UserRegistrationApi;
@@ -54,5 +57,12 @@ public class UserRegistrationController implements UserRegistrationApi {
                 .updatedAt(OffsetDateTime.now());
 
         return ResponseEntity.status(201).body(user);
+    }
+
+    @GetMapping("/api/users/profile")
+    public String getProfile() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String userId = (String) auth.getPrincipal();
+        return "Your user ID from JWT: " + userId;
     }
 }
