@@ -119,8 +119,14 @@ public class UserController implements UserRegistrationApi {
         }
 
         // Update lastLoginAt
-        user.setLastLoginAt(OffsetDateTime.now());
-        userRepository.save(user);
+        OffsetDateTime loginTime = OffsetDateTime.now();
+        System.out.println("=== LOGIN DEBUG ===");
+        System.out.println("Before update - lastLoginAt: " + user.getLastLoginAt());
+        user.setLastLoginAt(loginTime);
+        System.out.println("Setting lastLoginAt in database to: " + loginTime);
+        UserEntity savedUser = userRepository.save(user);
+        System.out.println("After save - lastLoginAt: " + savedUser.getLastLoginAt());
+        System.out.println("=== END LOGIN DEBUG ===");
 
         // Generate JWT
         SecretKey key = Keys.hmacShaKeyFor(JWT_SECRET.getBytes());
@@ -145,6 +151,10 @@ public class UserController implements UserRegistrationApi {
 
         UserEntity userEntity = userOpt.get();
 
+        System.out.println("=== PROFILE DEBUG ===");
+        System.out.println("Retrieved from DB - lastLoginAt: " + userEntity.getLastLoginAt());
+        System.out.println("=== END PROFILE DEBUG ===");
+
         // Map to API User model
         User user = new User()
                 .id(userEntity.getId())
@@ -155,6 +165,15 @@ public class UserController implements UserRegistrationApi {
                 .preferences(UserPreferencesMapper.toDto(userEntity.getPreferences()))
                 .createdAt(userEntity.getCreatedAt())
                 .updatedAt(userEntity.getUpdatedAt());
+
+        // Handle lastLoginAt properly using the correct method
+        if (userEntity.getLastLoginAt() != null) {
+            // Use the method that takes OffsetDateTime directly
+            user.lastLoginAt(userEntity.getLastLoginAt());
+            System.out.println("Setting lastLoginAt to: " + userEntity.getLastLoginAt());
+        } else {
+            System.out.println("lastLoginAt is null in entity");
+        }
 
         return ResponseEntity.ok(user);
     }
