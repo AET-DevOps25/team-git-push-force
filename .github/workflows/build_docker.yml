@@ -51,6 +51,16 @@ jobs:
         with:
           name: client-code
           path: ./client
+          if-no-files-found: error
+
+      - name: Set executable permissions for gradlew files
+        run: |
+          chmod +x gateway/gradlew
+          chmod +x user-svc/gradlew
+          chmod +x concept-svc/gradlew
+          ls -la gateway/gradlew
+          ls -la user-svc/gradlew
+          ls -la concept-svc/gradlew
 
       - name: Upload gateway artifact
         uses: actions/upload-artifact@v4
@@ -59,6 +69,7 @@ jobs:
           path: |
             ./gateway
             ./gateway/gradle/wrapper/
+          if-no-files-found: error
 
       - name: Upload user-svc artifact
         uses: actions/upload-artifact@v4
@@ -67,6 +78,7 @@ jobs:
           path: |
             ./user-svc
             ./user-svc/gradle/wrapper/
+          if-no-files-found: error
 
       - name: Upload concept-svc artifact
         uses: actions/upload-artifact@v4
@@ -75,12 +87,14 @@ jobs:
           path: |
             ./concept-svc
             ./concept-svc/gradle/wrapper/
+          if-no-files-found: error
 
       - name: Upload genai-svc artifact
         uses: actions/upload-artifact@v4
         with:
           name: genai-svc-code
           path: ./genai-svc
+          if-no-files-found: error
 
   test-java:
     name: Run Java Tests
@@ -105,10 +119,18 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Set executable permissions for gradlew
-        run: chmod +x ${{ matrix.service }}/gradlew
+        run: |
+          echo "Setting executable permissions for ${{ matrix.service }}/gradlew"
+          ls -la ${{ matrix.service }}
+          chmod +x ${{ matrix.service }}/gradlew
+          ls -la ${{ matrix.service }}/gradlew
 
       - name: Build and test with Gradle
-        run: cd ${{ matrix.service }} && ./gradlew build test
+        run: |
+          cd ${{ matrix.service }}
+          pwd
+          ls -la
+          ./gradlew build test
 
   test-python:
     name: Run Python Tests
