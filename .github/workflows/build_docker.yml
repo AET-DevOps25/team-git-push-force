@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
+      - dev
 
 jobs:
   generate_api_code:
@@ -43,11 +45,36 @@ jobs:
           chmod +x api/scripts/gen-all.sh
           ./api/scripts/gen-all.sh
 
-      - name: Upload entire repository as artifact
+      # Upload separate artifacts for each service
+      - name: Upload client artifact
         uses: actions/upload-artifact@v4
         with:
-          name: full-repository
-          path: .
+          name: client-code
+          path: ./client
+
+      - name: Upload gateway artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gateway-code
+          path: ./gateway
+
+      - name: Upload user-svc artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: user-svc-code
+          path: ./user-svc
+
+      - name: Upload concept-svc artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: concept-svc-code
+          path: ./concept-svc
+
+      - name: Upload genai-svc artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: genai-svc-code
+          path: ./genai-svc
 
   test-java:
     name: Run Java Tests
@@ -57,11 +84,11 @@ jobs:
       matrix:
         service: [gateway, user-svc, concept-svc]
     steps:
-      - name: Download full repository artifact
+      - name: Download service artifact
         uses: actions/download-artifact@v4
         with:
-          name: full-repository
-          path: .
+          name: ${{ matrix.service }}-code
+          path: ./${{ matrix.service }}
 
       - uses: actions/setup-java@v4
         with:
@@ -79,11 +106,11 @@ jobs:
     needs: generate_api_code
     runs-on: ubuntu-latest
     steps:
-      - name: Download full repository artifact
+      - name: Download genai-svc artifact
         uses: actions/download-artifact@v4
         with:
-          name: full-repository
-          path: .
+          name: genai-svc-code
+          path: ./genai-svc
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -108,13 +135,12 @@ jobs:
     strategy:
       matrix:
         service: [client, gateway, user-svc, concept-svc, genai-svc]
-      max-parallel: 1
     steps:
-      - name: Download full repository artifact
+      - name: Download service artifact
         uses: actions/download-artifact@v4
         with:
-          name: full-repository
-          path: .
+          name: ${{ matrix.service }}-code
+          path: ./${{ matrix.service }}
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
