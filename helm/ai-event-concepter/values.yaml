@@ -49,6 +49,18 @@ usersvc:
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: docker
+    - name: SPRING_DATASOURCE_URL
+      value: jdbc:postgresql://user-svc-db:5432/eventdb
+    - name: SPRING_DATASOURCE_USERNAME
+      value: postgres
+    - name: SPRING_DATASOURCE_PASSWORD
+      value: postgres
+    - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+      value: update
+    - name: SPRING_JPA_SHOW_SQL
+      value: "true"
+    - name: SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL
+      value: "true"
 
 conceptsvc:
   image:
@@ -89,6 +101,30 @@ genaisvc:
   env:
     - name: FLASK_ENV
       value: production
+
+userdb:
+  image:
+    repository: postgres
+    tag: "15"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5432
+    targetPort: 5432
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+  env:
+    - name: POSTGRES_PASSWORD
+      value: postgres
+    - name: POSTGRES_USER
+      value: postgres
+    - name: POSTGRES_DB
+      value: eventdb
 
 conceptdb:
   image:
