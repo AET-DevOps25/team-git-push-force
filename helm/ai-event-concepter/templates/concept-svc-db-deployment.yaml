@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-event-concepter-concept-svc-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-event-concepter-concept-svc-db-selector
+  template:
+    metadata:
+      labels:
+        app: ai-event-concepter-concept-svc-db-selector
+    spec:
+      containers:
+        - name: concept-svc-db
+          image: "{{ .Values.conceptdb.image.repository }}:{{ .Values.conceptdb.image.tag }}"
+          imagePullPolicy: {{ .Values.conceptdb.image.pullPolicy }}
+          resources:
+            limits:
+              cpu: {{ .Values.conceptdb.resources.limits.cpu }}
+              memory: {{ .Values.conceptdb.resources.limits.memory }}
+            requests:
+              cpu: {{ .Values.conceptdb.resources.requests.cpu }}
+              memory: {{ .Values.conceptdb.resources.requests.memory }}
+          ports:
+            - containerPort: {{ .Values.conceptdb.service.targetPort }}
+          env:
+            {{- range .Values.conceptdb.env }}
+            - name: {{ .name }}
+              value: "{{ .value }}"
+            {{- end }} 

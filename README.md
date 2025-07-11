@@ -41,11 +41,11 @@ The system follows a modular microservice architecture with clearly separated co
 | Layer         | Technology              | Purpose                                           |
 |---------------|--------------------------|---------------------------------------------------|
 | API Gateway   | Spring Boot 3            | JWT authentication, routing, OpenAPI docs         |
-| User Service  | Spring Boot 3            | User management, roles, preferences               |
-| Concept Service| Spring Boot 3           | CRUD for concepts, PDF rendering                  |
+| User Service  | Spring Boot 3            | User management, authentication, JWT tokens       |
+| Concept Service| Spring Boot 3           | Event concept CRUD, PDF generation, AI integration|
 | GenAI Service | Python 3.12 + LangChain  | Document ingestion, RAG pipeline, content creation|
 | Web Client    | Angular 19               | Chat UI, adaptive flow, PDF viewer                |
-| Relational DB | PostgreSQL               | Stores users, projects, concept metadata          |
+| Relational DB | PostgreSQL               | Stores users, concepts, agenda items, speakers    |
 | Vector DB     | Weaviate                 | Embeddings for trends & document chunks           |
 | Object Store  | MinIO                    | Uploaded files and generated PDFs                 |
 | Observability | Prometheus + Grafana     | Metrics and dashboards                            |
@@ -84,11 +84,11 @@ This diagram provides a high-level overview of the system’s components and the
 The project is split into several main directories:
 
 - `/api`: OpenAPI specifications (single source of truth)
-- `/client`: Angular 19 frontend
-- `/gateway`: API Gateway (Spring Boot)
-- `/user-svc`: User Service (Spring Boot)
-- `/concept-svc`: Concept Service (Spring Boot)
-- `/genai-svc`: GenAI Service (Python/Flask/LangChain)
+- `/client`: Angular 19 frontend  
+- `/gateway`: API Gateway (Spring Boot) - Routing, JWT validation, OpenAPI docs
+- `/user-svc`: User Service (Spring Boot) - Authentication, user management
+- `/concept-svc`: Concept Service (Spring Boot) - Event concept CRUD, PDF export
+- `/genai-svc`: GenAI Service (Python/Flask/LangChain) - Document processing, RAG pipeline
 
 ## 🔄 API-First Development
 
