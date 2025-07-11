@@ -1,0 +1,168 @@
+<!-- Event Foundation -->
+<mat-expansion-panel [expanded]="expanded" class="foundation-panel">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <mat-icon class="section-icon">foundation</mat-icon>
+      <span>Event Foundation</span>
+      <mat-icon class="completion-icon" 
+                [class.complete]="isComplete()"
+                [class.incomplete]="!isComplete()"
+                [class.has-suggestions]="hasSuggestions()"
+                [title]="hasSuggestions() ? 'Has pending AI suggestions' : (isComplete() ? 'Section complete' : 'Section incomplete')">
+        {{ hasSuggestions() ? 'auto_awesome' : (isComplete() ? 'check_circle' : 'radio_button_unchecked') }}
+      </mat-icon>
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+
+  <div class="panel-content">
+    <div class="detail-grid">
+      <div class="detail-item" *ngIf="concept.description">
+        <div class="detail-label">
+          <mat-icon>description</mat-icon>
+          <strong>Description</strong>
+        </div>
+        <p class="detail-value">{{ concept.description }}</p>
+      </div>
+
+      <div class="detail-item" *ngIf="concept.eventDetails?.objectives?.length">
+        <div class="detail-label">
+          <mat-icon>flag</mat-icon>
+          <strong>Objectives</strong>
+        </div>
+        <ul class="objectives-list">
+          <li *ngFor="let objective of concept.eventDetails?.objectives">{{ objective }}</li>
+        </ul>
+      </div>
+
+      <div class="detail-item" *ngIf="concept.eventDetails?.targetAudience">
+        <div class="detail-label">
+          <mat-icon>group</mat-icon>
+          <strong>Target Audience</strong>
+        </div>
+        <p class="detail-value">{{ concept.eventDetails?.targetAudience }}</p>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-item" *ngIf="concept.eventDetails?.format || getFieldSuggestion('eventDetails.format')">
+          <div class="detail-label">
+            <mat-icon>category</mat-icon>
+            <strong>Format</strong>
+          </div>
+          <p class="detail-value" *ngIf="concept.eventDetails?.format">{{ concept.eventDetails?.format }}</p>
+          
+          <!-- Format Suggestion -->
+          <div class="suggestion-item" *ngIf="getFieldSuggestion('eventDetails.format') as suggestion">
+            <div class="suggestion-content">
+              <div class="suggestion-change">
+                <span class="current">{{ suggestion.currentValue }}</span>
+                <mat-icon class="arrow">arrow_forward</mat-icon>
+                <span class="suggested">{{ suggestion.suggestedValue }}</span>
+              </div>
+              <p class="suggestion-reason">{{ suggestion.reasoning }}</p>
+              <div class="suggestion-actions">
+                <button mat-icon-button color="primary" (click)="acceptFieldUpdate(suggestion)">
+                  <mat-icon>check</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="rejectFieldUpdate(suggestion)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-item" *ngIf="concept.eventDetails?.capacity || getFieldSuggestion('eventDetails.capacity')">
+          <div class="detail-label">
+            <mat-icon>people</mat-icon>
+            <strong>Capacity</strong>
+          </div>
+          <p class="detail-value" *ngIf="concept.eventDetails?.capacity">{{ concept.eventDetails?.capacity }} attendees</p>
+          
+          <!-- Capacity Suggestion -->
+          <div class="suggestion-item" *ngIf="getFieldSuggestion('eventDetails.capacity') as suggestion">
+            <div class="suggestion-content">
+              <div class="suggestion-change">
+                <span class="current">{{ suggestion.currentValue }}</span>
+                <mat-icon class="arrow">arrow_forward</mat-icon>
+                <span class="suggested">{{ suggestion.suggestedValue }}</span>
+              </div>
+              <p class="suggestion-reason">{{ suggestion.reasoning }}</p>
+              <div class="suggestion-actions">
+                <button mat-icon-button color="primary" (click)="acceptFieldUpdate(suggestion)">
+                  <mat-icon>check</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="rejectFieldUpdate(suggestion)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-row" *ngIf="concept.eventDetails?.startDate || concept.eventDetails?.endDate">
+        <div class="detail-item" *ngIf="concept.eventDetails?.startDate">
+          <div class="detail-label">
+            <mat-icon>schedule</mat-icon>
+            <strong>Start Date</strong>
+          </div>
+          <p class="detail-value">{{ concept.eventDetails?.startDate | date:'MMM d, y' }}</p>
+        </div>
+
+        <div class="detail-item" *ngIf="concept.eventDetails?.endDate">
+          <div class="detail-label">
+            <mat-icon>event</mat-icon>
+            <strong>End Date</strong>
+          </div>
+          <p class="detail-value">{{ concept.eventDetails?.endDate | date:'MMM d, y' }}</p>
+        </div>
+      </div>
+
+      <div class="detail-item" *ngIf="concept.eventDetails?.duration || getFieldSuggestion('eventDetails.duration')">
+        <div class="detail-label">
+          <mat-icon>schedule</mat-icon>
+          <strong>Duration</strong>
+        </div>
+        <p class="detail-value" *ngIf="concept.eventDetails?.duration">{{ concept.eventDetails?.duration }}</p>
+        
+        <!-- Duration Suggestion -->
+        <div class="suggestion-item" *ngIf="getFieldSuggestion('eventDetails.duration') as suggestion">
+          <div class="suggestion-content">
+            <div class="suggestion-change">
+              <span class="current">{{ suggestion.currentValue }}</span>
+              <mat-icon class="arrow">arrow_forward</mat-icon>
+              <span class="suggested">{{ suggestion.suggestedValue }}</span>
+            </div>
+            <p class="suggestion-reason">{{ suggestion.reasoning }}</p>
+            <div class="suggestion-actions">
+              <button mat-icon-button color="primary" (click)="acceptFieldUpdate(suggestion)">
+                <mat-icon>check</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="rejectFieldUpdate(suggestion)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-item" *ngIf="concept.eventDetails?.location">
+        <div class="detail-label">
+          <mat-icon>place</mat-icon>
+          <strong>Location</strong>
+        </div>
+        <p class="detail-value">{{ concept.eventDetails?.location }}</p>
+      </div>
+
+      <div class="detail-item" *ngIf="concept.tags.length > 0">
+        <div class="detail-label">
+          <mat-icon>local_offer</mat-icon>
+          <strong>Tags</strong>
+        </div>
+        <div class="tags-container">
+          <span *ngFor="let tag of concept.tags" class="tag">{{ tag }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</mat-expansion-panel> 

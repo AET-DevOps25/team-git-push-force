@@ -1,0 +1,79 @@
+<!-- Pricing Strategy -->
+<mat-expansion-panel [expanded]="expanded" class="pricing-panel">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <mat-icon class="section-icon">attach_money</mat-icon>
+      <span>Pricing Strategy</span>
+      <mat-icon class="suggestion-indicator" 
+                *ngIf="hasSuggestions()"
+                title="Has pending AI suggestions">
+        auto_awesome
+      </mat-icon>
+      <mat-icon class="completion-icon" 
+                [class.complete]="isComplete()"
+                [class.incomplete]="!isComplete()">
+        {{ isComplete() ? 'check_circle' : 'radio_button_unchecked' }}
+      </mat-icon>
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+
+  <div class="panel-content">
+    <div class="pricing-grid" *ngIf="concept.pricing; else noPricing">
+      <div class="pricing-card" *ngIf="concept.pricing.earlyBird">
+        <div class="pricing-header">
+          <mat-icon>schedule</mat-icon>
+          <h4>Early Bird</h4>
+        </div>
+        <div class="pricing-amount">
+          {{ concept.pricing.currency }} {{ concept.pricing.earlyBird }}
+        </div>
+      </div>
+
+      <div class="pricing-card" *ngIf="concept.pricing.regular">
+        <div class="pricing-header">
+          <mat-icon>confirmation_number</mat-icon>
+          <h4>Regular</h4>
+        </div>
+        <div class="pricing-amount">
+          {{ concept.pricing.currency }} {{ concept.pricing.regular }}
+        </div>
+      </div>
+
+      <div class="pricing-card" *ngIf="concept.pricing.vip">
+        <div class="pricing-header">
+          <mat-icon>star</mat-icon>
+          <h4>VIP</h4>
+        </div>
+        <div class="pricing-amount">
+          {{ concept.pricing.currency }} {{ concept.pricing.vip }}
+        </div>
+      </div>
+
+      <div class="pricing-card" *ngIf="concept.pricing.student">
+        <div class="pricing-header">
+          <mat-icon>school</mat-icon>
+          <h4>Student</h4>
+        </div>
+        <div class="pricing-amount">
+          {{ concept.pricing.currency }} {{ concept.pricing.student }}
+        </div>
+      </div>
+
+      <div class="pricing-card" *ngIf="concept.pricing.group">
+        <div class="pricing-header">
+          <mat-icon>group</mat-icon>
+          <h4>Group (5+)</h4>
+        </div>
+        <div class="pricing-amount">
+          {{ concept.pricing.currency }} {{ concept.pricing.group }}
+        </div>
+      </div>
+    </div>
+    <ng-template #noPricing>
+      <div class="empty-state">
+        <mat-icon>attach_money</mat-icon>
+        <p>No pricing strategy yet. The AI will suggest ticket pricing based on your event details.</p>
+      </div>
+    </ng-template>
+  </div>
+</mat-expansion-panel> 

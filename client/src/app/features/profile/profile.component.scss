@@ -1,0 +1,86 @@
+@import '../../styles/abstracts/variables';
+@import '../../styles/abstracts/effects';
+
+.profile-container {
+  padding: $spacing-md;
+  max-width: 800px;
+  margin: 0 auto;
+  
+  @media (min-width: $screen-lg) {
+    padding: $spacing-xl;
+  }
+}
+
+.header {
+  margin-bottom: $spacing-lg;
+  
+  h1 {
+    display: flex;
+    align-items: center;
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+    
+    mat-icon {
+      margin-right: $spacing-sm;
+      font-size: 2rem;
+      width: 2rem;
+      height: 2rem;
+      color: var(--primary-color);
+    }
+  }
+}
+
+.profile-card {
+  @extend .transition-normal;
+  border-radius: $radius-md;
+  
+  .tab-content {
+    padding: $spacing-lg;
+    
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-md;
+      
+      .full-width {
+        width: 100%;
+      }
+      
+      .form-row {
+        display: flex;
+        gap: $spacing-md;
+        
+        mat-form-field {
+          flex: 1;
+        }
+        
+        @media (max-width: $screen-sm) {
+          flex-direction: column;
+          gap: $spacing-sm;
+        }
+      }
+      
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: $spacing-lg;
+        
+        button {
+          @extend .transition-fast;
+          height: 48px;
+          font-size: 1rem;
+          font-weight: 500;
+          min-width: 140px;
+        }
+        
+        @media (max-width: $screen-sm) {
+          button {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+} 

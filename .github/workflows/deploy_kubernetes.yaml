@@ -5,6 +5,9 @@ on:
     workflows: [Build Docker Images]
     types:
       - completed
+    branches:
+      - main
+    conclusion: success
 
 jobs:
   deployment:

@@ -1,0 +1,82 @@
+@use '../../../../styles/abstracts/variables' as vars;
+
+.dialog-content {
+  text-align: center;
+  padding: vars.$spacing-lg;
+  min-width: 320px;
+  max-width: 480px;
+}
+
+.dialog-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: vars.$spacing-lg;
+  
+  &.warning {
+    color: var(--mat-warn-500);
+  }
+  
+  &.error {
+    color: var(--mat-error-500);
+  }
+  
+  &.info {
+    color: var(--mat-primary-500);
+  }
+}
+
+.dialog-title {
+  margin: 0 0 vars.$spacing-md 0;
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.dialog-message {
+  margin: 0 0 vars.$spacing-xl 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  gap: vars.$spacing-md;
+  justify-content: center;
+  
+  button {
+    min-width: 100px;
+    transition: var(--transition-fast);
+    
+    &:hover {
+      transform: translateY(var(--translate-hover));
+    }
+  }
+  
+  @media (max-width: vars.$screen-sm) {
+    flex-direction: column;
+    gap: vars.$spacing-sm;
+    
+    button {
+      width: 100%;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: vars.$screen-sm) {
+  .dialog-content {
+    padding: vars.$spacing-md;
+    min-width: 280px;
+  }
+  
+  .dialog-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    margin-bottom: vars.$spacing-md;
+  }
+  
+  .dialog-title {
+    font-size: 1.125rem;
+  }
+} 

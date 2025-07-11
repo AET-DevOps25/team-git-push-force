@@ -1,0 +1,86 @@
+<!-- Speaker Portfolio -->
+<mat-expansion-panel [expanded]="expanded" class="speakers-panel">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <mat-icon class="section-icon">mic</mat-icon>
+      <span>Speaker Portfolio</span>
+      <mat-icon class="completion-icon" 
+                [class.complete]="isComplete()"
+                [class.incomplete]="!isComplete()"
+                [class.has-suggestions]="hasSuggestions()"
+                [title]="hasSuggestions() ? 'Has pending AI suggestions' : (isComplete() ? 'Section complete' : 'Section incomplete')">
+        {{ hasSuggestions() ? 'auto_awesome' : (isComplete() ? 'check_circle' : 'radio_button_unchecked') }}
+      </mat-icon>
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+
+  <div class="panel-content">
+    <!-- Existing Speakers -->
+    <div class="speakers-grid" *ngIf="concept.speakers?.length">
+      <div class="speaker-card" *ngFor="let speaker of concept.speakers">
+        <div class="speaker-header">
+          <div class="speaker-avatar">
+            <mat-icon>person</mat-icon>
+          </div>
+          <div class="speaker-info">
+            <h4 class="speaker-name">{{ speaker.name }}</h4>
+            <p class="speaker-expertise">{{ speaker.expertise }}</p>
+          </div>
+          <div class="speaker-status">
+            <mat-icon [class.confirmed]="speaker.confirmed" 
+                      [class.pending]="!speaker.confirmed">
+              {{ speaker.confirmed ? 'check_circle' : 'schedule' }}
+            </mat-icon>
+          </div>
+        </div>
+        <div class="speaker-details" *ngIf="speaker.suggestedTopic || speaker.bio">
+          <p class="suggested-topic" *ngIf="speaker.suggestedTopic">
+            <strong>Suggested Topic:</strong> {{ speaker.suggestedTopic }}
+          </p>
+          <p class="speaker-bio" *ngIf="speaker.bio">{{ speaker.bio }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggested Speakers -->
+    <div *ngIf="getSuggestedSpeakers().length > 0" class="suggested-speakers">
+      <h4 class="suggestion-header">
+        <mat-icon>lightbulb</mat-icon>
+        AI Suggested Speakers
+      </h4>
+      <div class="speakers-grid">
+        <div class="speaker-card suggested" *ngFor="let speaker of getSuggestedSpeakers()">
+          <div class="speaker-header">
+            <div class="speaker-avatar suggested">
+              <mat-icon>person_add</mat-icon>
+            </div>
+            <div class="speaker-info">
+              <h4 class="speaker-name">{{ speaker.name }}</h4>
+              <p class="speaker-expertise">{{ speaker.expertise }}</p>
+            </div>
+            <div class="suggestion-actions">
+              <button mat-icon-button color="primary" (click)="acceptSpeaker(speaker)">
+                <mat-icon>add</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="rejectSpeaker(speaker)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+          <div class="speaker-details" *ngIf="speaker.suggestedTopic || speaker.bio">
+            <p class="suggested-topic" *ngIf="speaker.suggestedTopic">
+              <strong>Suggested Topic:</strong> {{ speaker.suggestedTopic }}
+            </p>
+            <p class="speaker-bio" *ngIf="speaker.bio">{{ speaker.bio }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!concept.speakers?.length && !getSuggestedSpeakers().length" class="empty-state">
+      <mat-icon>mic</mat-icon>
+      <p>No speakers suggested yet. The AI will recommend speakers based on your event theme.</p>
+    </div>
+  </div>
+</mat-expansion-panel> 
