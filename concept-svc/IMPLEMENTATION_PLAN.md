@@ -59,10 +59,10 @@ Implementation of the Concept Service following patterns established by the User
 ## Phase 3: Repository Layer
 
 ### 3.1 Repository Interface
-- [ ] Create `ConceptRepository.java` extending `JpaRepository<ConceptEntity, UUID>`
-- [ ] Add method `findByUserIdOrderByUpdatedAtDesc(UUID userId)`
-- [ ] Add method `findByUserIdAndStatus(UUID userId, String status)`
-- [ ] Add method for paginated queries if needed
+- [x] Create `ConceptRepository.java` extending `JpaRepository<ConceptEntity, UUID>`
+- [x] Add method `findByUserIdOrderByUpdatedAtDesc(UUID userId)`
+- [x] Add method `findByUserIdAndStatus(UUID userId, String status)`
+- [x] Add method for paginated queries if needed
 
 ## Phase 4: Mapper Classes
 
