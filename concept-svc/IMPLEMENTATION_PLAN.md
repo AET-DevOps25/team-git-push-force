@@ -79,11 +79,11 @@ Implementation of the Concept Service following patterns established by the User
 ## Phase 5: Security Configuration
 
 ### 5.1 Security Setup
-- [ ] Copy `SecurityConfig.java` from user service and adapt
-- [ ] Copy `JwtAuthenticationFilter.java` from user service and adapt
-- [ ] Copy `CustomAuthenticationEntryPoint.java` from user service
-- [ ] Use same JWT secret as user service for token compatibility
-- [ ] Configure security to protect all `/api/concepts/**` endpoints
+- [x] Copy `SecurityConfig.java` from user service and adapt
+- [x] Copy `JwtAuthenticationFilter.java` from user service and adapt
+- [x] Copy `CustomAuthenticationEntryPoint.java` from user service
+- [x] Use same JWT secret as user service for token compatibility
+- [x] Configure security to protect all `/api/concepts/**` endpoints
 
 ## Phase 6: Controller Implementation
 
