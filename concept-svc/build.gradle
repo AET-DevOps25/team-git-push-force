@@ -34,6 +34,9 @@ dependencies {
 	// PDF generation
 	implementation 'com.itextpdf:itext7-core:7.2.5'
 	
+	// Validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	
 	// OpenAPI generated code dependencies
 	implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
 	implementation 'io.swagger.core.v3:swagger-annotations:2.2.20'
