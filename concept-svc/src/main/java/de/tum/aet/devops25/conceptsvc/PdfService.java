@@ -37,7 +37,7 @@ public class PdfService {
         if (concept.getSpeakers() != null && !concept.getSpeakers().isEmpty()) {
             content.append("\n=== SPEAKERS ===\n");
             concept.getSpeakers().forEach(speaker -> {
-                content.append("- ").append(speaker.getName()).append(" (").append(speaker.getExpertise()).append(")\n");
+                content.append("- ").append(speaker.getName()).append(" (").append(speaker.getExpertise() != null ? speaker.getExpertise() : "N/A").append(")\n");
             });
         }
         
