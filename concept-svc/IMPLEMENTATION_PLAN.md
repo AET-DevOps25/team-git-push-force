@@ -67,14 +67,14 @@ Implementation of the Concept Service following patterns established by the User
 ## Phase 4: Mapper Classes
 
 ### 4.1 Core Mappers
-- [ ] Create `ConceptMapper.java` with:
-  - [ ] `toEntity(Concept dto)` method
-  - [ ] `toDto(ConceptEntity entity)` method
-  - [ ] Handle null values and collections properly
-- [ ] Create `EventDetailsMapper.java` for embedded entity conversion
-- [ ] Create `AgendaItemMapper.java` for agenda item conversion
-- [ ] Create `SpeakerMapper.java` for speaker conversion
-- [ ] Create `PricingMapper.java` for pricing conversion
+- [x] Create `ConceptMapper.java` with:
+  - [x] `toEntity(Concept dto)` method
+  - [x] `toDto(ConceptEntity entity)` method
+  - [x] Handle null values and collections properly
+- [x] Create `EventDetailsMapper.java` for embedded entity conversion
+- [x] Create `AgendaItemMapper.java` for agenda item conversion
+- [x] Create `SpeakerMapper.java` for speaker conversion
+- [x] Create `PricingMapper.java` for pricing conversion
 
 ## Phase 5: Security Configuration
 
