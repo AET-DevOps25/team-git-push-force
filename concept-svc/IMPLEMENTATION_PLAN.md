@@ -29,32 +29,32 @@ Implementation of the Concept Service following patterns established by the User
 ## Phase 2: JPA Entity Implementation
 
 ### 2.1 Main Concept Entity
-- [ ] Create `ConceptEntity.java` with:
-  - [ ] UUID id (primary key)
-  - [ ] Basic fields (title, description, status)
-  - [ ] User relationship (userId as UUID, no JPA relationship)
-  - [ ] Timestamps (createdAt, updatedAt)
-  - [ ] Version field for optimistic locking
-  - [ ] Notes and tags fields
-  - [ ] Embedded EventDetails
-  - [ ] OneToMany relationships for agenda and speakers
-  - [ ] Embedded Pricing
+- [x] Create `ConceptEntity.java` with:
+  - [x] UUID id (primary key)
+  - [x] Basic fields (title, description, status)
+  - [x] User relationship (userId as UUID, no JPA relationship)
+  - [x] Timestamps (createdAt, updatedAt)
+  - [x] Version field for optimistic locking
+  - [x] Notes and tags fields
+  - [x] Embedded EventDetails
+  - [x] OneToMany relationships for agenda and speakers
+  - [x] Embedded Pricing
 
 ### 2.2 Related Entities
-- [ ] Create `EventDetailsEntity.java` as `@Embeddable`
-  - [ ] Theme, format, capacity, duration
-  - [ ] Start/end dates, target audience
-  - [ ] Objectives, location
-- [ ] Create `AgendaItemEntity.java` with:
-  - [ ] UUID id, time, title, description
-  - [ ] Type (enum), speaker, duration
-  - [ ] ManyToOne relationship to ConceptEntity
-- [ ] Create `SpeakerEntity.java` with:
-  - [ ] UUID id, name, expertise, bio
-  - [ ] Suggested topic, confirmed status
-  - [ ] ManyToOne relationship to ConceptEntity
-- [ ] Create `PricingEntity.java` as `@Embeddable`
-  - [ ] Currency, earlyBird, regular, vip, student, group prices
+- [x] Create `EventDetailsEntity.java` as `@Embeddable`
+  - [x] Theme, format, capacity, duration
+  - [x] Start/end dates, target audience
+  - [x] Objectives, location
+- [x] Create `AgendaItemEntity.java` with:
+  - [x] UUID id, time, title, description
+  - [x] Type (enum), speaker, duration
+  - [x] ManyToOne relationship to ConceptEntity
+- [x] Create `SpeakerEntity.java` with:
+  - [x] UUID id, name, expertise, bio
+  - [x] Suggested topic, confirmed status
+  - [x] ManyToOne relationship to ConceptEntity
+- [x] Create `PricingEntity.java` as `@Embeddable`
+  - [x] Currency, earlyBird, regular, vip, student, group prices
 
 ## Phase 3: Repository Layer
 
