@@ -13,7 +13,7 @@ def chat_with_ai_assistant(body):
         chat_request = ChatRequest.from_dict(connexion.request.get_json())
     else:
         chat_request = body if isinstance(body, ChatRequest) else ChatRequest.from_dict(body)
-    
+
     return process_chat_request(chat_request)
 
 def initialize_chat_for_concept(body):
@@ -22,13 +22,25 @@ def initialize_chat_for_concept(body):
         init_request = InitializeChatForConceptRequest.from_dict(connexion.request.get_json())
     else:
         init_request = body if isinstance(body, InitializeChatForConceptRequest) else InitializeChatForConceptRequest.from_dict(body)
-    
+
     welcome_message = generate_welcome_message(init_request)
-    
+
+    # Generate a unique conversation ID
+    import uuid
+    conversation_id = str(uuid.uuid4())
+
+    # Generate suggestions based on the concept
+    suggestions = [
+        "Generate an initial agenda",
+        "Suggest keynote speakers",
+        "Upload relevant documents",
+        "Define target audience"
+    ]
+
     # The OpenAPI spec expects 'message', 'suggestions', and 'conversationId'
     response = InitializeChatForConcept200Response(
         message=welcome_message,
-        suggestions=[],  # Placeholder for now
-        conversation_id="00000000-0000-0000-0000-000000000000"  # Placeholder for now
+        suggestions=suggestions,
+        conversation_id=conversation_id
     )
     return response.to_dict()
