@@ -1,0 +1,67 @@
+// ==========================================================================
+// MATERIAL THEME - Using Official Angular 19 Generated M3 Theme
+// ==========================================================================
+
+@use '@angular/material' as mat;
+@use '../themes_theme-colors' as theme-colors;
+
+// Use the official Angular-generated M3 theme
+$light-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: theme-colors.$primary-palette,
+    tertiary: theme-colors.$tertiary-palette,
+  ),
+  typography: (
+    brand-family: 'Roboto',
+    plain-family: 'Roboto',
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+$dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: theme-colors.$primary-palette,
+    tertiary: theme-colors.$tertiary-palette,
+  ),
+  typography: (
+    brand-family: 'Roboto',
+    plain-family: 'Roboto',
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+// Apply the official M3 theme globally
+html {
+  @include mat.all-component-themes($light-theme);
+}
+
+// Dark theme support (optional for later)
+.dark-theme {
+  @include mat.all-component-colors($dark-theme);
+}
+
+// High contrast support (for accessibility)
+@media (prefers-contrast: high) {
+  html {
+    @include theme-colors.high-contrast-overrides(light);
+  }
+  
+  .dark-theme {
+    @include theme-colors.high-contrast-overrides(dark);
+  }
+}
+
+// Basic application colors (only what we need right now)
+:root {
+  // Status colors for concepts (when we build them)
+  --status-draft: #6b7280;
+  --status-in-progress: #f59e0b;
+  --status-completed: #10b981;
+  --status-archived: #9ca3af;
+}

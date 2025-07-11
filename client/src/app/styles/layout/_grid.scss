@@ -1,0 +1,126 @@
+// ==========================================================================
+// GRID & LAYOUT - Essential utilities for MVP
+// ==========================================================================
+
+@use '../abstracts/variables' as vars;
+
+// Container classes (essential for layout)
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: vars.$spacing-md;
+  padding-right: vars.$spacing-md;
+  
+  @media (min-width: vars.$screen-sm) {
+    max-width: vars.$screen-sm;
+    padding-left: vars.$spacing-lg;
+    padding-right: vars.$spacing-lg;
+  }
+  
+  @media (min-width: vars.$screen-md) {
+    max-width: vars.$screen-md;
+  }
+  
+  @media (min-width: vars.$screen-lg) {
+    max-width: vars.$screen-lg;
+  }
+  
+  @media (min-width: vars.$screen-xl) {
+    max-width: vars.$screen-xl;
+  }
+}
+
+.container-fluid {
+  width: 100%;
+  padding-left: vars.$spacing-md;
+  padding-right: vars.$spacing-md;
+  
+  @media (min-width: vars.$screen-sm) {
+    padding-left: vars.$spacing-lg;
+    padding-right: vars.$spacing-lg;
+  }
+}
+
+// Essential flexbox utilities (just what we'll actually use)
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+// Basic grid (add more when needed)
+.grid {
+  display: grid;
+}
+
+.grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+// Essential spacing (add more when actually needed)
+.gap-md {
+  gap: vars.$spacing-md;
+}
+
+.mt-md {
+  margin-top: vars.$spacing-md;
+}
+
+.mb-md {
+  margin-bottom: vars.$spacing-md;
+}
+
+.p-md {
+  padding: vars.$spacing-md;
+}
+
+// Common utilities
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.hidden {
+  display: none;
+}
+
+// Responsive: Add mobile-first approach when needed
+@media (min-width: vars.$screen-md) {
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

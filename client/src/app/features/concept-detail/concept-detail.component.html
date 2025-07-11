@@ -1,0 +1,99 @@
+<div class="concept-detail-container">
+  <div *ngIf="concept$ | async as concept" class="concept-content">
+    <!-- Enhanced Header with Theme -->
+    <div class="header-section">
+      <div class="header-card">
+        <div class="header-left">
+          <button mat-icon-button (click)="goBack()" class="back-button">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <div class="header-info">
+            <div class="title-row">
+              <h1 class="concept-title">{{ concept.title }}</h1>
+              <div class="status-badge" [ngClass]="getStatusClass(concept.status)">
+                <mat-icon [color]="getStatusColor(concept.status)">{{ getStatusIcon(concept.status) }}</mat-icon>
+                <span>{{ getStatusDisplayName(concept.status) }}</span>
+              </div>
+            </div>
+            <div class="theme-row" *ngIf="concept.eventDetails?.theme">
+              <mat-icon class="theme-icon">auto_awesome</mat-icon>
+              <span class="theme-text">{{ concept.eventDetails?.theme }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button mat-raised-button color="primary" (click)="exportPDF()" class="action-button export-btn">
+            <mat-icon>file_download</mat-icon>
+            <span>Export PDF</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enhanced Split Layout -->
+    <div class="content-layout">
+      <!-- Left Panel: Comprehensive Concept View -->
+      <div class="concept-panel">
+        <mat-accordion class="concept-accordion">
+          
+          <app-concept-foundation-section
+            [concept]="concept"
+            [suggestions]="currentSuggestions"
+            [expanded]="shouldExpandFoundation(concept)">
+          </app-concept-foundation-section>
+
+          <app-concept-timeline-section
+            [concept]="concept"
+            [suggestions]="currentSuggestions"
+            [expanded]="shouldExpandTimeline(concept)">
+          </app-concept-timeline-section>
+
+          <app-concept-speakers-section
+            [concept]="concept"
+            [suggestions]="currentSuggestions"
+            [expanded]="shouldExpandSpeakers(concept)">
+          </app-concept-speakers-section>
+
+          <app-concept-pricing-section
+            [concept]="concept"
+            [suggestions]="currentSuggestions"
+            [expanded]="shouldExpandPricing(concept)">
+          </app-concept-pricing-section>
+
+        </mat-accordion>
+      </div>
+
+      <!-- Right Panel: AI Chat -->
+      <div class="chat-panel">
+        <div class="chat-card glass-card">
+          <div class="card-header">
+            <mat-icon class="header-icon">smart_toy</mat-icon>
+            <div class="header-text">
+              <h2>AI Assistant</h2>
+              <p>Co-develop your concept with AI</p>
+            </div>
+          </div>
+          <div class="card-content chat-content">
+            <app-chat-interface 
+              [concept]="concept" 
+              (suggestionsReceived)="onSuggestionsReceived($event)">
+            </app-chat-interface>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Loading State -->
+  <div *ngIf="!(concept$ | async)" class="loading-state">
+    <div class="loading-card glass-card">
+      <div class="loading-content">
+        <div class="loading-icon">
+          <mat-icon>event_note</mat-icon>
+        </div>
+        <h3>Loading concept...</h3>
+        <p>Please wait while we fetch your event details</p>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,102 @@
+<!-- Event Timeline & Agenda -->
+<mat-expansion-panel [expanded]="expanded" class="timeline-panel">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <mat-icon class="section-icon">schedule</mat-icon>
+      <span>Event Timeline & Agenda</span>
+      <mat-icon class="completion-icon" 
+                [class.complete]="isComplete()"
+                [class.incomplete]="!isComplete()"
+                [class.has-suggestions]="hasSuggestions()"
+                [title]="hasSuggestions() ? 'Has pending AI suggestions' : (isComplete() ? 'Section complete' : 'Section incomplete')">
+        {{ hasSuggestions() ? 'auto_awesome' : (isComplete() ? 'check_circle' : 'radio_button_unchecked') }}
+      </mat-icon>
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+
+  <div class="panel-content">
+    <!-- Existing Agenda -->
+    <div class="agenda-container" *ngIf="concept.agenda?.length">
+      <div class="agenda-item" *ngFor="let item of concept.agenda">
+        <div class="agenda-time">
+          <mat-icon class="time-icon">access_time</mat-icon>
+          <span>{{ formatAgendaTime(item.time) }}</span>
+        </div>
+        <div class="agenda-content">
+          <div class="agenda-header">
+            <mat-icon class="type-icon">{{ getAgendaTypeIcon(item.type) }}</mat-icon>
+            <h4 class="agenda-title">{{ item.title }}</h4>
+            <span class="agenda-duration">{{ formatDuration(item.duration) }}</span>
+            
+            <!-- Inline edit suggestion for existing item -->
+            <div class="inline-suggestion" *ngIf="getAgendaItemSuggestion(item) as suggestion">
+              <span class="suggestion-arrow">→</span>
+              <span class="suggested-duration">{{ formatDuration(+suggestion.suggestedValue) }}</span>
+              <div class="suggestion-actions">
+                <button mat-icon-button color="primary" (click)="acceptAgendaItemEdit(item, suggestion)">
+                  <mat-icon>check</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="rejectFieldUpdate(suggestion)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+          <p class="agenda-description" *ngIf="item.description">{{ item.description }}</p>
+          <div class="agenda-speaker" *ngIf="item.speaker">
+            <mat-icon>person</mat-icon>
+            <span>{{ item.speaker }}</span>
+          </div>
+          
+          <!-- Show reasoning for the edit suggestion -->
+          <div class="suggestion-reason" *ngIf="getAgendaItemSuggestion(item) as suggestion">
+            <mat-icon>lightbulb</mat-icon>
+            <span>{{ suggestion.reasoning }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggested Agenda Items -->
+    <div *ngIf="getSuggestedAgendaItems().length > 0" class="suggested-agenda">
+      <h4 class="suggestion-header">
+        <mat-icon>lightbulb</mat-icon>
+        AI Suggested Agenda Items
+      </h4>
+      <div class="agenda-container">
+        <div class="agenda-item suggested" *ngFor="let item of getSuggestedAgendaItems()">
+          <div class="agenda-time">
+            <mat-icon class="time-icon">add_circle</mat-icon>
+            <span>{{ formatAgendaTime(item.time) }}</span>
+          </div>
+          <div class="agenda-content">
+            <div class="agenda-header">
+              <mat-icon class="type-icon">{{ getAgendaTypeIcon(item.type) }}</mat-icon>
+              <h4 class="agenda-title">{{ item.title }}</h4>
+              <span class="agenda-duration">{{ formatDuration(item.duration) }}</span>
+              <div class="suggestion-actions">
+                <button mat-icon-button color="primary" (click)="acceptAgendaItem(item)">
+                  <mat-icon>add</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="rejectAgendaItem(item)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+            <p class="agenda-description" *ngIf="item.description">{{ item.description }}</p>
+            <div class="agenda-speaker" *ngIf="item.speaker">
+              <mat-icon>person</mat-icon>
+              <span>{{ item.speaker }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!concept.agenda?.length && !getSuggestedAgendaItems().length" class="empty-state">
+      <mat-icon>schedule</mat-icon>
+      <p>No agenda items yet. The AI will help you create a detailed timeline.</p>
+    </div>
+  </div>
+</mat-expansion-panel> 

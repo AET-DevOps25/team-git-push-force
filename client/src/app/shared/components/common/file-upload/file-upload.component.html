@@ -1,0 +1,84 @@
+<mat-card class="upload-area" 
+          [class.dragover]="isDragOver"
+          [class.disabled]="disabled"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+          (click)="!disabled && fileInput.click()">
+  
+  <!-- Upload Interface -->
+  <div class="upload-content flex flex-col items-center text-center" 
+       *ngIf="!isUploading && selectedFiles.length === 0">
+    <mat-icon class="upload-icon" [color]="disabled ? 'disabled' : 'primary'">
+      cloud_upload
+    </mat-icon>
+    <h3 class="upload-title">{{ title }}</h3>
+    <p class="upload-description text-muted">{{ description }}</p>
+    
+    <div class="file-types mb-md" *ngIf="acceptedTypes.length > 0">
+      <mat-chip-set>
+        <mat-chip *ngFor="let type of acceptedTypes">{{ type }}</mat-chip>
+      </mat-chip-set>
+    </div>
+    
+    <input type="file" 
+           #fileInput
+           [multiple]="multiple"
+           [accept]="acceptString"
+           [disabled]="disabled"
+           (change)="onFileSelected($event)"
+           style="display: none">
+    
+    <button mat-raised-button 
+            color="primary"
+            [disabled]="disabled"
+            (click)="$event.stopPropagation(); fileInput.click()">
+      <mat-icon>folder_open</mat-icon>
+      Choose Files
+    </button>
+  </div>
+  
+  <!-- Upload Progress -->
+  <div class="upload-progress flex flex-col items-center" *ngIf="isUploading">
+    <mat-icon color="primary">file_upload</mat-icon>
+    <p class="mt-md">Uploading {{ selectedFiles.length }} file(s)...</p>
+    <mat-progress-bar mode="indeterminate" color="primary" class="w-full mt-md"></mat-progress-bar>
+  </div>
+  
+  <!-- Selected Files -->
+  <div class="selected-files w-full" *ngIf="selectedFiles.length > 0 && !isUploading">
+    <h4 class="selected-files-title">Selected Files</h4>
+    <div class="file-list">
+      <div class="file-item flex items-center" 
+           *ngFor="let uploadFile of selectedFiles; trackBy: trackByFile">
+        <mat-icon class="file-icon">description</mat-icon>
+        <div class="file-info flex-1">
+          <div class="file-name">{{ uploadFile.file.name }}</div>
+          <div class="file-size text-muted">{{ formatFileSize(uploadFile.file.size) }}</div>
+          <div class="file-error" *ngIf="uploadFile.error">{{ uploadFile.error }}</div>
+        </div>
+        <button mat-icon-button 
+                color="warn"
+                (click)="removeFile(uploadFile)"
+                [disabled]="disabled">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+    
+    <div class="upload-actions flex justify-between mt-md">
+      <button mat-button 
+              (click)="clearFiles()"
+              [disabled]="disabled">
+        Clear All
+      </button>
+      <button mat-raised-button 
+              color="primary"
+              (click)="uploadFiles()"
+              [disabled]="disabled || selectedFiles.length === 0">
+        <mat-icon>cloud_upload</mat-icon>
+        Upload {{ selectedFiles.length }} File(s)
+      </button>
+    </div>
+  </div>
+</mat-card> 
