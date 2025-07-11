@@ -61,21 +61,23 @@ generate_java() {
   echo "Java code generation complete!"
 }
 
-# Python client generation
+# Python server generation
 generate_python() {
-  echo "Generating Python client..."
-  check_command openapi-python-client
+  echo "Generating Python client and server..."
+  check_command openapi-generator-cli
 
   # Create output directories
-  create_dir "genai-svc/client"
+  create_dir "genai-svc"
 
-  # Generate client for GenAI service
-  openapi-python-client generate \
-    --path api/genai-service.yaml \
-    --output-path genai-svc/client \
-    --overwrite
+  # Generate server stubs for GenAI service
+  openapi-generator-cli generate \
+    -i api/genai-service.yaml \
+    -g python-flask \
+    -o genai-svc \
+    --skip-validate-spec \
+    --additional-properties=packageName=genai_models,serverPort=8083
 
-  echo "Python client generation complete!"
+  echo "Python server generation complete!"
 }
 
 # TypeScript SDK generation

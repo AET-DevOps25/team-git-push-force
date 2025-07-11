@@ -60,6 +60,61 @@ services:
       - "8083:8083"
     environment:
       - FLASK_ENV=production
+      - WEAVIATE_URL=http://weaviate:8080  # This is correct for internal Docker network
+      - WEAVIATE_GRPC_PORT=8081  # Explicitly set gRPC port
+      - WEAVIATE_API_KEY=${WEAVIATE_API_KEY:-}
+      - MINIO_URL=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_BUCKET=concepts
+      - CONCEPT_SERVICE_URL=http://concept-svc:8080
+    depends_on:
+      - weaviate
+      - minio
+      - concept-svc
+    networks:
+      - backend-network
+    env_file:
+      - ./genai-svc/.env
+
+  # Weaviate Vector Database
+  weaviate:
+    image: semitechnologies/weaviate:1.24.1
+    ports:
+      - "8087:8080"  # HTTP port
+      - "8088:8081"  # gRPC port
+    environment:
+      - QUERY_DEFAULTS_LIMIT=20
+      - AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true
+      - PERSISTENCE_DATA_PATH=/var/lib/weaviate
+      - DEFAULT_VECTORIZER_MODULE=none
+      - ENABLE_MODULES=text2vec-transformers
+      - TRANSFORMERS_INFERENCE_API=http://t2v-transformers:8080
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    networks:
+      - backend-network
+
+  # Text2Vec Transformers for Weaviate
+  t2v-transformers:
+    image: semitechnologies/transformers-inference:sentence-transformers-all-MiniLM-L6-v2
+    environment:
+      - ENABLE_CUDA=0
+    networks:
+      - backend-network
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
     networks:
       - backend-network
 
@@ -68,3 +123,9 @@ networks:
     driver: bridge
   backend-network:
     driver: bridge
+
+volumes:
+  weaviate_data:
+    driver: local
+  minio_data:
+    driver: local
