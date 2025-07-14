@@ -1,0 +1,169 @@
+<div class="register-container">
+  <!-- Floating decorative elements -->
+  <div class="floating-decorations">
+    <div class="floating-element element-1">
+      <mat-icon>person_add</mat-icon>
+    </div>
+    <div class="floating-element element-2">
+      <mat-icon>workspace_premium</mat-icon>
+    </div>
+    <div class="floating-element element-3">
+      <mat-icon>settings</mat-icon>
+    </div>
+    <div class="floating-element element-4">
+      <mat-icon>rocket_launch</mat-icon>
+    </div>
+  </div>
+
+  <mat-card class="register-card">
+    <mat-card-header>
+      <mat-card-title>Create Account 🚀</mat-card-title>
+      <mat-card-subtitle>Join AI Event Concepter today</mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <mat-stepper linear #stepper>
+        <!-- Step 1: Basic Information -->
+        <mat-step [stepControl]="basicInfoForm" label="Basic Information">
+          <form [formGroup]="basicInfoForm" class="step-form">
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>First Name</mat-label>
+                <input matInput formControlName="firstName" placeholder="John">
+                <mat-error *ngIf="basicInfoForm.get('firstName')?.invalid && basicInfoForm.get('firstName')?.touched">
+                  {{ getFieldErrorMessage(basicInfoForm, 'firstName') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Last Name</mat-label>
+                <input matInput formControlName="lastName" placeholder="Doe">
+                <mat-error *ngIf="basicInfoForm.get('lastName')?.invalid && basicInfoForm.get('lastName')?.touched">
+                  {{ getFieldErrorMessage(basicInfoForm, 'lastName') }}
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" placeholder="john@example.com">
+              <mat-icon matSuffix>email</mat-icon>
+              <mat-error *ngIf="basicInfoForm.get('email')?.invalid && basicInfoForm.get('email')?.touched">
+                {{ getFieldErrorMessage(basicInfoForm, 'email') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Password</mat-label>
+              <input matInput 
+                     [type]="hidePassword ? 'password' : 'text'"
+                     formControlName="password"
+                     placeholder="Enter password">
+              <button mat-icon-button 
+                      matSuffix 
+                      type="button"
+                      (click)="hidePassword = !hidePassword">
+                <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              <mat-error *ngIf="basicInfoForm.get('password')?.invalid && basicInfoForm.get('password')?.touched">
+                {{ getFieldErrorMessage(basicInfoForm, 'password') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Confirm Password</mat-label>
+              <input matInput 
+                     [type]="hideConfirmPassword ? 'password' : 'text'"
+                     formControlName="confirmPassword"
+                     placeholder="Confirm password">
+              <button mat-icon-button 
+                      matSuffix 
+                      type="button"
+                      (click)="hideConfirmPassword = !hideConfirmPassword">
+                <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              <mat-error *ngIf="basicInfoForm.get('confirmPassword')?.invalid && basicInfoForm.get('confirmPassword')?.touched">
+                {{ getFieldErrorMessage(basicInfoForm, 'confirmPassword') }}
+              </mat-error>
+            </mat-form-field>
+
+            <div class="step-actions">
+              <button mat-raised-button 
+                      color="primary" 
+                      matStepperNext
+                      [disabled]="basicInfoForm.invalid">
+                Next: Preferences
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 2: Preferences -->
+        <mat-step [stepControl]="preferencesForm" label="Preferences">
+          <form [formGroup]="preferencesForm" class="step-form">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Preferred Event Format</mat-label>
+              <mat-select formControlName="preferredEventFormat">
+                <mat-option *ngFor="let format of eventFormats" [value]="format.value">
+                  {{ format.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Industry</mat-label>
+              <mat-select formControlName="industry">
+                <mat-option *ngFor="let industry of industries" [value]="industry">
+                  {{ industry }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Language</mat-label>
+                <mat-select formControlName="language">
+                  <mat-option *ngFor="let lang of languages" [value]="lang.value">
+                    {{ lang.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Timezone</mat-label>
+                <mat-select formControlName="timezone">
+                  <mat-option *ngFor="let tz of timezones" [value]="tz">
+                    {{ tz }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="step-actions">
+              <button mat-button matStepperPrevious>
+                <mat-icon>arrow_back</mat-icon>
+                Back
+              </button>
+              
+              <button mat-raised-button 
+                      color="primary" 
+                      (click)="onSubmit()"
+                      [disabled]="preferencesForm.invalid || (isLoading$ | async)">
+                <span *ngIf="!(isLoading$ | async)">Create Account</span>
+                <mat-spinner *ngIf="isLoading$ | async" diameter="20"></mat-spinner>
+              </button>
+            </div>
+          </form>
+        </mat-step>
+      </mat-stepper>
+    </mat-card-content>
+    
+    <mat-card-actions class="card-actions">
+      <p class="login-link">
+        Already have an account? 
+        <a routerLink="/auth/login" class="link">Sign in here</a>
+      </p>
+    </mat-card-actions>
+  </mat-card>
+</div> 

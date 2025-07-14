@@ -49,8 +49,7 @@ services:
       - backend-network
       - monitoring-network
     depends_on:
-      user-svc-db:
-        condition: service_healthy
+      - user-svc-db
 
   user-svc-db:
     image: postgres:15
@@ -62,11 +61,6 @@ services:
       - POSTGRES_DB=eventdb
     networks:
       - backend-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d eventdb"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     #volumes:
       #- eventdb_data:/var/lib/postgresql/data
 
@@ -78,9 +72,30 @@ services:
       - "8082:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://concept-svc-db:5432/conceptdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
     networks:
       - backend-network
       - monitoring-network
+    depends_on:
+      - concept-svc-db
+
+  concept-svc-db:
+    image: postgres:15
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=conceptdb
+    networks:
+      - backend-network
+    #volumes:
+      #- conceptdb_data:/var/lib/postgresql/data
 
   # GenAI Service (Python Flask)
   genai-svc:

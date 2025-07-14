@@ -1,0 +1,54 @@
+spring:
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      routes:
+        - id: api_redirect
+          uri: forward:/health
+          predicates:
+            - Path=/api
+        - id: root_redirect
+          uri: forward:/health
+          predicates:
+            - Path=/
+        - id: user_health_route
+          uri: ${user-svc.url}
+          predicates:
+            - Path=/api/users/health
+          filters:
+            - RewritePath=/api/users/health, /health
+        - id: user_service_route
+          uri: ${user-svc.url}
+          predicates:
+            - Path=/api/users/**
+            - Path=/auth/**
+        - id: concept_health_route
+          uri: ${concept-svc.url}
+          predicates:
+            - Path=/api/concepts/health
+          filters:
+            - RewritePath=/api/concepts/health, /health
+        - id: concept_service_route
+          uri: ${concept-svc.url}
+          predicates:
+            - Path=/api/concepts/**
+        - id: genai_health_route
+          uri: ${genai-svc.url}
+          predicates:
+            - Path=/api/genai/health
+          filters:
+            - RewritePath=/api/genai/health, /health
+        - id: genai_service_route
+          uri: ${genai-svc.url}
+          predicates:
+            - Path=/api/genai/**
+
+user-svc:
+  url: http://user-svc:8080
+
+concept-svc:
+  url: http://concept-svc:8080
+
+genai-svc:
+  url: http://genai-svc:8083

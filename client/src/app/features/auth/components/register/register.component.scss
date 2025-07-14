@@ -1,0 +1,476 @@
+@import '../../../../styles/abstracts/variables';
+@import '../../../../styles/abstracts/effects';
+
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: $spacing-md;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow: hidden;
+  
+  // Background overlay effects like dashboard
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  
+  // Floating decorative elements
+  &::after {
+    content: '';
+    position: absolute;
+    top: 8%;
+    right: 12%;
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  @media (min-width: $screen-md) {
+    padding: $spacing-lg;
+  }
+}
+
+.register-card {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.12),
+    0 4px 16px rgba(102, 126, 234, 0.08);
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  
+  // Subtle inner glow
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  }
+  
+  mat-card-header {
+    text-align: center;
+    padding: $spacing-lg $spacing-md $spacing-md;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.02), rgba(118, 75, 162, 0.02));
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    
+    mat-card-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: $spacing-sm;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    mat-card-subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.4;
+    }
+  }
+  
+  mat-card-content {
+    padding: 0 $spacing-md $spacing-md;
+  }
+}
+
+.step-form {
+  display: flex;
+  flex-direction: column;
+  
+  .full-width {
+    width: 100%;
+    
+    // Enhanced form field styling
+    ::ng-deep {
+      .mat-mdc-form-field {
+        .mat-mdc-text-field-wrapper {
+          background: rgba(248, 250, 252, 0.8);
+          border-radius: 16px;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(102, 126, 234, 0.1);
+          transition: all 0.3s ease;
+          
+          &:hover {
+            border-color: rgba(102, 126, 234, 0.3);
+            background: rgba(248, 250, 252, 0.9);
+          }
+        }
+        
+        &.mat-focused {
+          .mat-mdc-text-field-wrapper {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+          }
+        }
+        
+        .mat-mdc-form-field-icon-suffix {
+          color: #667eea;
+        }
+      }
+    }
+  }
+  
+  .form-row {
+    display: flex;
+    gap: $spacing-md;
+    
+    .half-width {
+      flex: 1;
+    }
+    
+    @media (max-width: $screen-sm) {
+      flex-direction: column;
+      gap: $spacing-sm;
+    }
+  }
+  
+  .step-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: $spacing-lg;
+    gap: $spacing-md;
+    
+    button {
+      @extend .transition-fast;
+      border-radius: 12px;
+      
+      &[mat-raised-button] {
+        height: 48px;
+        font-size: 1rem;
+        font-weight: 600;
+        min-width: 140px;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        position: relative;
+        overflow: hidden;
+        
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          transition: left 0.5s ease;
+        }
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+          
+          &::before {
+            left: 100%;
+          }
+        }
+        
+        &:disabled {
+          opacity: 0.7;
+          transform: none;
+          box-shadow: none;
+          
+          &::before {
+            display: none;
+          }
+        }
+        
+        mat-spinner {
+          margin: 0 auto;
+        }
+      }
+      
+      &[mat-button] {
+        height: 48px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+        
+        &:hover {
+          background: rgba(102, 126, 234, 0.15);
+          transform: translateX(-4px);
+        }
+      }
+      
+      mat-icon {
+        margin-left: $spacing-xs;
+        margin-right: $spacing-xs;
+      }
+    }
+    
+    // Single button in first step
+    &:has(button:only-child) {
+      justify-content: flex-end;
+    }
+  }
+}
+
+// Enhanced Stepper customization
+::ng-deep {
+  mat-stepper {
+    background: transparent;
+    
+    .mat-horizontal-stepper-header-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: $spacing-lg;
+    }
+    
+    .mat-step-header {
+      border-radius: 8px;
+      padding: $spacing-sm;
+      flex: none;
+      
+      &.cdk-keyboard-focused,
+      &.cdk-program-focused,
+      &:hover {
+        background-color: rgba(102, 126, 234, 0.05);
+      }
+    }
+    
+    .mat-step-icon {
+      background: linear-gradient(45deg, #667eea, #764ba2) !important;
+      color: white !important;
+      border-radius: 8px !important;
+      width: 28px !important;
+      height: 28px !important;
+      font-weight: 600;
+      font-size: 14px !important;
+    }
+    
+    .mat-step-icon-state-done {
+      background: linear-gradient(45deg, #4CAF50, #81C784) !important;
+    }
+    
+    .mat-step-icon-selected {
+      background: linear-gradient(45deg, #667eea, #764ba2) !important;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    .mat-step-label {
+      font-weight: 500;
+      color: var(--text-primary);
+      
+      &.mat-step-label-active {
+        color: #667eea;
+        font-weight: 600;
+      }
+    }
+    
+    .mat-step-text-label {
+      font-size: 0.9rem;
+    }
+    
+    .mat-step-content {
+      margin-top: $spacing-md;
+      padding: 0;
+    }
+    
+    .mat-stepper-horizontal-line {
+      background: linear-gradient(90deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+      height: 1px;
+      margin: 0 $spacing-sm;
+      top: 50% !important;
+      transform: translateY(-50%);
+      flex: 1;
+    }
+  }
+}
+
+.card-actions {
+  text-align: center;
+  padding: $spacing-md;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.02), rgba(118, 75, 162, 0.02));
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  
+  .login-link {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 1rem;
+    
+    .link {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      position: relative;
+      transition: all 0.3s ease;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        transition: width 0.3s ease;
+      }
+      
+      &:hover {
+        color: #764ba2;
+        
+        &::after {
+          width: 100%;
+        }
+      }
+    }
+  }
+}
+
+// Floating decorative elements
+.floating-decorations {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  
+  .floating-element {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: float 8s ease-in-out infinite;
+    
+    mat-icon {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 2.2rem !important;
+      width: 2.2rem !important;
+      height: 2.2rem !important;
+    }
+    
+    &.element-1 {
+      top: 12%;
+      left: 8%;
+      animation-delay: 0s;
+    }
+    
+    &.element-2 {
+      top: 25%;
+      right: 10%;
+      animation-delay: 3s;
+      width: 70px;
+      height: 70px;
+      
+      mat-icon {
+        font-size: 1.8rem !important;
+        width: 1.8rem !important;
+        height: 1.8rem !important;
+      }
+    }
+    
+    &.element-3 {
+      bottom: 20%;
+      left: 5%;
+      animation-delay: 6s;
+      width: 80px;
+      height: 80px;
+      
+      mat-icon {
+        font-size: 2rem !important;
+        width: 2rem !important;
+        height: 2rem !important;
+      }
+    }
+    
+    &.element-4 {
+      bottom: 15%;
+      right: 20%;
+      animation-delay: 1.5s;
+      width: 60px;
+      height: 60px;
+      
+      mat-icon {
+        font-size: 1.5rem !important;
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+      }
+    }
+    
+    @media (max-width: $screen-md) {
+      display: none;
+    }
+  }
+}
+
+// Additional floating elements
+@media (min-width: $screen-md) {
+  .register-container {
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 10%;
+      right: 8%;
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      animation: float 10s ease-in-out infinite;
+      animation-delay: 4s;
+    }
+  }
+}
+
+// Animations
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-25px) rotate(5deg);
+  }
+}
+
+// Enhanced Material Design overrides
+::ng-deep {
+  .mat-mdc-form-field-error {
+    color: #FF5722;
+    font-weight: 500;
+  }
+  
+  .mat-mdc-form-field-label {
+    color: var(--text-muted) !important;
+    font-weight: 500;
+  }
+  
+  .mat-mdc-select-panel {
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+} 

@@ -1,0 +1,70 @@
+name: Deploy to Staging Kubernetes
+
+on:
+  workflow_run:
+    workflows: [Build Docker Images]
+    types:
+      - completed
+    branches:
+      - dev
+    conclusion: success
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "latest"
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+
+      - name: Run Helm Upgrade for workflow_run
+        if: github.event_name == 'workflow_run'
+        run: |
+          cd helm/ai-event-concepter
+          helm upgrade --install ai-event-concepter . \
+            --namespace team-git-push-force-dev \
+            --create-namespace \
+            --set ingress.host=dev-aieventconcepter.student.k8s.aet.cit.tum.de \
+            --set client.image.tag=dev \
+            --set gateway.image.tag=dev \
+            --set usersvc.image.tag=dev \
+            --set conceptsvc.image.tag=dev \
+            --set genaisvc.image.tag=dev
+
+      - name: Run Helm Upgrade for pull_request
+        if: github.event_name == 'pull_request'
+        run: |
+          cd helm/ai-event-concepter
+          helm upgrade --install ai-event-concepter . \
+            --namespace team-git-push-force-dev \
+            --create-namespace \
+            --set ingress.host=dev-aieventconcepter.student.k8s.aet.cit.tum.de \
+            --set client.image.tag=pr-${{ github.event.pull_request.number }} \
+            --set gateway.image.tag=pr-${{ github.event.pull_request.number }} \
+            --set usersvc.image.tag=pr-${{ github.event.pull_request.number }} \
+            --set conceptsvc.image.tag=pr-${{ github.event.pull_request.number }} \
+            --set genaisvc.image.tag=pr-${{ github.event.pull_request.number }}
+
+      - name: Rollout Restart Deployments
+        run: |
+          kubectl rollout restart deployment -n team-git-push-force-dev

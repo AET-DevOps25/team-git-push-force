@@ -8,14 +8,20 @@ WORKDIR /app
 COPY build.gradle settings.gradle ./
 COPY gradle ./gradle
 
-# Trigger dependency resolution
-RUN gradle dependencies --no-daemon
+# Create gradle.properties with optimized settings
+RUN echo "org.gradle.parallel=true" > gradle.properties && \
+    echo "org.gradle.caching=true" >> gradle.properties && \
+    echo "org.gradle.daemon=false" >> gradle.properties && \
+    echo "org.gradle.configureondemand=true" >> gradle.properties
+
+# Trigger dependency resolution with optimized settings
+RUN --mount=type=cache,target=/root/.gradle gradle dependencies
 
 # Copy source code
 COPY src ./src
 
-# Build the application
-RUN gradle bootJar --no-daemon
+# Build the application with optimized settings
+RUN --mount=type=cache,target=/root/.gradle gradle bootJar
 
 # Stage 2: Run the application
 FROM eclipse-temurin:21-jre
