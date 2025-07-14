@@ -112,6 +112,7 @@ services:
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET=concepts
       - CONCEPT_SERVICE_URL=http://concept-svc:8080
+      - OPENWEBUI_MODEL=llama3.3:latest
     depends_on:
       - genai-svc-weaviate
       - genai-svc-minio
@@ -120,7 +121,7 @@ services:
       - service-network
       - genai-network
     env_file:
-      - ./genai-svc/.env
+      - genai-svc/prod/.env
 
   # Weaviate Vector Database for GenAI Service
   genai-svc-weaviate:

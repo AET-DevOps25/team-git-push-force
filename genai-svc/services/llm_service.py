@@ -2,9 +2,10 @@ import os
 import requests
 import json
 from typing import List, Dict, Any, Optional
-from langchain.chains import LLMChain, ConversationalRetrievalChain
+from langchain.chains import ConversationalRetrievalChain
 from langchain.prompts import PromptTemplate
 from langchain_community.llms.fake import FakeListLLM
+from langchain.schema.runnable import RunnablePassthrough
 
 from genai_models.models.chat_request import ChatRequest
 from genai_models.models.chat_response import ChatResponse
@@ -16,7 +17,7 @@ from openwebui_llm import OpenWebUILLM
 
 class LLMService:
     """Service for interacting with language models"""
-    
+
     def __init__(self):
         """Initialize the LLM service"""
         # Try to use the OpenWebUI LLM, fall back to FakeListLLM if not available
@@ -36,7 +37,7 @@ class LLMService:
                 responses=["This is a placeholder response from the FakeListLLM model."],
                 temperature=0.7,
             )
-        
+
         # Initialize prompt templates
         self.chat_prompt = PromptTemplate(
             input_variables=["context", "question", "chat_history"],
@@ -52,50 +53,50 @@ class LLMService:
 
             Answer:"""
         )
-        
+
         self.welcome_prompt = PromptTemplate(
             input_variables=["user_name", "concept_name", "concept_description"],
             template="""You are an AI assistant for event planning and concept development.
-            
+
             Generate a friendly welcome message for {user_name} who is creating a new event concept called "{concept_name}".
-            
+
             The concept is described as: {concept_description}
-            
+
             Your welcome message should be enthusiastic, mention the concept name and briefly comment on the concept description.
             Also offer to help with developing the concept further.
-            
+
             Welcome message:"""
         )
-    
+
     def process_chat_request(self, chat_request: ChatRequest) -> ChatResponse:
         """Process a chat request and generate a response"""
         # Extract message and context
         message = chat_request.message
         concept_id = chat_request.context.concept_id if chat_request.context else None
-        
+
         # Get chat history
         chat_history = []
         if chat_request.context and chat_request.context.previous_messages:
             for msg in chat_request.context.previous_messages:
                 chat_history.append((msg.user_message, msg.assistant_response))
-        
+
         # Prepare enhanced message with concept info if available
         enhanced_message = message
         if concept_id:
             # In a real implementation, we would fetch concept details from the concept service
             # For now, we'll just use the concept_id
             enhanced_message = f"[Concept ID: {concept_id}] {message}"
-        
+
         # Generate response
         response_text = ""
         sources = []
-        
+
         try:
             # Try to use RAG if we have a concept_id and vector store
             if concept_id and vector_store_service.vector_store:
                 # Get retriever for this concept
                 retriever = vector_store_service.get_retriever(concept_id)
-                
+
                 if retriever:
                     # Create ConversationalRetrievalChain
                     conversation_chain = ConversationalRetrievalChain.from_llm(
@@ -103,11 +104,11 @@ class LLMService:
                         retriever=retriever,
                         return_source_documents=True
                     )
-                    
+
                     # Run the chain
                     result = conversation_chain({"question": message, "chat_history": chat_history})
                     response_text = result["answer"]
-                    
+
                     # Extract sources from retrieved documents
                     if "source_documents" in result:
                         for doc in result["source_documents"]:
@@ -117,39 +118,39 @@ class LLMService:
                                 "confidence": 0.9  # Placeholder
                             })
                 else:
-                    # Fallback to simple LLM
-                    chain = LLMChain(llm=self.llm, prompt=self.chat_prompt)
-                    response_text = chain.run(
-                        context="No specific documents available for this concept.",
-                        question=message,
-                        chat_history=str(chat_history)
-                    )
+                    # Fallback to simple LLM using RunnableSequence
+                    chain = self.chat_prompt | self.llm
+                    response_text = chain.invoke({
+                        "context": "No specific documents available for this concept.",
+                        "question": message,
+                        "chat_history": str(chat_history)
+                    })
             else:
-                # Use simple LLM chain
-                chain = LLMChain(llm=self.llm, prompt=self.chat_prompt)
-                response_text = chain.run(
-                    context="No specific context available.",
-                    question=message,
-                    chat_history=str(chat_history)
-                )
+                # Use simple LLM chain with RunnableSequence
+                chain = self.chat_prompt | self.llm
+                response_text = chain.invoke({
+                    "context": "No specific context available.",
+                    "question": message,
+                    "chat_history": str(chat_history)
+                })
         except Exception as e:
             print(f"Error generating response: {e}")
             response_text = "I'm sorry, I encountered an error while processing your request. Please try again."
-        
+
         # Generate follow-up suggestions
         suggestions = [
             "Tell me more about the event format",
             "What speakers would you recommend for this type of event?",
             "How can I make this event more engaging for the audience?"
         ]
-        
+
         # Generate follow-up questions
         follow_up_questions = [
             "What is your target audience?",
             "What is your budget for this event?",
             "When are you planning to hold this event?"
         ]
-        
+
         return ChatResponse(
             response=response_text,
             suggestions=suggestions,
@@ -162,7 +163,7 @@ class LLMService:
                 "total": 250  # Placeholder
             }
         )
-    
+
     def generate_welcome_message(self, init_request: InitializeChatForConceptRequest) -> str:
         """Generate a welcome message for a new concept"""
         try:
@@ -170,15 +171,15 @@ class LLMService:
             user_name = init_request.user_id  # Using userId as user_name placeholder
             concept_name = init_request.concept_title
             concept_description = ""  # Not available in current API spec, providing empty string
-            
-            # Use the welcome prompt template
-            chain = LLMChain(llm=self.llm, prompt=self.welcome_prompt)
-            welcome_message = chain.run(
-                user_name=user_name,
-                concept_name=concept_name,
-                concept_description=concept_description
-            )
-            
+
+            # Use the welcome prompt template with RunnableSequence
+            chain = self.welcome_prompt | self.llm
+            welcome_message = chain.invoke({
+                "user_name": user_name,
+                "concept_name": concept_name,
+                "concept_description": concept_description
+            })
+
             return welcome_message
         except Exception as e:
             print(f"Error generating welcome message: {e}")

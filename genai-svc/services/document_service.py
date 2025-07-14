@@ -247,6 +247,22 @@ class DocumentService:
         # Return overall success status
         return vector_store_success and minio_success
 
+    def close(self):
+        """Close the S3 client connection"""
+        if hasattr(self, 's3_client') and self.s3_client:
+            try:
+                # Close any open connections
+                session = self.s3_client.meta.session
+                if session:
+                    session.close()
+                print("S3 client connection closed")
+            except Exception as e:
+                print(f"Error closing S3 client connection: {e}")
+
+    def __del__(self):
+        """Destructor to ensure the connection is closed when the object is garbage collected"""
+        self.close()
+
 # Create a singleton instance
 document_service = DocumentService()
 

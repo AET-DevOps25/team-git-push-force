@@ -1,4 +1,5 @@
 import os
+import time
 import weaviate
 from weaviate.auth import AuthApiKey
 from weaviate.embedded import EmbeddedOptions
@@ -10,65 +11,89 @@ class VectorStoreService:
 
     def __init__(self):
         """Initialize the vector store service"""
-        # Initialize Weaviate client
+        # Initialize default values
+        self.client = None
+        self.vector_store = None
+        self.embeddings = None
+
+        # Initialize Weaviate client with retry mechanism
+        self._initialize_weaviate_client()
+
+    def _initialize_weaviate_client(self):
+        """Initialize Weaviate client with retry mechanism"""
         weaviate_url = os.getenv("WEAVIATE_URL", "http://localhost:8080")
         weaviate_api_key = os.getenv("WEAVIATE_API_KEY", None)
+        max_retries = 5
+        retry_delay = 3  # seconds
 
         auth_config = weaviate.auth.AuthApiKey(api_key=weaviate_api_key) if weaviate_api_key else None
 
-        try:
-            # Create connection config
-            # For Weaviate v4, we need to specify both HTTP and gRPC ports
-            # Get gRPC port from environment variable or calculate it
-            grpc_port = int(os.getenv("WEAVIATE_GRPC_PORT", 0))
-            if grpc_port == 0:
-                # Default gRPC port is typically HTTP port + 1 (e.g., 8080 -> 8081)
-                http_port = int(weaviate_url.split(":")[-1])
-                grpc_port = http_port + 1
+        # Get gRPC port from environment variable or calculate it
+        grpc_port = int(os.getenv("WEAVIATE_GRPC_PORT", 0))
+        if grpc_port == 0:
+            # Default gRPC port is typically HTTP port + 1 (e.g., 8080 -> 8081)
+            http_port = int(weaviate_url.split(":")[-1])
+            grpc_port = http_port + 1
 
-            print(f"Using gRPC port: {grpc_port}")
+        print(f"Connecting to Weaviate at {weaviate_url} with gRPC port: {grpc_port}")
 
-            connection_params = weaviate.connect.ConnectionParams.from_url(
-                url=weaviate_url,
-                grpc_port=grpc_port
-            )
+        # Create connection config
+        connection_params = weaviate.connect.ConnectionParams.from_url(
+            url=weaviate_url,
+            grpc_port=grpc_port
+        )
 
-            # Add authentication if provided
-            if auth_config:
-                connection_params = connection_params.with_auth(auth_config)
+        # Add authentication if provided
+        if auth_config:
+            connection_params = connection_params.with_auth(auth_config)
 
-            # Initialize client with v4 API
-            self.client = weaviate.WeaviateClient(
-                connection_params=connection_params,
-                skip_init_checks=True  # Skip initialization checks to avoid gRPC issues
-            )
+        # Try to connect with retries
+        for attempt in range(max_retries):
+            try:
+                # Initialize client with v4 API
+                self.client = weaviate.WeaviateClient(
+                    connection_params=connection_params,
+                    skip_init_checks=True  # Skip initialization checks to avoid gRPC issues
+                )
 
-            # Connect to Weaviate
-            self.client.connect()
-            print(f"Connected to Weaviate at {weaviate_url}")
+                # Connect to Weaviate
+                self.client.connect()
+                print(f"Successfully connected to Weaviate at {weaviate_url} (attempt {attempt + 1}/{max_retries})")
 
-            # Create schema if it doesn't exist
-            self._ensure_schema_exists()
+                # Create schema if it doesn't exist
+                self._ensure_schema_exists()
 
-            # Initialize embeddings model
-            self.embeddings = HuggingFaceEmbeddings(
-                model_name="sentence-transformers/all-MiniLM-L6-v2"
-            )
+                # Initialize embeddings model
+                self.embeddings = HuggingFaceEmbeddings(
+                    model_name="sentence-transformers/all-MiniLM-L6-v2"
+                )
 
-            # Initialize vector store
-            self.vector_store = WeaviateVectorStore(
-                client=self.client,
-                index_name="Documents",
-                text_key="content",
-                embedding=self.embeddings
-            )
+                # Initialize vector store
+                self.vector_store = WeaviateVectorStore(
+                    client=self.client,
+                    index_name="Documents",
+                    text_key="content",
+                    embedding=self.embeddings
+                )
 
-        except Exception as e:
-            print(f"Error connecting to Weaviate: {e}")
-            # Create a fallback client for testing
-            self.client = None
-            self.vector_store = None
-            self.embeddings = None
+                # If we get here, connection was successful
+                return
+
+            except Exception as e:
+                print(f"Error connecting to Weaviate (attempt {attempt + 1}/{max_retries}): {e}")
+                # Make sure client is properly closed if partially initialized
+                if self.client:
+                    try:
+                        self.client.close()
+                    except:
+                        pass
+                    self.client = None
+
+                if attempt < max_retries - 1:
+                    print(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                else:
+                    print("Max retries reached. Could not connect to Weaviate.")
 
     def _ensure_schema_exists(self):
         """Ensure the required schema exists in Weaviate"""
@@ -193,7 +218,11 @@ class VectorStoreService:
         """Close the Weaviate client connection"""
         if self.client:
             try:
+                # Ensure all connections are properly closed
                 self.client.close()
+                # Set client to None to prevent further usage
+                self.client = None
+                self.vector_store = None
                 print("Weaviate client connection closed")
             except Exception as e:
                 print(f"Error closing Weaviate client connection: {e}")
