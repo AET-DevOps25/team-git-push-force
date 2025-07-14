@@ -1,6 +1,5 @@
 .gitignore
 .travis.yml
-README.md
 genai_models/__init__.py
 genai_models/__main__.py
 genai_models/controllers/__init__.py
@@ -39,7 +38,6 @@ genai_models/openapi/openapi.yaml
 genai_models/test/__init__.py
 genai_models/typing_utils.py
 genai_models/util.py
-git_push.sh
 setup.py
 test-requirements.txt
 tox.ini

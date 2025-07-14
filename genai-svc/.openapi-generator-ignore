@@ -15,6 +15,7 @@ tests/**
 requirements-dev.txt
 requirements.txt
 README.md
+git_push.sh
 
 # Custom Docker and CI files
 Dockerfile
