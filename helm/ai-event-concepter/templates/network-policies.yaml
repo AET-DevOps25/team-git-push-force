@@ -1,0 +1,138 @@
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/NetworkPolicy" }}
+# Network policy for client (frontend)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: client-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-event-concepter-client-selector
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from: []  # Allow ingress traffic from anywhere (for user access)
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-gateway-selector
+---
+# Network policy for gateway
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gateway-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-event-concepter-gateway-selector
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-client-selector
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-user-svc-selector
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-concept-svc-selector
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-genai-svc-selector
+---
+# Network policy for genai-svc
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: genai-svc-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-event-concepter-genai-svc-selector
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-gateway-selector
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-genai-svc-weaviate-selector
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-genai-svc-minio-selector
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-concept-svc-selector
+---
+# Network policy for weaviate
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: genai-svc-weaviate-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-event-concepter-genai-svc-weaviate-selector
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-genai-svc-selector
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-genai-svc-t2v-transformers-selector
+---
+# Network policy for t2v-transformers
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: genai-svc-t2v-transformers-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-event-concepter-genai-svc-t2v-transformers-selector
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-genai-svc-weaviate-selector
+---
+# Network policy for minio
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: genai-svc-minio-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-event-concepter-genai-svc-minio-selector
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: ai-event-concepter-genai-svc-selector
+{{- end }}

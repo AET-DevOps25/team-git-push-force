@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-event-concepter-genai-svc-t2v-transformers
+spec:
+  replicas: {{ .Values.genaisvct2vtransformers.replicaCount }}
+  selector:
+    matchLabels:
+      app: ai-event-concepter-genai-svc-t2v-transformers-selector
+  template:
+    metadata:
+      labels:
+        app: ai-event-concepter-genai-svc-t2v-transformers-selector
+    spec:
+      containers:
+        - name: t2v-transformers
+          image: "{{ .Values.genaisvct2vtransformers.image.repository }}:{{ .Values.genaisvct2vtransformers.image.tag }}"
+          imagePullPolicy: {{ .Values.genaisvct2vtransformers.image.pullPolicy }}
+          resources:
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+            requests:
+              cpu: "1000m"
+              memory: "2Gi"
+          ports:
+            - containerPort: {{ .Values.genaisvct2vtransformers.service.targetPort }}
+          env:
+            {{- range .Values.genaisvct2vtransformers.env }}
+            - name: {{ .name }}
+              value: "{{ .value }}"
+            {{- end }}

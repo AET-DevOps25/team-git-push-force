@@ -32,3 +32,6 @@ spec:
             - name: {{ .name }}
               value: "{{ .value }}"
             {{- end }}
+          envFrom:
+            - secretRef:
+                name: genai-svc-secret
