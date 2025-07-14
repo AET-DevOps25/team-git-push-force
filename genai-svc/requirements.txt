@@ -4,3 +4,4 @@ langchain-community==0.0.13
 python-dotenv==1.0.0
 gunicorn==21.0.0
 flask-cors==4.0.0
+prometheus_flask_exporter

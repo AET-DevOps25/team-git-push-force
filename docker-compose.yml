@@ -61,6 +61,11 @@ services:
       - POSTGRES_DB=eventdb
     networks:
       - backend-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     #volumes:
       #- eventdb_data:/var/lib/postgresql/data
 

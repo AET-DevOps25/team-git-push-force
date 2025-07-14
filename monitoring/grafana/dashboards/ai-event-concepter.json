@@ -41,8 +41,8 @@
             "targets": [
                 {
                     "expr": "up",
-                    "legendFormat": "{{service}}",
-                    "datasource": "${DS_PROMETHEUS}"
+                    "legendFormat": "{{job}}:{{instance}}",
+                    "datasource": "Prometheus"
                 }
             ],
             "fieldConfig": {
@@ -77,9 +77,9 @@
             "type": "graph",
             "targets": [
                 {
-                    "expr": "rate(http_requests_total[5m])",
-                    "legendFormat": "{{service}} - {{method}} {{path}}",
-                    "datasource": "${DS_PROMETHEUS}"
+                    "expr": "sum by (job, method, uri) (rate(http_server_requests_seconds_count[5m]))",
+                    "legendFormat": "{{job}} - {{method}} {{uri}}",
+                    "datasource": "Prometheus"
                 }
             ],
             "gridPos": {
@@ -95,9 +95,9 @@
             "type": "graph",
             "targets": [
                 {
-                    "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
-                    "legendFormat": "{{service}}",
-                    "datasource": "${DS_PROMETHEUS}"
+                    "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_requests_seconds_bucket[5m])))",
+                    "legendFormat": "{{job}}",
+                    "datasource": "Prometheus"
                 }
             ],
             "gridPos": {
@@ -113,14 +113,14 @@
             "type": "graph",
             "targets": [
                 {
-                    "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
-                    "legendFormat": "{{service}} - 5xx errors",
-                    "datasource": "${DS_PROMETHEUS}"
+                    "expr": "sum by (job) (rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]))",
+                    "legendFormat": "{{job}} - 5xx errors",
+                    "datasource": "Prometheus"
                 },
                 {
-                    "expr": "rate(http_requests_total{status=~\"4..\"}[5m])",
-                    "legendFormat": "{{service}} - 4xx errors",
-                    "datasource": "${DS_PROMETHEUS}"
+                    "expr": "sum by (job) (rate(http_server_requests_seconds_count{status=~\"4..\"}[5m]))",
+                    "legendFormat": "{{job}} - 4xx errors",
+                    "datasource": "Prometheus"
                 }
             ],
             "gridPos": {
@@ -137,8 +137,8 @@
             "targets": [
                 {
                     "expr": "jvm_memory_used_bytes / jvm_memory_max_bytes * 100",
-                    "legendFormat": "{{service}} - {{area}}",
-                    "datasource": "${DS_PROMETHEUS}"
+                    "legendFormat": "{{job}} - {{area}}",
+                    "datasource": "Prometheus"
                 }
             ],
             "gridPos": {
@@ -155,8 +155,8 @@
             "targets": [
                 {
                     "expr": "rate(process_cpu_seconds_total[5m]) * 100",
-                    "legendFormat": "{{service}}",
-                    "datasource": "${DS_PROMETHEUS}"
+                    "legendFormat": "{{job}}",
+                    "datasource": "Prometheus"
                 }
             ],
             "gridPos": {
@@ -173,38 +173,19 @@
             "targets": [
                 {
                     "expr": "hikaricp_connections_active",
-                    "legendFormat": "{{service}} - Active",
-                    "datasource": "${DS_PROMETHEUS}"
+                    "legendFormat": "{{job}} - Active",
+                    "datasource": "Prometheus"
                 },
                 {
                     "expr": "hikaricp_connections_idle",
-                    "legendFormat": "{{service}} - Idle",
-                    "datasource": "${DS_PROMETHEUS}"
+                    "legendFormat": "{{job}} - Idle",
+                    "datasource": "Prometheus"
                 }
             ],
             "gridPos": {
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 24
-            }
-        },
-        {
-            "id": 8,
-            "title": "Application Version",
-            "type": "table",
-            "targets": [
-                {
-                    "expr": "info{name=\"app_version\"}",
-                    "format": "table",
-                    "instant": true,
-                    "datasource": "${DS_PROMETHEUS}"
-                }
-            ],
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
                 "y": 24
             }
         }

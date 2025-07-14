@@ -2,8 +2,10 @@ from flask import Flask, jsonify
 from langchain_community.llms import FakeListLLM
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
+from prometheus_flask_exporter import PrometheusMetrics
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 
 # Initialize a simple LangChain component (using FakeListLLM for demonstration)
 responses = ["This is a demonstration of LangChain integration."]
