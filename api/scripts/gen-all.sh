@@ -28,7 +28,8 @@ generate_java() {
   echo "Generating Java code..."
   check_command openapi-generator-cli
 
-openapi-generator-cli generate \
+  # Generate for API Gateway
+  openapi-generator-cli generate \
   -i api/gateway.yaml \
   -g spring \
   -o gateway \

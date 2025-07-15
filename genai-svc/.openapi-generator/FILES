@@ -36,6 +36,9 @@ genai_models/models/upload_and_process_documents200_response.py
 genai_models/models/user_preferences.py
 genai_models/openapi/openapi.yaml
 genai_models/test/__init__.py
+genai_models/test/test_chat_interface_controller.py
+genai_models/test/test_document_processing_controller.py
+genai_models/test/test_health_controller.py
 genai_models/typing_utils.py
 genai_models/util.py
 setup.py
