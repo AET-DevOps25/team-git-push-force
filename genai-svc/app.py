@@ -14,6 +14,7 @@ from controllers.chat_controller import chat_with_ai_assistant, initialize_chat_
 from controllers.document_controller import upload_and_process_documents, get_documents_for_concept, delete_document
 from controllers.health_controller import get_gen_ai_service_health
 from services.vector_store import vector_store_service
+from genai_models.encoder import JSONEncoder
 
 # Initialize Connexion app
 app = connexion.App(__name__, specification_dir='./genai_models/openapi/')
@@ -21,6 +22,9 @@ app.add_api('openapi.yaml', arguments={'title': 'AI Event Concepter - GenAI Serv
 
 # Get the underlying Flask app
 flask_app = app.app
+
+# Set custom JSON encoder
+flask_app.json_encoder = JSONEncoder
 
 # Enable CORS
 CORS(flask_app)
