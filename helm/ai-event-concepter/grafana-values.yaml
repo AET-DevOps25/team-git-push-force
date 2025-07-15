@@ -1,0 +1,10 @@
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClassName: "standard"
+adminUser: admin
+adminPassword: strongpassword
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard 

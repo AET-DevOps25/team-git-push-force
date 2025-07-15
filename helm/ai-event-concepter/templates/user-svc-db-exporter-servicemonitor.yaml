@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: user-svc-db-exporter-servicemonitor
+  namespace: team-git-push-force-monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: postgres-exporter
+      monitoring: "true"
+  namespaceSelector:
+    matchNames:
+      - team-git-push-force
+  endpoints:
+    - port: postgres-exporter
+      path: /metrics
+      interval: 15s 

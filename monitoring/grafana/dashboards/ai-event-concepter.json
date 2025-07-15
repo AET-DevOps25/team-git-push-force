@@ -188,6 +188,34 @@
                 "x": 0,
                 "y": 24
             }
+        },
+        {
+            "id": 8,
+            "title": "Service Version Overview",
+            "type": "table",
+            "targets": [
+                {
+                    "expr": "app_version_info",
+                    "format": "table",
+                    "refId": "A"
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "labelsToFields",
+                    "options": {}
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 32
+            }
         }
     ],
     "time": {

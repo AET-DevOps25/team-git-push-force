@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: genai-svc-servicemonitor
+  namespace: team-git-push-force-monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: genai-svc
+      monitoring: "true"
+  namespaceSelector:
+    matchNames:
+      - team-git-push-force
+  endpoints:
+    - port: genai-svc
+      path: /metrics
+      interval: 15s 

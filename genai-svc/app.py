@@ -3,9 +3,17 @@ from langchain_community.llms import FakeListLLM
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_client import Gauge
+
+APP_VERSION = "1.0.0"
+SERVICE_NAME = "genai-svc"
 
 app = Flask(__name__)
 metrics = PrometheusMetrics(app)
+
+# Custom version metric
+version_gauge = Gauge('app_version_info', 'Application version info', ['service', 'version'])
+version_gauge.labels(service=SERVICE_NAME, version=APP_VERSION).set(1)
 
 # Initialize a simple LangChain component (using FakeListLLM for demonstration)
 responses = ["This is a demonstration of LangChain integration."]

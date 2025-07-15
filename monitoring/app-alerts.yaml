@@ -1,0 +1,38 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: app-alerts
+  namespace: team-git-push-force-monitoring
+spec:
+  groups:
+    - name: app.rules
+      rules:
+        # High error rate
+        - alert: HighErrorRate
+          expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High error rate detected"
+            description: "Service {{ $labels.service }} has error rate of {{ $value }} errors per second"
+
+        # Pod restart count > 5
+        - alert: PodRestartingFrequently
+          expr: increase(kube_pod_container_status_restarts_total[10m]) > 5
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod restarting frequently"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted more than 5 times in 10 minutes"
+
+        # Slow response time (95th percentile > 2s)
+        - alert: HighResponseTime
+          expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job)) > 2
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High response time detected"
+            description: "95th percentile response time for {{ $labels.job }} is {{ $value }}s"
