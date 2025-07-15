@@ -12,6 +12,12 @@ spring:
           uri: forward:/health
           predicates:
             - Path=/
+        - id: auth_route
+          uri: forward:/auth
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - RewritePath=/api/auth/(?<segment>.*), /auth/$\{segment}
         - id: user_health_route
           uri: ${user-svc.url}
           predicates:
@@ -22,7 +28,6 @@ spring:
           uri: ${user-svc.url}
           predicates:
             - Path=/api/users/**
-            - Path=/auth/**
         - id: concept_health_route
           uri: ${concept-svc.url}
           predicates:
@@ -45,10 +50,29 @@ spring:
             - Path=/api/genai/**
 
 user-svc:
-  url: http://user-svc:8080
+  url: ${USER_SERVICE_URL:http://user-svc:8081}
 
 concept-svc:
-  url: http://concept-svc:8080
+  url: ${CONCEPT_SERVICE_URL:http://concept-svc:8082}
 
 genai-svc:
-  url: http://genai-svc:8083
+  url: ${GENAI_SERVICE_URL:http://genai-svc:8083}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+user-svc:
+  url: http://localhost:8081
+
+concept-svc:
+  url: http://localhost:8082
+
+genai-svc:
+  url: http://localhost:8083
+
+jwt:
+  secret: ${JWT_SECRET:defaultSecretKeyForDevelopmentEnvironmentOnly}
+  expiration: ${JWT_EXPIRATION:3600000} # 1 hour in milliseconds
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days in milliseconds
