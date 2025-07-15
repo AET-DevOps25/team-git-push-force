@@ -28,15 +28,15 @@ generate_java() {
   echo "Generating Java code..."
   check_command openapi-generator-cli
 
-  # Generate code for API Gateway
-  openapi-generator-cli generate \
-    -i api/gateway.yaml \
-    -g spring \
-    -o gateway \
-    --skip-validate-spec \
-    --api-package de.tum.aet.devops25.api.generated.controller \
-    --model-package de.tum.aet.devops25.api.generated.model \
-    --additional-properties=useTags=true,useSpringBoot3=true,interfaceOnly=true
+openapi-generator-cli generate \
+  -i api/gateway.yaml \
+  -g spring \
+  -o gateway \
+  --skip-validate-spec \
+  --api-package de.tum.aet.devops25.api.generated.controller \
+  --model-package de.tum.aet.devops25.api.generated.model \
+  --additional-properties=useTags=true,useSpringBoot3=true,interfaceOnly=true,reactive=true \
+  --library spring-boot
 
   # Generate for user-svc
   openapi-generator-cli generate \
