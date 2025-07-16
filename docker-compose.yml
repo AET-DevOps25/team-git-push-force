@@ -105,7 +105,7 @@ services:
     environment:
       - FLASK_ENV=production
       - WEAVIATE_URL=http://genai-svc-weaviate:8080  # Updated for new service name
-      - WEAVIATE_GRPC_PORT=8081  # Explicitly set gRPC port
+      - WEAVIATE_GRPC_PORT=50051  # Explicitly set gRPC port
       - WEAVIATE_API_KEY=${WEAVIATE_API_KEY:-}
       - MINIO_URL=http://genai-svc-minio:9000  # Updated for new service name
       - MINIO_ACCESS_KEY=minioadmin
@@ -125,10 +125,10 @@ services:
 
   # Weaviate Vector Database for GenAI Service
   genai-svc-weaviate:
-    image: semitechnologies/weaviate:1.24.1
+    image: semitechnologies/weaviate:1.30.5
     ports:
       - "8087:8080"  # HTTP port
-      - "8088:8081"  # gRPC port
+      - "50051:50051"  # gRPC port
     environment:
       - QUERY_DEFAULTS_LIMIT=20
       - AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true
@@ -136,6 +136,9 @@ services:
       - DEFAULT_VECTORIZER_MODULE=none
       - ENABLE_MODULES=text2vec-transformers
       - TRANSFORMERS_INFERENCE_API=http://genai-svc-t2v-transformers:8080
+      # Minimal single-node configuration
+      - CLUSTER_HOSTNAME=genai-svc-weaviate
+      - RAFT_BOOTSTRAP_EXPECT=1
     volumes:
       - weaviate_data:/var/lib/weaviate
     networks:

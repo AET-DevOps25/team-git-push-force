@@ -84,12 +84,12 @@ class TestControllerFunctions:
         assert 'models' in response
         assert 'vector_store' in response
 
-    @patch('services.llm_service.ConversationalRetrievalChain.from_llm')
+    @patch('services.llm_service.ConversationalRetrievalChain')
     def test_chat_with_ai_assistant(self, mock_chain_constructor):
         """Test the chat_with_ai_assistant function."""
         # Create a mock chain instance
         mock_chain = MagicMock()
-        mock_chain.return_value = {
+        mock_chain.invoke.return_value = {
             "answer": "This is a test response from the AI assistant.",
             "source_documents": []
         }
@@ -101,8 +101,11 @@ class TestControllerFunctions:
             conversation_id="test-conversation-id"
         )
 
-        # Call the process_chat_request function directly
-        response = process_chat_request(chat_request)
+        # Import the llm_service instance
+        from services.llm_service import llm_service
+
+        # Call the process_chat_request method on the llm_service instance
+        response = llm_service.process_chat_request(chat_request)
 
         # Verify the response has the expected attributes
         assert hasattr(response, 'response')

@@ -1,29 +1,30 @@
-connexion[swagger-ui] >= 2.6.0; python_version>="3.6"
-# 2.3 is the last version that supports python 3.4-3.5
-connexion[swagger-ui] <= 2.3.0; python_version=="3.5" or python_version=="3.4"
-# prevent breaking dependencies from advent of connexion>=3.0
-connexion[swagger-ui] <= 2.14.2; python_version>"3.4"
-# connexion requires werkzeug but connexion < 2.4.0 does not install werkzeug
-# we must peg werkzeug versions below to fix connexion
-# https://github.com/zalando/connexion/pull/1044
-werkzeug == 0.16.1; python_version=="3.5" or python_version=="3.4"
+# Use specific connexion version that works with modern Python
+connexion[swagger-ui] == 2.14.2
 swagger-ui-bundle >= 0.0.2
 python_dateutil >= 2.6.0
 setuptools >= 21.0.0
 Flask == 2.1.1
 
 # Vector database
-weaviate-client >= 4.0.0
-langchain-weaviate >= 0.0.5
-langchain-community >= 0.0.10
-langchain >= 0.0.267
+weaviate-client >= 4.3.3
+
+# LangChain dependencies - pinned for compatibility
+langchain-core==0.1.52
+langchain==0.1.17
+langchain-community==0.0.36
+langchain-weaviate==0.0.5
+langchain-huggingface==0.0.1
+
+# Pydantic dependencies
+pydantic>=2.0.0,<3.0.0
+pydantic-core>=2.0.0,<3.0.0
 
 # Embeddings
 sentence-transformers >= 2.2.2
 huggingface-hub >= 0.16.4
 
 # Websockets and server dependencies
-websockets >= 11.0.3
+websockets >= 12.0.0
 wsproto >= 1.2.0
 uvicorn >= 0.23.2
 gunicorn >= 21.2.0
@@ -34,6 +35,7 @@ requests >= 2.31.0
 flask-cors >= 3.0.10
 
 # Document processing
-boto3 >= 1.28.38
+boto3 >= 1.29.0
+botocore >= 1.32.0
 pypdf >= 3.15.1
 python-docx >= 0.8.11

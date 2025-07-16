@@ -1,235 +1,384 @@
 import os
 import time
+import requests
 import weaviate
 from weaviate.auth import AuthApiKey
 from weaviate.embedded import EmbeddedOptions
 from langchain_weaviate import WeaviateVectorStore
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
+from weaviate.collections.classes.filters import Filter
+
+
 
 class VectorStoreService:
-    """Service for interacting with the Weaviate vector database"""
+    """Service for managing vector storage and retrieval operations"""
 
     def __init__(self):
         """Initialize the vector store service"""
-        # Initialize default values
         self.client = None
         self.vector_store = None
         self.embeddings = None
-
-        # Initialize Weaviate client with retry mechanism
         self._initialize_weaviate_client()
 
-    def _initialize_weaviate_client(self):
-        """Initialize Weaviate client with retry mechanism"""
-        weaviate_url = os.getenv("WEAVIATE_URL", "http://localhost:8080")
-        weaviate_api_key = os.getenv("WEAVIATE_API_KEY", None)
-        max_retries = 5
-        retry_delay = 3  # seconds
+    def _wait_for_weaviate_ready(self, weaviate_url, timeout=120, check_interval=5):
+        """Wait for Weaviate to be ready and responding to requests
 
-        auth_config = weaviate.auth.AuthApiKey(api_key=weaviate_api_key) if weaviate_api_key else None
+        Args:
+            weaviate_url (str): URL of the Weaviate instance
+            timeout (int): Maximum time to wait in seconds
+            check_interval (int): Time between checks in seconds
 
-        # Get gRPC port from environment variable or calculate it
-        grpc_port = int(os.getenv("WEAVIATE_GRPC_PORT", 0))
-        if grpc_port == 0:
-            # Default gRPC port is typically HTTP port + 1 (e.g., 8080 -> 8081)
-            http_port = int(weaviate_url.split(":")[-1])
-            grpc_port = http_port + 1
-
-        print(f"Connecting to Weaviate at {weaviate_url} with gRPC port: {grpc_port}")
-
-        # Create connection config
-        connection_params = weaviate.connect.ConnectionParams.from_url(
-            url=weaviate_url,
-            grpc_port=grpc_port
-        )
-
-        # Add authentication if provided
-        if auth_config:
-            connection_params = connection_params.with_auth(auth_config)
-
-        # Try to connect with retries
-        for attempt in range(max_retries):
+        Returns:
+            bool: True if Weaviate is ready, False if timeout occurred
+        """
+        print(f"Waiting for Weaviate to be ready at {weaviate_url}...")
+        start_time = time.time()
+        while time.time() - start_time < timeout:
             try:
-                # Initialize client with v4 API
-                self.client = weaviate.WeaviateClient(
-                    connection_params=connection_params,
-                    skip_init_checks=True  # Skip initialization checks to avoid gRPC issues
-                )
-
-                # Connect to Weaviate
-                self.client.connect()
-                print(f"Successfully connected to Weaviate at {weaviate_url} (attempt {attempt + 1}/{max_retries})")
-
-                # Create schema if it doesn't exist
-                self._ensure_schema_exists()
-
-                # Initialize embeddings model
-                self.embeddings = HuggingFaceEmbeddings(
-                    model_name="sentence-transformers/all-MiniLM-L6-v2"
-                )
-
-                # Initialize vector store
-                self.vector_store = WeaviateVectorStore(
-                    client=self.client,
-                    index_name="Documents",
-                    text_key="content",
-                    embedding=self.embeddings
-                )
-
-                # If we get here, connection was successful
-                return
-
-            except Exception as e:
-                print(f"Error connecting to Weaviate (attempt {attempt + 1}/{max_retries}): {e}")
-                # Make sure client is properly closed if partially initialized
-                if self.client:
+                # First try the v1 ready endpoint
+                try:
+                    response = requests.get(f"{weaviate_url}/v1/.well-known/ready", timeout=5)
+                    if response.status_code == 200:
+                        ready_data = response.json()
+                        ready_status = ready_data.get("ready", False)
+                        if ready_status:
+                            print(f"Weaviate is ready after {time.time() - start_time:.2f} seconds")
+                            return True
+                        else:
+                            print(f"Weaviate endpoint reached but service reports not ready: {ready_data}")
+                except (requests.RequestException, ValueError) as e:
+                    # Try the legacy meta endpoint as fallback
+                    print(f"Error with v1 ready endpoint: {e}, trying legacy endpoint")
                     try:
-                        self.client.close()
-                    except:
-                        pass
-                    self.client = None
+                        response = requests.get(f"{weaviate_url}/v1/meta", timeout=5)
+                        if response.status_code == 200:
+                            print(f"Weaviate meta endpoint accessible after {time.time() - start_time:.2f} seconds")
+                            return True
+                    except (requests.RequestException, ValueError) as e2:
+                        print(f"Weaviate not yet ready (meta endpoint): {e2}")
+            except Exception as e:
+                print(f"Unexpected error checking Weaviate readiness: {e}")
 
-                if attempt < max_retries - 1:
-                    print(f"Retrying in {retry_delay} seconds...")
-                    time.sleep(retry_delay)
+            # Wait before next check
+            time.sleep(check_interval)
+            print(f"Waited {time.time() - start_time:.2f}s for Weaviate readiness...")
+
+        print(f"Timed out after {timeout} seconds waiting for Weaviate to be ready")
+        return False
+
+    def _initialize_weaviate_client(self):
+        """Initialize and configure the Weaviate client"""
+        try:
+            # Get Weaviate configuration from environment variables
+            weaviate_url = os.getenv("WEAVIATE_URL", "http://localhost:8080")
+            weaviate_api_key = os.getenv("WEAVIATE_API_KEY", None)
+            use_embedded = os.getenv("WEAVIATE_USE_EMBEDDED", "false").lower() == "true"
+            grpc_port = int(os.getenv("WEAVIATE_GRPC_PORT", "50051"))
+
+            # Perform readiness check for Docker Compose setup
+            if not use_embedded and not weaviate_url.startswith("http://localhost"):
+                self._wait_for_weaviate_ready(weaviate_url, timeout=60, check_interval=5)
+
+            # Initialize client with appropriate configuration
+            if use_embedded:
+                # Use embedded Weaviate for local development and testing
+                print("Initializing embedded Weaviate client")
+                embedded_options = EmbeddedOptions()
+                self.client = weaviate.Client(embedded_options=embedded_options)
+            else:
+                # Use external Weaviate instance (Docker or managed service)
+                print(f"Connecting to Weaviate at {weaviate_url}")
+
+                # Parse URL to extract host and port
+                from urllib.parse import urlparse
+                parsed_url = urlparse(weaviate_url)
+                host = parsed_url.hostname
+                port = parsed_url.port or 8080
+
+                # Use the modern v4 client connection approach
+                if weaviate_api_key:
+                    # With authentication
+                    self.client = weaviate.connect_to_local(
+                        host=host,
+                        port=port,
+                        grpc_port=grpc_port,
+                        auth_credentials=AuthApiKey(api_key=weaviate_api_key)
+                    )
                 else:
-                    print("Max retries reached. Could not connect to Weaviate.")
+                    # Without authentication
+                    self.client = weaviate.connect_to_local(
+                        host=host,
+                        port=port,
+                        grpc_port=grpc_port
+                    )
+
+            # Ensure required schema exists
+            self._ensure_schema_exists()
+
+            # Initialize embeddings model
+            # If transformers inference is available via API, use SentenceTransformer model
+            # Otherwise fall back to local embeddings
+            transformers_inference_api = os.getenv("TRANSFORMERS_INFERENCE_API", None)
+            model_name = "sentence-transformers/all-MiniLM-L6-v2"
+
+            print(f"Initializing embeddings model with {model_name}")
+            try:
+                # Try with the current version
+                self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
+            except Exception as e:
+                print(f"Error initializing HuggingFaceEmbeddings: {e}")
+                # Fallback - try with direct SentenceTransformers import if HuggingFace wrapper fails
+                from sentence_transformers import SentenceTransformer
+                from langchain_core.embeddings import Embeddings
+
+                class SentenceTransformerEmbeddings(Embeddings):
+                    def __init__(self, model_name):
+                        self.model = SentenceTransformer(model_name)
+
+                    def embed_documents(self, texts):
+                        embeddings = self.model.encode(texts)
+                        return embeddings.tolist()
+
+                    def embed_query(self, text):
+                        embedding = self.model.encode(text)
+                        return embedding.tolist()
+
+                print("Using fallback SentenceTransformerEmbeddings implementation")
+                self.embeddings = SentenceTransformerEmbeddings(model_name=model_name)
+
+            # Initialize vector store with Weaviate client
+            # For langchain-weaviate 0.0.5, use attributes parameter
+            print("Initializing vector store with langchain-weaviate 0.0.5")
+            self.vector_store = WeaviateVectorStore(
+                client=self.client,
+                index_name="Documents",
+                text_key="content", 
+                embedding=self.embeddings,
+                attributes=["document_id", "concept_id", "filename"]
+            )
+
+            print("Vector store service initialized successfully")
+
+        except Exception as e:
+            print(f"Failed to initialize vector store service: {e}")
+            # Reraise to prevent service from starting with broken vector store
+            raise
 
     def _ensure_schema_exists(self):
         """Ensure the required schema exists in Weaviate"""
         # Get collections to check if Documents collection exists
-        try:
-            # Try to get the Documents collection
-            # If it exists, this will succeed
-            self.client.collections.get("Documents")
-            print("Documents collection already exists in Weaviate")
-        except Exception:
-            # If the collection doesn't exist, create it
-            from weaviate.classes.config import Property, DataType, Configure
+        max_retries = 3
+        retry_delay = 2  # seconds
 
-            properties = [
-                Property(
-                    name="content",
-                    data_type=DataType.TEXT,
-                    description="The text content of the document chunk"
-                ),
-                Property(
-                    name="document_id",
-                    data_type=DataType.TEXT,
-                    description="The ID of the document"
-                ),
-                Property(
-                    name="concept_id",
-                    data_type=DataType.TEXT,
-                    description="The ID of the concept this document belongs to"
-                ),
-                Property(
-                    name="filename",
-                    data_type=DataType.TEXT,
-                    description="The original filename"
+        # Additional check for readiness before attempting to access collections
+        # This helps prevent "leader not found" errors
+        weaviate_url = os.getenv("WEAVIATE_URL", "http://localhost:8080")
+        self._wait_for_weaviate_ready(weaviate_url, timeout=30, check_interval=2)
+
+        # First, try to see if collection exists and check its properties
+        collection_exists = False
+        has_required_properties = False
+
+        for attempt in range(max_retries):
+            try:
+                # Try to get the Documents collection
+                docs_collection = self.client.collections.get("Documents")
+                collection_exists = True
+                print("Documents collection exists in Weaviate")
+
+                # Check if it has all required properties
+                try:
+                    properties = docs_collection.config.get().properties
+                    property_names = [p.name for p in properties]
+                    required_props = ["content", "document_id", "concept_id", "filename"]
+                    missing_props = [p for p in required_props if p not in property_names]
+
+                    if not missing_props:
+                        print("All required properties exist in schema")
+                        has_required_properties = True
+                        return
+                    else:
+                        print(f"Missing properties in schema: {missing_props}")
+                        # We need to delete and recreate the collection
+                        self.client.collections.delete("Documents")
+                        collection_exists = False
+                        break
+                except Exception as prop_err:
+                    print(f"Error checking properties: {prop_err}")
+                    break
+            except weaviate.exceptions.UnexpectedStatusCodeError as e:
+                if "leader not found" in str(e):
+                    print(f"Leader not found error (attempt {attempt+1}/{max_retries})")
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        print("Max retries reached for leader not found error")
+                        break
+                else:
+                    # Collection probably doesn't exist
+                    print(f"Collection does not exist: {e}")
+                    break
+            except Exception as e:
+                print(f"Unexpected error checking collection: {e}")
+                break
+
+        # If we need to create or recreate the collection
+        if not collection_exists or not has_required_properties:
+            try:
+                # Delete collection if it exists but is incomplete
+                if collection_exists and not has_required_properties:
+                    try:
+                        self.client.collections.delete("Documents")
+                        print("Deleted existing incomplete collection")
+                    except Exception as del_err:
+                        print(f"Error deleting collection: {del_err}")
+
+                # Import required classes for schema creation
+                from weaviate.classes.config import Property, DataType
+
+                # Define properties for our collection
+                properties = [
+                    Property(
+                        name="content",
+                        data_type=DataType.TEXT,
+                        description="The text content of the document chunk"
+                    ),
+                    Property(
+                        name="document_id",
+                        data_type=DataType.TEXT,
+                        description="The ID of the document"
+                    ),
+                    Property(
+                        name="concept_id",
+                        data_type=DataType.TEXT,
+                        description="The ID of the concept this document belongs to"
+                    ),
+                    Property(
+                        name="filename",
+                        data_type=DataType.TEXT,
+                        description="The original filename"
+                    )
+                ]
+
+                # Create the collection
+                self.client.collections.create(
+                    name="Documents",
+                    description="A collection to store document chunks for retrieval",
+                    properties=properties
                 )
-            ]
+                print("Created Documents collection with all required properties")
 
-            # Create the collection
-            self.client.collections.create(
-                name="Documents",
-                description="A collection to store document chunks for retrieval",
-                properties=properties
-            )
-            print("Created Documents collection in Weaviate")
+            except Exception as create_err:
+                print(f"Error creating schema: {create_err}")
 
-    def add_texts(self, texts, metadatas=None):
+    def add_texts(self, texts, metadatas, **kwargs):
         """Add texts to the vector store"""
-        if not self.vector_store:
-            print("Vector store not available")
-            return []
-
-        try:
-            return self.vector_store.add_texts(texts=texts, metadatas=metadatas)
-        except Exception as e:
-            print(f"Error adding texts to vector store: {e}")
-            return []
+        return self.vector_store.add_texts(texts=texts, metadatas=metadatas, **kwargs)
 
     def get_retriever(self, concept_id=None):
-        """Get a retriever for the vector store, optionally filtered by concept_id"""
-        if not self.vector_store:
-            print("Vector store not available")
-            return None
+        """Get a retriever for the vector store, optionally filtered by concept_id
 
-        search_kwargs = {}
+        Args:
+            concept_id (str, optional): The concept ID to filter documents by. If None, all documents are retrieved.
 
-        # Add filter for concept_id if provided
+        Returns:
+            A LangChain retriever that will fetch documents from the vector store
+        """
+        print(f"Creating retriever for concept_id: {concept_id}")
+
+        # Skip custom retriever implementation due to Pydantic issues
+        # Use standard retriever from vector store with search_kwargs
         if concept_id:
-            search_kwargs["filter"] = {
-                "path": ["concept_id"],
-                "operator": "Equal",
-                "valueString": concept_id
-            }
+            # Create a Filter object directly using the Filter class from weaviate
+            filters = Filter.by_property("concept_id").equal(concept_id)
+            print(f"Creating filtered retriever with Filter object for concept_id: {concept_id}")
 
-        return self.vector_store.as_retriever(
-            search_kwargs=search_kwargs
-        )
+            # Use the built-in as_retriever method with proper Filter object
+            return self.vector_store.as_retriever(
+                search_kwargs={
+                    "k": 10,
+                    "filters": filters
+                }
+            )
+        else:
+            # No filter needed
+            print("Creating standard retriever without filters")
+            return self.vector_store.as_retriever(search_kwargs={"k": 10})
 
     def delete_by_document_id(self, document_id):
-        """Delete all chunks for a specific document"""
-        if not self.client:
-            print("Weaviate client not available")
-            return False
-
+        """Delete all chunks associated with a specific document_id"""
         try:
-            # Create a filter for document_id
-            from weaviate.query import Filter
-
-            filter_by_doc_id = Filter.by_property("document_id").equal(document_id)
-
-            # Delete objects with the specified document_id
-            self.client.collections.get("Documents").data.delete_many(
-                filters=filter_by_doc_id
-            )
-            return True
-        except Exception as e:
-            print(f"Error deleting document from vector store: {e}")
-            return False
-
-    def get_document_count(self, concept_id=None):
-        """Get the count of documents, optionally filtered by concept_id"""
-        if not self.client:
-            print("Weaviate client not available")
-            return 0
-
-        try:
-            # Get the Documents collection
+            # Get collection and create a query
             collection = self.client.collections.get("Documents")
 
-            # Create filter if concept_id is provided
-            if concept_id:
-                from weaviate.query import Filter
-                filter_by_concept = Filter.by_property("concept_id").equal(concept_id)
-                count = collection.aggregate.count(filters=filter_by_concept)
-            else:
-                count = collection.aggregate.count()
+            # Query to find objects with the matching document_id
+            result = collection.query.fetch_objects(
+                filters=collection.query.filter.by_property("document_id").equal(document_id)
+            )
 
-            return count
+            # If objects were found, delete them
+            if result.objects:
+                print(f"Found {len(result.objects)} chunks for document ID {document_id}")
+                for obj in result.objects:
+                    # Delete each object by its ID
+                    collection.data.delete_by_id(obj.uuid)
+                print(f"Successfully deleted all chunks for document ID {document_id}")
+                return True
+            else:
+                print(f"No chunks found for document ID {document_id}")
+                return False
+
         except Exception as e:
-            print(f"Error getting document count: {e}")
+            print(f"Error deleting document chunks: {e}")
+            return False
+
+    def get_document_count(self, document_id: str) -> int:
+        """
+        Gets the number of vectors for a given document ID.
+        Args:
+            document_id: The ID of the document.
+        Returns:
+            The number of vectors for the document.
+        """
+        try:
+            # Define the filter to find objects with the matching document_id
+            # Create a Filter object directly using the Filter class from weaviate
+            filters = Filter.by_property("document_id").equal(document_id)
+
+            # Perform the aggregation query using the Filter object
+            result = self.vector_store.aggregate.over_all(filters=filters)
+
+            return result.total_count
+
+        except Exception as e:
+            # Log the exception for debugging purposes
+            print(f"An error occurred while getting document count: {e}")
+            # Optionally, re-raise the exception if you want the caller to handle it
+            # raise
             return 0
 
     def close(self):
         """Close the Weaviate client connection"""
-        if self.client:
-            try:
-                # Ensure all connections are properly closed
-                self.client.close()
-                # Set client to None to prevent further usage
-                self.client = None
-                self.vector_store = None
-                print("Weaviate client connection closed")
-            except Exception as e:
-                print(f"Error closing Weaviate client connection: {e}")
+        try:
+            if self.client:
+                # Check if client has a close method (newer versions of weaviate-client)
+                if hasattr(self.client, 'close'):
+                    self.client.close()
+                    print("Closed Weaviate client connection")
+                # For embedded client, check if there's a specific shutdown method
+                elif hasattr(self.client, '_connection') and hasattr(self.client._connection, 'embedded_db'):
+                    # Handle embedded DB shutdown if needed
+                    if hasattr(self.client._connection.embedded_db, 'stop'):
+                        self.client._connection.embedded_db.stop()
+                        print("Stopped embedded Weaviate database")
+        except Exception as e:
+            print(f"Error closing Weaviate client: {e}")
 
     def __del__(self):
-        """Destructor to ensure the connection is closed when the object is garbage collected"""
+        """Destructor to ensure connections are closed"""
         self.close()
 
-# Create a singleton instance
+
+# Singleton instance
 vector_store_service = VectorStoreService()
