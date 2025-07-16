@@ -1,9 +1,7 @@
 import os
-import requests
-import json
-import re
 import warnings
 from typing import List, Dict, Any, Optional
+
 from langchain.chains import ConversationalRetrievalChain
 from langchain.prompts import PromptTemplate
 from langchain_community.llms.fake import FakeListLLM
@@ -11,16 +9,18 @@ from langchain.schema.runnable import RunnablePassthrough
 
 from genai_models.models.chat_request import ChatRequest
 from genai_models.models.chat_response import ChatResponse
-from genai_models.models.chat_response_concept_suggestion import ChatResponseConceptSuggestion
-from genai_models.models.chat_response_concept_suggestion_event_details import ChatResponseConceptSuggestionEventDetails
-from genai_models.models.chat_response_concept_suggestion_agenda_inner import ChatResponseConceptSuggestionAgendaInner
-from genai_models.models.chat_response_concept_suggestion_speakers_inner import ChatResponseConceptSuggestionSpeakersInner
-from genai_models.models.chat_response_concept_suggestion_pricing import ChatResponseConceptSuggestionPricing
 from genai_models.models.initialize_chat_for_concept_request import InitializeChatForConceptRequest
-from services.vector_store import vector_store_service
 
 # Import custom OpenWebUI LLM
 from openwebui_llm import OpenWebUILLM
+
+# Import services
+from services.vector_store import vector_store_service
+from services.concept_extractor import concept_extractor
+from services.response_generator import response_generator
+from services.welcome_generator import welcome_generator
+from services.conversation_history_service import conversation_history_service
+
 
 class LLMService:
     """Service for interacting with language models"""
@@ -33,7 +33,7 @@ class LLMService:
             self.llm = OpenWebUILLM(
                 model_name=os.getenv("OPENWEBUI_MODEL", "llama3"),
                 temperature=0.7,
-                max_tokens=1024
+                max_tokens=2048  # Increased token count to ensure full JSON can be generated
             )
             print("Successfully initialized OpenWebUI LLM")
         except Exception as e:
@@ -41,24 +41,70 @@ class LLMService:
             print("Falling back to FakeListLLM")
             # Fall back to FakeListLLM if OpenWebUI is not available
             self.llm = FakeListLLM(
-                responses=["This is a placeholder response from the FakeListLLM model."],
+                        responses=["""I understand you're interested in planning an event. Here's a concept based on the information provided.
+
+        ```json
+        {
+          "title": "Sample Conference",
+          "eventDetails": {
+            "theme": "Technology and Innovation",
+            "format": "HYBRID",
+            "capacity": 250,
+            "duration": "2 days",
+            "targetAudience": "Technology professionals and enthusiasts",
+            "location": "Tech Hub Conference Center"
+          },
+          "agenda": [
+            {
+              "time": "9:00 AM",
+              "title": "Opening Keynote",
+              "type": "KEYNOTE",
+              "duration": 60
+            },
+            {
+              "time": "10:30 AM",
+              "title": "Networking Break",
+              "type": "BREAK",
+              "duration": 30
+            }
+          ],
+          "notes": "This is a placeholder response from the development environment"
+        }
+        ```"""],
                 temperature=0.7,
             )
 
         # Initialize prompt templates
+        # Use raw string to avoid issues with escape characters and indentation
         self.chat_prompt = PromptTemplate(
             input_variables=["context", "question", "chat_history"],
-            template="""You are an AI assistant for event planning and concept development. 
+            template=r"""You are an AI assistant for event planning and concept development. 
             You have access to previous conversation history and context about the event concept being developed.
 
             Use the following context to answer the question. If you don't know the answer, 
             just say that you don't know, don't try to make up an answer.
 
-            When suggesting event concepts, please provide your response in two parts:
+            For EVERY response, please provide your answer in two parts:
 
             1. A conversational response to the user's question that acknowledges previous conversation context.
 
-            2. A structured JSON object containing the concept details with the following format:
+            2. A structured JSON object containing the concept details with the following format.
+               HERE IS AN EXAMPLE OF A VALID RESPONSE FORMAT YOU MUST FOLLOW:
+
+            "I understand you're looking for a tech conference with workshops on AI. That sounds like a great idea! I've developed an initial concept based on your requirements.
+
+            ```json
+            {{
+              "title": "AI Innovation Summit",
+              "eventDetails": {{
+                "theme": "Future of AI in Business",
+                "format": "HYBRID"
+              }},
+              "notes": "This is a concept for an AI-focused event with hands-on workshops"
+            }}
+            ```"
+
+            Now, here is the JSON structure you should include:
             ```json
             {{
               "title": "Event Title",
@@ -103,7 +149,9 @@ class LLMService:
             }}
             ```
 
-            Always include the JSON object when suggesting event concepts, even if it's a partial suggestion.
+            IMPORTANT: YOU MUST INCLUDE THE JSON OBJECT IN EVERY RESPONSE, EXACTLY AS SHOWN ABOVE.
+            The JSON object is REQUIRED for the application to work correctly.
+            For simple questions or responses, include at least the title and notes fields in the JSON.
             Make sure the JSON is properly formatted and valid.
 
             Event Concept Context: {context}
@@ -116,299 +164,9 @@ class LLMService:
             Answer:"""
         )
 
-        self.welcome_prompt = PromptTemplate(
-            input_variables=["user_name", "concept_name", "concept_description"],
-            template="""You are an AI assistant for event planning and concept development.
-
-            Generate a friendly welcome message for {user_name} who is creating a new event concept called "{concept_name}".
-
-            The concept is described as: {concept_description}
-
-            Your welcome message should be enthusiastic, mention the concept name and briefly comment on the concept description.
-            Also offer to help with developing the concept further.
-
-            Welcome message:"""
-        )
-
-    def extract_concept_suggestion(self, response_text: str) -> ChatResponseConceptSuggestion:
-        """Extract concept suggestions from the response text"""
-        # Initialize with default values
-        title = "Event Concept Suggestion"
-        description = response_text
-        event_details = None
-        agenda = []
-        speakers = []
-        pricing = None
-        notes = ""
-        reasoning = ""
-        confidence = 0.9
-
-        # Try to extract JSON from the response
-        json_data = self._extract_json_from_text(response_text)
-
-        if json_data:
-            # Extract data from JSON
-            if "title" in json_data:
-                title = json_data["title"]
-
-            # Extract event details
-            if "eventDetails" in json_data:
-                event_details_data = json_data["eventDetails"]
-                event_details = ChatResponseConceptSuggestionEventDetails(
-                    theme=event_details_data.get("theme"),
-                    format=event_details_data.get("format", "").upper() if event_details_data.get("format") else None,
-                    capacity=event_details_data.get("capacity"),
-                    duration=event_details_data.get("duration"),
-                    target_audience=event_details_data.get("targetAudience"),
-                    location=event_details_data.get("location")
-                )
-
-            # Extract agenda
-            if "agenda" in json_data and json_data["agenda"]:
-                for agenda_item in json_data["agenda"]:
-                    agenda.append(ChatResponseConceptSuggestionAgendaInner(
-                        time=agenda_item.get("time", ""),
-                        title=agenda_item.get("title", ""),
-                        type=agenda_item.get("type", "KEYNOTE"),
-                        duration=agenda_item.get("duration", 60)
-                    ))
-
-            # Extract speakers
-            if "speakers" in json_data and json_data["speakers"]:
-                for speaker in json_data["speakers"]:
-                    speakers.append(ChatResponseConceptSuggestionSpeakersInner(
-                        name=speaker.get("name", ""),
-                        expertise=speaker.get("expertise", ""),
-                        suggested_topic=speaker.get("suggestedTopic", "")
-                    ))
-
-            # Extract pricing
-            if "pricing" in json_data:
-                pricing_data = json_data["pricing"]
-                pricing = ChatResponseConceptSuggestionPricing(
-                    currency=pricing_data.get("currency", "USD"),
-                    regular=pricing_data.get("regular"),
-                    early_bird=pricing_data.get("earlyBird"),
-                    vip=pricing_data.get("vip"),
-                    student=pricing_data.get("student")
-                )
-
-            # Extract notes and reasoning
-            if "notes" in json_data:
-                notes = json_data["notes"]
-
-            if "reasoning" in json_data:
-                reasoning = json_data["reasoning"]
-        else:
-            # Fallback to legacy text parsing for backward compatibility with tests
-            return self._extract_concept_suggestion_legacy(response_text)
-
-        # Create and return the concept suggestion object
-        return ChatResponseConceptSuggestion(
-            title=title,
-            description=description,
-            event_details=event_details,
-            agenda=agenda if agenda else None,
-            speakers=speakers if speakers else None,
-            pricing=pricing,
-            notes=notes,
-            reasoning=reasoning,
-            confidence=confidence
-        )
-
-    def _extract_json_from_text(self, text: str) -> dict:
-        """Extract JSON object from text"""
-        # Look for JSON pattern in the text
-        json_pattern = r'```json\s*(.*?)\s*```'
-        json_match = re.search(json_pattern, text, re.DOTALL)
-
-        if not json_match:
-            # Try alternative pattern without the json tag
-            json_pattern = r'```\s*(\{.*?\})\s*```'
-            json_match = re.search(json_pattern, text, re.DOTALL)
-
-        if not json_match:
-            # Try to find JSON without code blocks
-            # This pattern doesn't have a capturing group, so we need to handle it differently
-            json_pattern = r'\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\}))*\}))*\}'
-            json_match = re.search(json_pattern, text, re.DOTALL)
-
-        if json_match:
-            try:
-                # Parse the JSON
-                if len(json_match.groups()) > 0:
-                    # For patterns with capturing groups (first two patterns)
-                    json_str = json_match.group(1)
-                else:
-                    # For pattern without capturing group (third pattern)
-                    json_str = json_match.group(0)
-
-                # Debug the extracted JSON string
-                print(f"Extracted JSON string: {json_str[:100]}...")
-
-                return json.loads(json_str)
-            except json.JSONDecodeError as e:
-                print(f"Error parsing JSON: {e}")
-                # Try to clean up the JSON string and try again
-                try:
-                    # Remove any trailing commas before closing braces or brackets
-                    json_str = re.sub(r',\s*}', '}', json_str)
-                    json_str = re.sub(r',\s*]', ']', json_str)
-                    return json.loads(json_str)
-                except Exception:
-                    print(f"Failed to parse JSON even after cleanup")
-                    return {}
-            except Exception as e:
-                print(f"Unexpected error parsing JSON: {e}")
-                return {}
-
-        return {}
-
-    def _extract_concept_suggestion_legacy(self, response_text: str) -> ChatResponseConceptSuggestion:
-        """Legacy method to extract concept suggestions from text format (for backward compatibility)"""
-        # Initialize with default values
-        title = "Event Concept Suggestion"
-        description = response_text
-        event_details = None
-        agenda = []
-        speakers = []
-        pricing = None
-        notes = ""
-        reasoning = ""
-        confidence = 0.9
-
-        # Extract title if it appears to be a specific event concept
-        title_match = re.search(r'(?:^|\n|\s)Title:\s*"?([^"\n]+)"?', response_text, re.IGNORECASE)
-        if title_match:
-            title = title_match.group(1).strip()
-            if title.lower().startswith("title:"):
-                title = title[6:].strip()
-
-        # Extract event details
-        theme_match = re.search(r'(?:^|\n|\s)(?:Theme|Focus):\s*"?([^"\n]+)"?', response_text, re.IGNORECASE)
-        format_match = re.search(r'(?:^|\n|\s)Format:\s*(PHYSICAL|VIRTUAL|HYBRID|physical|virtual|hybrid)', response_text, re.IGNORECASE)
-        capacity_match = re.search(r'(?:^|\n|\s)(?:Capacity|Attendees):\s*(\d+)', response_text, re.IGNORECASE)
-        duration_match = re.search(r'(?:^|\n|\s)Duration:\s*([^\n]+)', response_text, re.IGNORECASE)
-        target_audience_match = re.search(r'(?:^|\n|\s)(?:Target Audience|Audience):\s*([^\n]+)', response_text, re.IGNORECASE)
-        location_match = re.search(r'(?:^|\n|\s)Location:\s*([^\n]+)', response_text, re.IGNORECASE)
-
-        # Create event details object if any matches found
-        if any([theme_match, format_match, capacity_match, duration_match, target_audience_match, location_match]):
-            event_details = ChatResponseConceptSuggestionEventDetails(
-                theme=theme_match.group(1).strip() if theme_match else None,
-                format=format_match.group(1).upper() if format_match else None,
-                capacity=int(capacity_match.group(1)) if capacity_match else None,
-                duration=duration_match.group(1).strip() if duration_match else None,
-                target_audience=target_audience_match.group(1).strip() if target_audience_match else None,
-                location=location_match.group(1).strip() if location_match else None
-            )
-
-        # Extract agenda items
-        agenda_section_match = re.search(r'(?:^|\n|\s)Agenda:\s*\n(.*?)(?:\n\n|\n[A-Z]|\Z)', response_text, re.DOTALL | re.IGNORECASE)
-        if agenda_section_match:
-            agenda_text = agenda_section_match.group(1)
-            agenda_pattern = r'(?:^|\n)(?:\*\*)?(\d{1,2}:\d{2}(?:\s*(?:AM|PM))?)\s*(?:-|–|:)\s*([^\n(]+)(?:\((\d+)(?:\s*min)?\))?'
-            agenda_matches = re.finditer(agenda_pattern, agenda_text, re.MULTILINE)
-
-            for match in agenda_matches:
-                time = match.group(1).strip()
-                title = match.group(2).strip()
-                duration = int(match.group(3)) if match.group(3) else 60  # Default to 60 minutes
-
-                # Determine type based on keywords
-                session_type = "KEYNOTE"  # Default
-                if any(keyword in title.lower() for keyword in ["workshop", "hands-on"]):
-                    session_type = "WORKSHOP"
-                elif any(keyword in title.lower() for keyword in ["panel", "discussion"]):
-                    session_type = "PANEL"
-                elif any(keyword in title.lower() for keyword in ["network", "social"]):
-                    session_type = "NETWORKING"
-                elif any(keyword in title.lower() for keyword in ["break", "coffee"]):
-                    session_type = "BREAK"
-                elif any(keyword in title.lower() for keyword in ["lunch", "dinner", "breakfast"]):
-                    session_type = "LUNCH"
-
-                agenda.append(ChatResponseConceptSuggestionAgendaInner(
-                    time=time,
-                    title=title,
-                    type=session_type,
-                    duration=duration
-                ))
-
-        # Extract speaker suggestions
-        speakers_section_match = re.search(r'(?:^|\n|\s)Speakers:\s*\n(.*?)(?:\n\n|\n[A-Z]|\Z)', response_text, re.DOTALL | re.IGNORECASE)
-        if speakers_section_match:
-            speakers_text = speakers_section_match.group(1)
-            speaker_pattern = r'(?:^|\n)(?:\*\*)?([A-Z][a-zA-Z\s.]+)(?:\*\*)?\s*(?:-|–|:)\s*([^\n]+)'
-            speaker_matches = re.finditer(speaker_pattern, speakers_text, re.MULTILINE)
-
-            for match in speaker_matches:
-                name = match.group(1).strip()
-                description = match.group(2).strip()
-
-                # Skip if this doesn't look like a person's name
-                if any(keyword in name.lower() for keyword in ["day", "session", "break", "lunch"]):
-                    continue
-
-                # Try to extract expertise and topic
-                expertise = ""
-                topic = ""
-
-                if "(" in description and ")" in description:
-                    parts = description.split("(")
-                    if len(parts) > 1:
-                        topic = parts[0].strip()
-                        expertise = parts[1].split(")")[0].strip()
-                else:
-                    expertise = description
-
-                speakers.append(ChatResponseConceptSuggestionSpeakersInner(
-                    name=name,
-                    expertise=expertise,
-                    suggested_topic=topic
-                ))
-
-        # Extract pricing if present
-        pricing_section_match = re.search(r'(?:^|\n|\s)Pricing:\s*\n(.*?)(?:\n\n|\n[A-Z]|\Z)', response_text, re.DOTALL | re.IGNORECASE)
-        if pricing_section_match:
-            pricing_text = pricing_section_match.group(1)
-            currency_match = re.search(r'(?:^|\n|\s)(?:Currency|Price):\s*([A-Z]{3})', pricing_text, re.IGNORECASE)
-            regular_match = re.search(r'(?:^|\n|\s)(?:Regular|Standard)(?:\s*Price)?:\s*(\d+)', pricing_text, re.IGNORECASE)
-            early_bird_match = re.search(r'(?:^|\n|\s)Early Bird(?:\s*Price)?:\s*(\d+)', pricing_text, re.IGNORECASE)
-            vip_match = re.search(r'(?:^|\n|\s)VIP(?:\s*Price)?:\s*(\d+)', pricing_text, re.IGNORECASE)
-            student_match = re.search(r'(?:^|\n|\s)Student(?:\s*Price)?:\s*(\d+)', pricing_text, re.IGNORECASE)
-
-            if any([currency_match, regular_match, early_bird_match, vip_match, student_match]):
-                pricing = ChatResponseConceptSuggestionPricing(
-                    currency=currency_match.group(1) if currency_match else "USD",
-                    regular=float(regular_match.group(1)) if regular_match else None,
-                    early_bird=float(early_bird_match.group(1)) if early_bird_match else None,
-                    vip=float(vip_match.group(1)) if vip_match else None,
-                    student=float(student_match.group(1)) if student_match else None
-                )
-
-        # Extract reasoning if present
-        reasoning_match = re.search(r'(?:^|\n|\s)(?:Reasoning|Rationale):\s*(.*?)(?:\n\n|\n[A-Z]|\n\s*Notes:|\Z)', response_text, re.DOTALL | re.IGNORECASE)
-        if reasoning_match:
-            reasoning = reasoning_match.group(1).strip()
-
-        # Extract notes if present
-        notes_match = re.search(r'(?:^|\n|\s)(?:Notes|Additional Information):\s*(.*?)(?:\n\n|\n[A-Z]|\Z)', response_text, re.DOTALL | re.IGNORECASE)
-        if notes_match:
-            notes = notes_match.group(1).strip()
-
-
-        return ChatResponseConceptSuggestion(
-            title=title,
-            description=description,
-            event_details=event_details,
-            agenda=agenda if agenda else None,
-            speakers=speakers if speakers else None,
-            pricing=pricing,
-            notes=notes,
-            reasoning=reasoning,
-            confidence=confidence
-        )
+        # Initialize the other services with this LLM
+        response_generator.concept_extractor = concept_extractor
+        welcome_generator.llm = self.llm
 
     def process_chat_request(self, chat_request: ChatRequest) -> ChatResponse:
         """Process a chat request and generate a response"""
@@ -418,18 +176,66 @@ class LLMService:
         concept_id = concept.id if concept else None
 
         # Get chat history - format it properly for the prompt
-        chat_history = ""
+        chat_history_str = ""
+        chat_history_tuples = []
+        
+        # Get conversation ID from the request
+        conversation_id = getattr(chat_request, 'conversation_id', None)
+        
+        # Try to get conversation history from the service if we have a conversation ID
+        if conversation_id:
+            print(f"Retrieving conversation history for conversation ID: {conversation_id}")
+            # Get formatted history from the conversation history service
+            server_history_str, server_history_tuples = conversation_history_service.get_formatted_history(conversation_id)
+            
+            if server_history_str:
+                chat_history_str = server_history_str
+                chat_history_tuples = server_history_tuples
+                print(f"Retrieved {len(server_history_tuples)} conversation pairs from server history")
+            else:
+                print(f"No server-side history found for conversation ID: {conversation_id}")
+        
+        # If client also provided history, use it as a fallback or merge it with server history
+        client_history_provided = False
         if hasattr(chat_request, 'context') and chat_request.context and hasattr(chat_request.context, 'previous_messages') and chat_request.context.previous_messages:
-            print(f"Found {len(chat_request.context.previous_messages)} previous messages in conversation history")
-            chat_history_lines = []
-            for msg in chat_request.context.previous_messages:
-                if hasattr(msg, 'user_message') and msg.user_message:
-                    chat_history_lines.append(f"User: {msg.user_message}")
-                if hasattr(msg, 'assistant_response') and msg.assistant_response:
-                    chat_history_lines.append(f"Assistant: {msg.assistant_response}")
-            chat_history = "\n".join(chat_history_lines)
-        else:
-            print("No previous conversation history found in request")
+            client_history_provided = True
+            print(f"Found {len(chat_request.context.previous_messages)} previous messages in client-provided history")
+            
+            # If we don't have server history, use client history
+            if not chat_history_str:
+                chat_history_lines = []
+                
+                # Group messages by role for proper conversation flow
+                current_user_message = ""
+                current_assistant_message = ""
+                
+                for msg in chat_request.context.previous_messages:
+                    if hasattr(msg, 'role') and msg.role and hasattr(msg, 'content') and msg.content:
+                        if msg.role == "user":
+                            # If we have a complete pair, add it to tuples
+                            if current_user_message and current_assistant_message:
+                                chat_history_tuples.append((current_user_message, current_assistant_message))
+                                current_user_message = ""
+                                current_assistant_message = ""
+                            
+                            # Set the current user message
+                            current_user_message = msg.content
+                            chat_history_lines.append(f"User: {msg.content}")
+                        elif msg.role == "assistant":
+                            current_assistant_message = msg.content
+                            chat_history_lines.append(f"Assistant: {msg.content}")
+                
+                # Add the last pair if we have both parts
+                if current_user_message and current_assistant_message:
+                    chat_history_tuples.append((current_user_message, current_assistant_message))
+                
+                chat_history_str = "\n".join(chat_history_lines)
+                print(f"Using client-provided history as fallback")
+        
+        if not chat_history_str:
+            print("No conversation history found (neither server-side nor client-provided)")
+            
+        print(f"Using {len(chat_history_tuples)} conversation pairs for LLM context")
 
         # Prepare enhanced message with concept info if available
         enhanced_message = message
@@ -468,32 +274,32 @@ class LLMService:
             # Try to use RAG if we have a concept_id and vector store
             if concept_id and vector_store_service.vector_store:
                 try:
-                        try:
-                            # Get retriever for this concept with enhanced error handling
-                            retriever = vector_store_service.get_retriever(concept_id)
-                        except Exception as retriever_error:
-                            print(f"Error creating retriever: {retriever_error}")
-                            # Fallback to simple LLM without retrieval
-                            chain = self.chat_prompt | self.llm
-                            response_text = chain.invoke({
-                                "context": f"Unable to access documents for concept {concept_id} due to a technical error.",
-                                "question": message,
-                                "chat_history": str(chat_history)
-                            })
-                            # Extract concept suggestion from response text
-                            concept_suggestion = self.extract_concept_suggestion(response_text)
-                            # Generate dynamic follow-up suggestions and questions
-                            suggestions = self._generate_dynamic_suggestions(concept_suggestion)
-                            follow_up_questions = self._generate_dynamic_follow_up_questions(concept_suggestion)
-                            return ChatResponse(
-                                response=response_text,
-                                suggestions=suggestions,
-                                follow_up_questions=follow_up_questions,
-                                sources=[],
-                                confidence=0.9,
-                                concept_suggestion=concept_suggestion,
-                                tokens={"prompt": 100, "response": 150, "total": 250}
-                            )
+                    try:
+                        # Get retriever for this concept with enhanced error handling
+                        retriever = vector_store_service.get_retriever(concept_id)
+                    except Exception as retriever_error:
+                        print(f"Error creating retriever: {retriever_error}")
+                        # Fallback to simple LLM without retrieval
+                        chain = self.chat_prompt | self.llm
+                        response_text = chain.invoke({
+                            "context": f"Unable to access documents for concept {concept_id} due to a technical error.",
+                            "question": message,
+                            "chat_history": chat_history_str
+                        })
+                        # Extract concept suggestion from response text
+                        concept_suggestion = concept_extractor.extract_concept_suggestion(response_text)
+                        # Generate dynamic follow-up suggestions and questions
+                        suggestions = response_generator._generate_dynamic_suggestions(concept_suggestion)
+                        follow_up_questions = response_generator._generate_dynamic_follow_up_questions(concept_suggestion)
+                        return ChatResponse(
+                            response=response_text,
+                            suggestions=suggestions,
+                            follow_up_questions=follow_up_questions,
+                            sources=[],
+                            confidence=0.9,
+                            concept_suggestion=concept_suggestion,
+                            tokens={"prompt": 100, "response": 150, "total": 250}
+                        )
                 except Exception as retriever_error:
                     print(f"Error creating retriever: {retriever_error}")
                     # Fallback to simple LLM response without retrieval
@@ -501,18 +307,28 @@ class LLMService:
                     response_text = chain.invoke({
                         "context": f"Unable to access documents for concept {concept_id} due to technical error.",
                         "question": message,
-                        "chat_history": str(chat_history)
+                        "chat_history": chat_history_str
                     })
-                    return self._create_response(response_text, [])
+                    return response_generator.create_response(response_text, [])
 
                 if retriever:
                     # Create custom prompts that don't require a "title" variable
                     from langchain.prompts import PromptTemplate
 
                     # Create a custom prompt template for the question generator
+                    # Use raw string to avoid issues with escape characters and indentation
                     custom_question_prompt = PromptTemplate(
                         input_variables=["chat_history", "question"],
-                        template="""Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+                        template=r"""You are an AI assistant specializing in event planning and concept development.
+
+                        Given the following conversation history about event planning and a follow-up question, 
+                        rephrase the follow-up question to be a standalone question that captures all relevant 
+                        context about the event concept being discussed.
+
+                        Make sure your standalone question:
+                        1. Incorporates key details about the event concept from the conversation history
+                        2. Maintains the original intent of the follow-up question
+                        3. Is phrased in a way that will help generate a comprehensive response about event planning
 
                         Chat History:
                         {chat_history}
@@ -523,10 +339,81 @@ class LLMService:
                     )
 
                     # Create a custom prompt template for the QA chain
+                    # Use raw string to avoid issues with escape characters and indentation
                     qa_prompt = PromptTemplate(
                         input_variables=["context", "question", "chat_history"],
-                        template="""You are an AI assistant for event planning and concept development. 
-                        Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+                        template=r"""You are an AI assistant for event planning and concept development. 
+                        Use the following pieces of context to answer the question at the end. If you don't know the answer, 
+                        just say that you don't know, don't try to make up an answer.
+
+                        For EVERY response, please provide your answer in two parts:
+
+                        1. A conversational response to the user's question that acknowledges previous conversation context.
+
+                        2. A structured JSON object containing the concept details as follows.
+                           Here is an example of a properly formatted response:
+
+                        "I understand you're looking for a tech conference. Based on your requirements, I've developed an initial concept.
+
+                        ```json
+                        {{
+                          "title": "Tech Innovation Summit",
+                          "eventDetails": {{
+                            "theme": "Future of Technology",
+                            "format": "HYBRID"
+                          }},
+                          "notes": "This is a concept for a technology event"
+                        }}
+                        ```"
+
+                        Now, here is the JSON structure you should include:
+                        ```json
+                        {{
+                          "title": "Event Title",
+                          "eventDetails": {{
+                            "theme": "Theme or Focus",
+                            "format": "PHYSICAL|VIRTUAL|HYBRID",
+                            "capacity": 500,
+                            "duration": "2 days",
+                            "targetAudience": "Description of target audience",
+                            "location": "Location if applicable"
+                          }},
+                          "agenda": [
+                            {{
+                              "time": "9:00 AM",
+                              "title": "Opening Keynote",
+                              "type": "KEYNOTE|WORKSHOP|PANEL|NETWORKING|BREAK|LUNCH",
+                              "duration": 60
+                            }},
+                            {{
+                              "time": "10:30 AM",
+                              "title": "Coffee Break",
+                              "type": "BREAK",
+                              "duration": 30
+                            }}
+                          ],
+                          "speakers": [
+                            {{
+                              "name": "Speaker Name",
+                              "expertise": "Speaker's expertise or role",
+                              "suggestedTopic": "Suggested presentation topic"
+                            }}
+                          ],
+                          "pricing": {{
+                            "currency": "USD",
+                            "earlyBird": 299,
+                            "regular": 399,
+                            "vip": 599,
+                            "student": 99
+                          }},
+                          "notes": "Any additional information",
+                          "reasoning": "Why this concept would work well"
+                        }}
+                        ```
+
+                        Always include the JSON object in EVERY response, even if it's a partial suggestion or if you're just answering a question.
+                        For simple questions or responses, include at least the title and notes fields in the JSON.
+                        Make sure the JSON is properly formatted and valid.
 
                         Context:
                         {context}
@@ -574,17 +461,41 @@ class LLMService:
                         return_source_documents=True
                     )
 
-                    # Format chat history properly
-                    formatted_chat_history = []
-                    for entry in chat_history:
-                        if isinstance(entry, tuple) and len(entry) == 2:
-                            # Convert tuple to proper format (user, ai)
-                            formatted_chat_history.append((entry[0], entry[1]))
+                    # Use the chat history tuples directly
+                    print(f"Using {len(chat_history_tuples)} conversation pairs for retrieval chain")
 
+                    # Check if we have any conversation pairs
+                    # When there are 0 conversation pairs, the ConversationalRetrievalChain can fail with
+                    # "Missing some input keys" error related to "title" fields with unusual formatting.
+                    # To avoid this issue, we use a direct LLM chain instead when there are no conversation pairs.
+                    if len(chat_history_tuples) == 0:
+                        print("No conversation pairs available, using direct LLM chain instead of retrieval chain")
+                        # Use direct LLM chain with the chat_prompt template
+                        chain = self.chat_prompt | self.llm
+                        response_text = chain.invoke({
+                            "context": concept_context or "No specific context available.",
+                            "question": enhanced_message,
+                            "chat_history": chat_history_str
+                        })
+                        # Extract concept suggestion from response text
+                        concept_suggestion = concept_extractor.extract_concept_suggestion(response_text)
+                        # Generate dynamic follow-up suggestions and questions
+                        suggestions = response_generator._generate_dynamic_suggestions(concept_suggestion)
+                        follow_up_questions = response_generator._generate_dynamic_follow_up_questions(concept_suggestion)
+                        return ChatResponse(
+                            response=response_text,
+                            suggestions=suggestions,
+                            follow_up_questions=follow_up_questions,
+                            sources=[],
+                            confidence=0.9,
+                            concept_suggestion=concept_suggestion,
+                            tokens={"prompt": 100, "response": 150, "total": 250}
+                        )
+                    
                     # Run the chain with the modern invoke method
                     result = conversation_chain.invoke({
                         "question": enhanced_message,  # Use enhanced message with concept context
-                        "chat_history": [(entry[0], entry[1]) for entry in chat_history if isinstance(entry, tuple)]
+                        "chat_history": chat_history_tuples
                     })
                     response_text = result["answer"]
 
@@ -602,143 +513,103 @@ class LLMService:
                     response_text = chain.invoke({
                         "context": "No specific documents available for this concept.",
                         "question": message,
-                        "chat_history": str(chat_history)
+                        "chat_history": chat_history_str
                     })
             else:
                 # Use simple LLM chain with proper context
+                print("Using direct LLM chain with structured JSON template")
                 chain = self.chat_prompt | self.llm
                 response_text = chain.invoke({
                     "context": concept_context or "No specific context available.",
                     "question": enhanced_message,
-                    "chat_history": chat_history  # Use formatted string
+                    "chat_history": chat_history_str  # Use formatted string
                 })
+
+                # Log the response for debugging
+                print(f"\n======= DIRECT LLM RESPONSE =======\n{response_text[:500]}...\n=================================")
+
+                # Check if the response has a JSON structure
+                import re
+                json_match = re.search(r'```json\s*(.*?)\s*```', response_text, re.DOTALL)
+                if not json_match:
+                    print("WARNING: No JSON structure found in response! Adding a default JSON structure.")
+                    # Append a default JSON if none is found
+                    default_json = '''
+                ```json
+                {
+                  "title": "Event Concept",
+                  "notes": "Generated from conversation"
+                }
+                ```'''
+                    response_text = f"{response_text}\n\nHere's a summary of the concept:\n{default_json}"
+                    print(f"Added default JSON structure to response")
+                else:
+                    print(f"JSON structure found in response")
         except Exception as e:
             print(f"Error generating response: {e}")
             response_text = "I'm sorry, I encountered an error while processing your request. Please try again."
 
-        # Use the helper method to create the response
-        return self._create_response(response_text, sources)
+        # Debug: print the response text before creating the response
+        print(f"\n======= FINAL RESPONSE TEXT BEFORE PROCESSING =======\n{response_text[:500]}...\n=================================\n")
 
-    def _generate_dynamic_suggestions(self, concept_suggestion: ChatResponseConceptSuggestion) -> List[str]:
-        """Generate dynamic suggestions based on the concept suggestion"""
-        suggestions = []
+        # Check if response has the expected JSON format
+        import re
+        has_json_block = bool(re.search(r'```json\s*\{', response_text, re.DOTALL))
+        if not has_json_block:
+            print("WARNING: Response text does not contain properly formatted JSON block")
+            # Add a fallback JSON block if necessary
+            json_block = '''
+        ```json
+        {
+          "title": "Event Concept",
+          "eventDetails": {
+            "theme": "Based on conversation",
+            "format": "HYBRID"
+          },
+          "notes": "Generated from conversation context"
+        }
+        ```'''
+            # Append JSON block to the response if not already present
+            response_text = f"{response_text}\n\nHere's a summary of the concept:\n{json_block}"
+            print("Added fallback JSON block to response")
 
-        # Add suggestions based on what's missing or could be expanded
-        if not concept_suggestion.agenda:
-            suggestions.append("Can you suggest an agenda for this event?")
-        else:
-            suggestions.append("Can you refine the agenda with more detailed sessions?")
+        # Extract concept suggestion before passing to response generator
+        concept_suggestion = concept_extractor.extract_concept_suggestion(response_text)
 
-        if not concept_suggestion.speakers:
-            suggestions.append("Who would be good speakers for this event?")
-        else:
-            suggestions.append("Can you suggest additional speakers with expertise in this field?")
+        # Create the response with all components
+        generated_response = response_generator.create_response(response_text, sources)
 
-        if not concept_suggestion.pricing:
-            suggestions.append("What pricing structure would work for this event?")
-        else:
-            suggestions.append("How can I optimize the pricing strategy for maximum attendance?")
+        # Ensure the response has the concept suggestion
+        if generated_response and not generated_response.concept_suggestion and concept_suggestion:
+            generated_response.concept_suggestion = concept_suggestion
+            print(f"Added missing concept_suggestion to response: {concept_suggestion.title}")
 
-        # Add general suggestions
-        general_suggestions = [
-            "How can I make this event more interactive?",
-            "What technologies should we use for this event?",
-            "How can we promote this event effectively?",
-            "What are the key success metrics for this type of event?",
-            "How can we incorporate networking opportunities?",
-            "What sponsorship opportunities would be appropriate?",
-            "How should we handle registration and check-in?",
-            "What post-event activities would you recommend?"
-        ]
-
-        # Add some general suggestions to ensure we have enough
-        while len(suggestions) < 3 and general_suggestions:
-            suggestions.append(general_suggestions.pop(0))
-
-        # Limit to 3 suggestions
-        return suggestions[:3]
-
-    def _create_response(self, response_text: str, sources: List[Dict] = None) -> ChatResponse:
-        """Create a standard ChatResponse object with concept suggestions and follow-up items"""
-        if sources is None:
-            sources = []
-
-        # Extract concept suggestion from response text
-        concept_suggestion = self.extract_concept_suggestion(response_text)
-
-        # Generate dynamic follow-up suggestions and questions
-        suggestions = self._generate_dynamic_suggestions(concept_suggestion)
-        follow_up_questions = self._generate_dynamic_follow_up_questions(concept_suggestion)
-
-        return ChatResponse(
-            response=response_text,
-            suggestions=suggestions,
-            follow_up_questions=follow_up_questions,
-            sources=sources,
-            confidence=0.9,  # Placeholder
-            concept_suggestion=concept_suggestion,
-            tokens={
-                "prompt": 100,  # Placeholder
-                "response": 150,  # Placeholder
-                "total": 250  # Placeholder
-            }
-        )
-
-    def _generate_dynamic_follow_up_questions(self, concept_suggestion: ChatResponseConceptSuggestion) -> List[str]:
-        """Generate dynamic follow-up questions based on the concept suggestion"""
-        questions = []
-
-        # Add questions based on what's missing or could be expanded
-        if not concept_suggestion.event_details or not concept_suggestion.event_details.target_audience:
-            questions.append("Who is the target audience for this event?")
-
-        if not concept_suggestion.event_details or not concept_suggestion.event_details.duration:
-            questions.append("How long should this event be?")
-
-        if not concept_suggestion.event_details or not concept_suggestion.event_details.location:
-            questions.append("Where would be an ideal location for this event?")
-
-        # Add general questions
-        general_questions = [
-            "What is your budget for this event?",
-            "When are you planning to hold this event?",
-            "What are your main objectives for this event?",
-            "Are there any specific themes or topics you want to focus on?",
-            "Do you have any preferred speakers in mind?",
-            "What has worked well for similar events in the past?",
-            "What challenges do you anticipate for this event?",
-            "How will you measure the success of this event?"
-        ]
-
-        # Add some general questions to ensure we have enough
-        while len(questions) < 3 and general_questions:
-            questions.append(general_questions.pop(0))
-
-        # Limit to 3 questions
-        return questions[:3]
-
+        return generated_response
 
     def generate_welcome_message(self, init_request: InitializeChatForConceptRequest) -> str:
         """Generate a welcome message for a new concept"""
-        try:
-            # Extract information from the request
-            user_name = init_request.user_id  # Using userId as user_name placeholder
-            concept_name = init_request.concept_title
-            concept_description = ""  # Not available in current API spec, providing empty string
+        return welcome_generator.generate_welcome_message(init_request)
+        
+    def _generate_dynamic_suggestions(self, concept_suggestion):
+        """
+        Delegate to response_generator for backward compatibility.
+        
+        Note: This method is maintained for backward compatibility with existing code.
+        In the future, consider updating callers to use response_generator directly
+        and remove this method once all callers have been updated.
+        """
+        return response_generator._generate_dynamic_suggestions(concept_suggestion)
+        
+    def _generate_dynamic_follow_up_questions(self, concept_suggestion):
+        """
+        Delegate to response_generator for backward compatibility.
+        
+        Note: This method is maintained for backward compatibility with existing code.
+        In the future, consider updating callers to use response_generator directly
+        and remove this method once all callers have been updated.
+        """
+        return response_generator._generate_dynamic_follow_up_questions(concept_suggestion)
 
-            # Use the welcome prompt template with RunnableSequence
-            chain = self.welcome_prompt | self.llm
-            welcome_message = chain.invoke({
-                "user_name": user_name,
-                "concept_name": concept_name,
-                "concept_description": concept_description
-            })
-
-            return welcome_message
-        except Exception as e:
-            print(f"Error generating welcome message: {e}")
-            # Fallback message using available data
-            return f"Welcome, {init_request.user_id}! I'm here to help you develop your event concept '{init_request.concept_title}'. Let's get started!"
 
 # Create a singleton instance
 llm_service = LLMService()

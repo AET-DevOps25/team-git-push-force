@@ -6,6 +6,7 @@ import connexion
 
 # Import services
 from services.llm_service import LLMService
+from services.conversation_history_service import conversation_history_service
 
 # Initialize the LLM service
 llm_service = LLMService()
@@ -22,9 +23,42 @@ def chat_with_ai_assistant(body):
         # Set the question field from message for compatibility with LLM services
         if hasattr(chat_request, 'message') and chat_request.message:
             chat_request.question = chat_request.message
+            
+        # Get the conversation ID from the request
+        conversation_id = getattr(chat_request, 'conversation_id', None)
+        
+        # Store the user's message in the conversation history if we have a conversation ID
+        if conversation_id and hasattr(chat_request, 'message') and chat_request.message:
+            conversation_history_service.add_message(
+                conversation_id=conversation_id,
+                role="user",
+                content=chat_request.message
+            )
+            print(f"Stored user message in conversation {conversation_id}")
 
         # Get the response from the service
         response = llm_service.process_chat_request(chat_request)
+
+        # Verify that concept_suggestion is present in the response
+        if isinstance(response, ChatResponse) and not response.concept_suggestion:
+            print("WARNING: No concept_suggestion in response from LLM service")
+
+            # Attempt to extract it again from the response text
+            from services.concept_extractor import concept_extractor
+            concept_suggestion = concept_extractor.extract_concept_suggestion(response.response)
+
+            # If we still don't have a concept, create a minimal one
+            if not concept_suggestion or not concept_suggestion.title:
+                from genai_models.models.chat_response_concept_suggestion import ChatResponseConceptSuggestion
+                concept_suggestion = ChatResponseConceptSuggestion(
+                    title="Event Concept",
+                    description=response.response,
+                    notes="Automatically generated when no concept was found in the response"
+                )
+
+            # Update the response with the concept
+            response.concept_suggestion = concept_suggestion
+            print(f"Added concept_suggestion with title: {concept_suggestion.title}")
 
         # Ensure we have a valid response object
         if not response or (isinstance(response, dict) and 'response' not in response):
@@ -38,6 +72,15 @@ def chat_with_ai_assistant(body):
             response_dict = fallback_response.to_dict()
             response_dict['conversation_id'] = getattr(chat_request, 'conversation_id', None)
             return response_dict
+
+        # Store the assistant's response in the conversation history if we have a conversation ID
+        if conversation_id and isinstance(response, ChatResponse) and response.response:
+            conversation_history_service.add_message(
+                conversation_id=conversation_id,
+                role="assistant",
+                content=response.response
+            )
+            print(f"Stored assistant response in conversation {conversation_id}")
 
         # Return the response, ensuring it's a dict
         if isinstance(response, ChatResponse):
@@ -109,6 +152,14 @@ def initialize_chat_for_concept(body):
             "Upload relevant documents",
             "Define target audience"
         ]
+
+    # Store the welcome message in the conversation history
+    conversation_history_service.add_message(
+        conversation_id=conversation_id,
+        role="assistant",
+        content=welcome_message
+    )
+    print(f"Stored welcome message in conversation {conversation_id}")
 
     # The OpenAPI spec expects 'message', 'suggestions', and 'conversationId'
     response = InitializeChatForConcept200Response(
