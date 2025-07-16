@@ -3,12 +3,13 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: prometheus-ingress
-  namespace: team-git-push-force-monitoring
-  {{- $annotations := .Values.prometheus.ingress.annotations | default dict }}
-  {{- if $annotations }}
   annotations:
+    {{- $annotations := .Values.prometheus.ingress.annotations | default dict }}
+    {{- if $annotations }}
     {{- toYaml $annotations | nindent 4 }}
-  {{- end }}
+    {{- end }}
+    # Ensure this Ingress is created after the prometheus service
+    "helm.sh/hook-weight": "1"
 spec:
   {{- if .Values.prometheus.ingress.className }}
   ingressClassName: {{ .Values.prometheus.ingress.className }}
@@ -17,7 +18,7 @@ spec:
   tls:
     - hosts:
         - "{{ .Values.prometheus.ingress.host }}"
-      secretName: "ai-event-concepter-tls"
+      secretName: "prometheus-tls"
   {{- end }}
   rules:
     - host: "{{ .Values.prometheus.ingress.host }}"

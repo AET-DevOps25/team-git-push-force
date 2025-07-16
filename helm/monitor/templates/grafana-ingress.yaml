@@ -3,7 +3,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: grafana-ingress
-  namespace: team-git-push-force-monitoring
   {{- $annotations := .Values.ingress.annotations | default dict }}
   {{- if $annotations }}
   annotations:
@@ -17,7 +16,7 @@ spec:
   tls:
     - hosts:
         - "{{ .Values.ingress.host }}"
-      secretName: "ai-event-concepter-tls"
+      secretName: "grafana-tls"
   {{- end }}
   rules:
     - host: "{{ .Values.ingress.host }}"
