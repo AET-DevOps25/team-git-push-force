@@ -24,23 +24,23 @@ data:
         metrics_path: '/metrics'
         scrape_interval: 15s
 
-      # Spring Boot Services with Actuator endpoints
+      # Spring Boot Services with Actuator endpoints - using FQDNs for cross-namespace access
       - job_name: 'spring-boot-services'
         metrics_path: '/actuator/prometheus'
         scrape_interval: 15s
         static_configs:
           - targets:
-            - 'gateway:8080'
-            - 'user-svc:8080'
-            - 'concept-svc:8080'
+            - 'server-service.team-git-push-force.svc.cluster.local:8080'
+            - 'user-service.team-git-push-force.svc.cluster.local:8080'
+            - 'concept-service.team-git-push-force.svc.cluster.local:8080'
         relabel_configs:
           - source_labels: [__address__]
             target_label: instance
           - source_labels: [__address__]
-            regex: '([^:]+):.*'
+            regex: '([^:]+)\..*'
             target_label: service
           - source_labels: [__address__]
-            regex: '([^:]+):.*'
+            regex: '([^:]+)\..*'
             target_label: app
           - target_label: monitoring
             replacement: "true"
@@ -71,11 +71,11 @@ data:
           - target_label: monitoring
             replacement: "true"
 
-      # GenAI Service (Flask) - Prometheus metrics
+      # GenAI Service (Flask) - using FQDN for cross-namespace access
       - job_name: 'genai-svc'
         metrics_path: /metrics
         static_configs:
-          - targets: ['genai-svc:8083']
+          - targets: ['genai-service.team-git-push-force.svc.cluster.local:8083']
         relabel_configs:
           - target_label: monitoring
             replacement: "true"
