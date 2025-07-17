@@ -4,7 +4,6 @@ metadata:
   name: grafana-dashboards
   labels:
     app: grafana
-    grafana_dashboard: "1"
 data:
   dashboards.yaml: |
     apiVersion: 1
@@ -14,6 +13,7 @@ data:
         folder: ''
         type: file
         disableDeletion: false
-        editable: true
+        updateIntervalSeconds: 10
+        allowUiUpdates: true
         options:
           path: /var/lib/grafana/dashboards 

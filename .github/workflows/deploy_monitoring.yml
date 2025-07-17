@@ -32,9 +32,17 @@ jobs:
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo update
-          helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
-            --namespace team-git-push-force-monitoring --create-namespace \
+          helm upgrade --install prometheus prometheus-community/prometheus \
+            --namespace team-git-push-force-monitoring \
             -f helm/ai-event-concepter/prometheus-values.yaml
+
+      - name: Deploy Alertmanager
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update
+          helm upgrade --install alertmanager prometheus-community/alertmanager \
+            --namespace team-git-push-force-monitoring --create-namespace \
+            -f helm/ai-event-concepter/alertmanager-values.yaml
 
       - name: Deploy Grafana
         run: |

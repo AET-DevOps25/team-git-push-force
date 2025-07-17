@@ -1,5 +1,0 @@
-server:
-  persistentVolume:
-    enabled: true
-    size: 8Gi
-    storageClass: "standard"  # Use your cluster's storage class 

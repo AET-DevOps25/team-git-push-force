@@ -2,7 +2,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: ai-event-concepter-tls
-  namespace: team-git-push-force-monitoring
+  namespace: {{ .Release.Namespace }}
 spec:
   secretName: ai-event-concepter-tls
   issuerRef:

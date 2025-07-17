@@ -32,21 +32,16 @@ grafana:
       memory: "512Mi"
       cpu: "300m"
   persistence:
-    enabled: true # Enable persistence for dashboards and configuration
+    enabled: false # Temporarily disable persistence to troubleshoot
     size: 5Gi
     storageClassName: "csi-rbd-sc"
-  sidecar:
-    dashboards:
-      enabled: true
-      label: grafana_dashboard
-      searchNamespace: ALL
-    datasources:
-      enabled: true
-      label: grafana_datasource
+  # Simplified provisioning without sidecar
+  provisioning:
+    enabled: true
   rbac:
-    create: false
+    create: true
   serviceAccount:
-    create: false
+    create: true
   dashboards:
     default:
       timezone: "browser"
