@@ -1,4 +1,4 @@
-name: Deploy Infrastructure
+name: Infrastructure Deployment
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ on:
       terraform_action:
         description: 'Terraform action to perform'
         required: true
-        default: 'apply'
+        default: 'plan'
         type: choice
         options:
         - plan
@@ -28,7 +28,6 @@ on:
   push:
     branches:
       - main
-      - feat/terraform
     paths:
       - 'infrastructure/**'
 
@@ -77,12 +76,12 @@ jobs:
         id: init
         run: |
           terraform init
-          
+
           # Create or select workspace for environment isolation
           if ! terraform workspace select ${{ github.event.inputs.environment || 'staging' }}; then
             terraform workspace new ${{ github.event.inputs.environment || 'staging' }}
           fi
-          
+
           echo "Current workspace: $(terraform workspace show)"
 
       - name: Terraform Validate
@@ -246,7 +245,7 @@ jobs:
         run: |
           INSTANCE_IP=$(cat artifacts/instance_ip.txt)
           echo "Application should be available at: http://${INSTANCE_IP}:3000"
-          
+
           # Test application health
           for i in {1..10}; do
             if curl -f "http://${INSTANCE_IP}:3000" > /dev/null 2>&1; then
@@ -281,6 +280,3 @@ jobs:
           echo "📍 Environment: ${{ github.event.inputs.environment || 'staging' }}"
           echo "🔗 URL: http://${INSTANCE_IP}:3000"
           echo "⚙️  API Gateway: http://${INSTANCE_IP}:8080"
-          
-          # You can add API calls here to update environment variables in GitHub
-          # or external systems with the new instance IP 
