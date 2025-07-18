@@ -50,7 +50,7 @@ describe('ChatInterfaceComponent', () => {
 
   beforeEach(async () => {
     const chatServiceSpy = jasmine.createSpyObj('ChatService', ['sendMessage', 'initializeChat', 'getCurrentMessages']);
-    const stateServiceSpy = jasmine.createSpyObj('StateService', ['getCurrentConcept', 'getConcepts', 'setCurrentConcept', 'areConceptsLoaded', 'isLoading']);
+    const stateServiceSpy = jasmine.createSpyObj('StateService', ['getCurrentConcept', 'getConcepts', 'setCurrentConcept', 'areConceptsLoaded', 'isLoading', 'getChatMessages']);
 
     // Configure mock return values
     chatServiceSpy.sendMessage.and.returnValue(of({ response: 'Test response', suggestions: [], followUpQuestions: [], confidence: 0.9 }));
@@ -60,6 +60,7 @@ describe('ChatInterfaceComponent', () => {
     stateServiceSpy.getConcepts.and.returnValue(of([mockConcept]));
     stateServiceSpy.areConceptsLoaded.and.returnValue(false);
     stateServiceSpy.isLoading.and.returnValue(of(false));
+    stateServiceSpy.getChatMessages.and.returnValue(of(mockMessages));
 
     await TestBed.configureTestingModule({
       imports: [

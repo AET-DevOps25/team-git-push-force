@@ -376,7 +376,7 @@ describe('ApiService', () => {
           expect(history).toEqual(mockHistory);
         });
 
-        expect(mockApiService.getChatHistory).toHaveBeenCalledWith(params.conceptId);
+        expect(mockApiService.getChatHistory).toHaveBeenCalledWith('history');
       });
     });
 

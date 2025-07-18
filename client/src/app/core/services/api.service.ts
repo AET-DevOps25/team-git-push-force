@@ -141,7 +141,9 @@ export class ApiService {
       return this.mockApiService.getDocuments(params) as Observable<T>;
     }
     if ((endpoint === '/api/documents/upload' || endpoint === '/documents/upload') && method === 'POST') {
-      return this.mockApiService.uploadDocument(data) as Observable<T>;
+      // Extract the file from FormData for the mock service
+      const file = data instanceof FormData ? data.get('file') as File : data;
+      return this.mockApiService.uploadDocument(file) as Observable<T>;
     }
     if ((endpoint.includes('/api/documents/') || endpoint.includes('/documents/')) && method === 'DELETE') {
       const id = endpoint.split('/').pop();
