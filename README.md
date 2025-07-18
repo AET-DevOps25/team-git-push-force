@@ -222,6 +222,8 @@ This will start all services:
 - User Service at [http://localhost:8081](http://localhost:8081)
 - Concept Service at [http://localhost:8082](http://localhost:8082)
 - GenAI Service at [http://localhost:8083](http://localhost:8083)
+- Weaviate Vector Database at [http://localhost:8087](http://localhost:8087)
+- MinIO Object Storage at [http://localhost:9000](http://localhost:9000) (API) and [http://localhost:9001](http://localhost:9001) (Console)
 
 ### Option 2: Manual Startup
 

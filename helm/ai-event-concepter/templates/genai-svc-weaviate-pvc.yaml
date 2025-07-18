@@ -1,0 +1,19 @@
+{{- if .Values.genaisvcweaviate.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ai-event-concepter-genai-svc-weaviate-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.genaisvcweaviate.persistence.size }}
+  {{- if .Values.genaisvcweaviate.persistence.storageClass }}
+  {{- if (eq "-" .Values.genaisvcweaviate.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: "{{ .Values.genaisvcweaviate.persistence.storageClass }}"
+  {{- end }}
+  {{- end }}
+{{- end }}

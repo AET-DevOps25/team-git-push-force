@@ -152,12 +152,13 @@ jobs:
         run: |
           cd genai-svc
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
-      - name: Run Python tests (if any)
+      - name: Run Python tests
         run: |
+          export SKIP_WEAVIATE=true
           cd genai-svc
-          # Add test commands here when tests are available
-          python -m py_compile app.py
+          python -m pytest tests/ -v
 
   build:
     name: Build Docker Images

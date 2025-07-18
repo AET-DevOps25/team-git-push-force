@@ -1,0 +1,19 @@
+{{- if .Values.genaisvcminio.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ai-event-concepter-genai-svc-minio-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.genaisvcminio.persistence.size }}
+  {{- if .Values.genaisvcminio.persistence.storageClass }}
+  {{- if (eq "-" .Values.genaisvcminio.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: "{{ .Values.genaisvcminio.persistence.storageClass }}"
+  {{- end }}
+  {{- end }}
+{{- end }}

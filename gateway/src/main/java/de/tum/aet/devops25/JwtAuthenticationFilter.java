@@ -25,14 +25,14 @@ public class JwtAuthenticationFilter implements WebFilter {
         String path = exchange.getRequest().getURI().getPath();
         String method = exchange.getRequest().getMethod().toString();
 
-        System.out.println("[AUTH_DEBUG] Request: " + method + " " + path);
-        System.out.println("[AUTH_DEBUG] Authorization header: " + (authHeader != null ? "Present" : "Missing"));
-
         // Skip authentication for actuator endpoints
         if (path.startsWith("/actuator/")) {
-            System.out.println("[AUTH_DEBUG] Skipping authentication for actuator endpoint: " + path);
+            //System.out.println("[AUTH_DEBUG] Skipping authentication for actuator endpoint: " + path);
             return chain.filter(exchange);
         }
+
+        System.out.println("[AUTH_DEBUG] Request: " + method + " " + path);
+        System.out.println("[AUTH_DEBUG] Authorization header: " + (authHeader != null ? "Present" : "Missing"));
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);

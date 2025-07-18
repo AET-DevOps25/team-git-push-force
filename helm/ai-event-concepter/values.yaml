@@ -101,6 +101,95 @@ genaisvc:
   env:
     - name: FLASK_ENV
       value: production
+    - name: WEAVIATE_URL
+      value: http://genai-svc-weaviate:8080
+    - name: WEAVIATE_API_KEY
+      value: ""
+    - name: WEAVIATE_TIMEOUT
+      value: "300"
+    - name: OPENWEBUI_API_URL
+      value: https://gpu.aet.cit.tum.de/api
+    - name: OPENWEBUI_MODEL
+      value: llama3.3:latest
+    - name: MINIO_URL
+      value: http://genai-svc-minio:9000
+    - name: MINIO_BUCKET
+      value: concepts
+  # Secrets are managed externally using kubectl
+  # See README.md for instructions
+
+# Weaviate Vector Database for GenAI Service
+genaisvcweaviate:
+  image:
+    repository: semitechnologies/weaviate
+    tag: "1.24.1"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    grpcPort: 8081
+    grpcTargetPort: 8081
+  replicaCount: 1
+  env:
+    - name: QUERY_DEFAULTS_LIMIT
+      value: "20"
+    - name: AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED
+      value: "true"
+    - name: PERSISTENCE_DATA_PATH
+      value: "/var/lib/weaviate"
+    - name: DEFAULT_VECTORIZER_MODULE
+      value: "none"
+    - name: ENABLE_MODULES
+      value: "text2vec-transformers"
+    - name: TRANSFORMERS_INFERENCE_API
+      value: "http://genai-svc-t2v-transformers:8080"
+    - name: MODULES_TRANSFORMERS_INFERENCE_API_TIMEOUT_SECONDS
+      value: "300"
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+
+# Text2Vec Transformers for Weaviate
+genaisvct2vtransformers:
+  image:
+    repository: semitechnologies/transformers-inference
+    tag: "sentence-transformers-all-MiniLM-L6-v2"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  replicaCount: 1
+  env:
+    - name: ENABLE_CUDA
+      value: "0"
+    - name: STARTUP_TIMEOUT_SECONDS
+      value: "300"
+
+# MinIO Object Storage for GenAI Service
+genaisvcminio:
+  image:
+    repository: minio/minio
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 9000
+    targetPort: 9000
+    consolePort: 9001
+    consoleTargetPort: 9001
+  replicaCount: 1
+  env:
+    - name: MINIO_ROOT_USER
+      value: "minioadmin"
+    - name: MINIO_ROOT_PASSWORD
+      value: "minioadmin"
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
 
 userdb:
   image:

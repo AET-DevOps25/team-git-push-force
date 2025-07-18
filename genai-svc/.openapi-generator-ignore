@@ -4,9 +4,23 @@
 # Use this file to prevent files from being overwritten by the generator.
 # The patterns follow closely to .gitignore or .dockerignore.
 
-# As an example, the C# client generator defines ApiClient.cs.
-# You can make changes and tell OpenAPI Generator to ignore just this file by uncommenting the following line:
-#ApiClient.cs
+# Custom application files that should not be overwritten
+app.py
+openwebui_llm.py
+TESTING.md
+test_openwebui_connection.py
+tests/**
+.env
+.env.example
+requirements-dev.txt
+requirements.txt
+README.md
+git_push.sh
+
+# Custom Docker and CI files
+Dockerfile
+.dockerignore
+.github/**
 
 # You can match any string of characters against a directory, file or extension with a single asterisk (*):
 #foo/*/qux
@@ -21,5 +35,3 @@
 #docs/*.md
 # Then explicitly reverse the ignore rule for a single file:
 #!docs/README.md
-
-README.md

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: genai-svc-minio
+spec:
+  selector:
+    app: ai-event-concepter-genai-svc-minio-selector
+  ports:
+    - port: {{ .Values.genaisvcminio.service.port }}
+      targetPort: {{ .Values.genaisvcminio.service.targetPort }}
+      name: api
+    - port: {{ .Values.genaisvcminio.service.consolePort }}
+      targetPort: {{ .Values.genaisvcminio.service.consoleTargetPort }}
+      name: console
+  type: {{ .Values.genaisvcminio.service.type }}

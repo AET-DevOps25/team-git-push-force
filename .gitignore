@@ -383,10 +383,7 @@ sketch
 /gateway/src/main/java/de/tum/aet/devops25/api/generated/
 /concept-svc/src/main/java/de/tum/aet/devops25/api/generated/
 /user-svc/src/main/java/de/tum/aet/devops25/api/generated/
-/server/src/main/java/generated/
-concept-svc/src/main/java/generated/
-user-svc/src/main/java/generated/
-/genai-svc/client/
+/genai-svc/genai_models/
 
 # OpenAPI Generator CLI configuration
 openapitools.json
