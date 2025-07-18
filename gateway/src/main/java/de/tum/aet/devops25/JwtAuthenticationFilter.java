@@ -28,6 +28,12 @@ public class JwtAuthenticationFilter implements WebFilter {
         System.out.println("[AUTH_DEBUG] Request: " + method + " " + path);
         System.out.println("[AUTH_DEBUG] Authorization header: " + (authHeader != null ? "Present" : "Missing"));
 
+        // Skip authentication for actuator endpoints
+        if (path.startsWith("/actuator/")) {
+            System.out.println("[AUTH_DEBUG] Skipping authentication for actuator endpoint: " + path);
+            return chain.filter(exchange);
+        }
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             System.out.println("[AUTH_DEBUG] Bearer token found with length: " + token.length());
