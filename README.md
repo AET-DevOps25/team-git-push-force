@@ -225,6 +225,28 @@ This will start all services:
 - Weaviate Vector Database at [http://localhost:8087](http://localhost:8087)
 - MinIO Object Storage at [http://localhost:9000](http://localhost:9000) (API) and [http://localhost:9001](http://localhost:9001) (Console)
 
+### 🔥 Hot Reload Development (Recommended for Frontend Development)
+
+For faster frontend development with hot reload and real backend services:
+
+```bash
+# Start local development environment with hot reload
+./start-dev.sh
+# OR manually:
+docker-compose -f docker-compose.local.yml up --build
+```
+
+This setup:
+- ✅ **Hot Reload**: Changes to Angular code are immediately reflected in the browser
+- ✅ **Real Backend**: Uses actual backend services for full-stack development
+- ✅ **Fast Iteration**: No need to rebuild containers for frontend changes
+- ✅ **Complete Stack**: All services running for integrated development
+
+**Services in Hot Reload Mode:**
+- Client (Angular frontend) at [http://localhost:3000](http://localhost:3000) ⚡ (with hot reload)
+- All backend services running and connected
+
+
 ### Option 2: Manual Startup
 
 Before starting the services manually, you need to generate code from the OpenAPI specifications:
