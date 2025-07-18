@@ -34,9 +34,5 @@ COPY --from=build /app/build/libs/*.jar app.jar
 # Expose the port the app runs on
 EXPOSE 8080
 
-
-ADD https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz /tmp/
-RUN tar -C /usr/local/bin -xzvf /tmp/dockerize-linux-amd64-v0.6.1.tar.gz && \
-    rm /tmp/dockerize-linux-amd64-v0.6.1.tar.gz
-
-ENTRYPOINT ["dockerize", "-wait", "tcp://user-svc-db:5432", "-timeout", "60s", "java", "-jar", "app.jar"]
+# Command to run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -42,7 +42,7 @@ jobs:
         run: |
           cd helm/ai-event-concepter
           helm upgrade --install ai-event-concepter . \
-            --namespace ${{ secrets.KUBE_NAMESPACE }} \
+            --namespace team-git-push-force-dev \
             --create-namespace \
             --set ingress.host=dev-aieventconcepter.student.k8s.aet.cit.tum.de \
             --set client.image.tag=dev \
@@ -56,7 +56,7 @@ jobs:
         run: |
           cd helm/ai-event-concepter
           helm upgrade --install ai-event-concepter . \
-            --namespace ${{ secrets.KUBE_NAMESPACE }} \
+            --namespace team-git-push-force-dev \
             --create-namespace \
             --set ingress.host=dev-aieventconcepter.student.k8s.aet.cit.tum.de \
             --set client.image.tag=pr-${{ github.event.pull_request.number }} \
@@ -67,4 +67,4 @@ jobs:
 
       - name: Rollout Restart Deployments
         run: |
-          kubectl rollout restart deployment -n ${{ secrets.KUBE_NAMESPACE }}
+          kubectl rollout restart deployment -n team-git-push-force-dev
