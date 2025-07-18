@@ -4,6 +4,7 @@ from genai_models.models.get_gen_ai_service_health200_response_vector_store impo
 
 from services.vector_store import vector_store_service
 from services.llm_service import llm_service
+from utils.serialization import to_camel_case_dict
 
 def get_gen_ai_service_health():
     """Get health status of the GenAI service"""
@@ -41,4 +42,4 @@ def get_gen_ai_service_health():
             collections=0  # Placeholder
         )
     )
-    return response.to_dict()
+    return to_camel_case_dict(response)

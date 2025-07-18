@@ -7,6 +7,7 @@ import connexion
 # Import services
 from services.llm_service import LLMService
 from services.conversation_history_service import conversation_history_service
+from utils.serialization import to_camel_case_dict
 
 # Initialize the LLM service
 llm_service = LLMService()
@@ -69,8 +70,8 @@ def chat_with_ai_assistant(body):
                 follow_up_questions=[],
                 confidence=0.5
             )
-            response_dict = fallback_response.to_dict()
-            response_dict['conversation_id'] = getattr(chat_request, 'conversation_id', None)
+            response_dict = to_camel_case_dict(fallback_response)
+            response_dict['conversationId'] = getattr(chat_request, 'conversation_id', None)
             return response_dict
 
         # Store the assistant's response in the conversation history if we have a conversation ID
@@ -84,8 +85,8 @@ def chat_with_ai_assistant(body):
 
         # Return the response, ensuring it's a dict
         if isinstance(response, ChatResponse):
-            response_dict = response.to_dict()
-            response_dict['conversation_id'] = getattr(chat_request, 'conversation_id', None)
+            response_dict = to_camel_case_dict(response)
+            response_dict['conversationId'] = getattr(chat_request, 'conversation_id', None)
             return response_dict
         return response
 
@@ -112,8 +113,8 @@ def chat_with_ai_assistant(body):
             follow_up_questions=[],
             confidence=0.5
         )
-        response_dict = error_response.to_dict()
-        response_dict['conversation_id'] = getattr(chat_request, 'conversation_id', None) if 'chat_request' in locals() else None
+        response_dict = to_camel_case_dict(error_response)
+        response_dict['conversationId'] = getattr(chat_request, 'conversation_id', None) if 'chat_request' in locals() else None
         return response_dict
 
 def initialize_chat_for_concept(body):
@@ -167,4 +168,4 @@ def initialize_chat_for_concept(body):
         suggestions=suggestions,
         conversation_id=conversation_id
     )
-    return response.to_dict()
+    return to_camel_case_dict(response)
