@@ -105,6 +105,8 @@ genaisvc:
       value: http://genai-svc-weaviate:8080
     - name: WEAVIATE_API_KEY
       value: ""
+    - name: WEAVIATE_TIMEOUT
+      value: "300"
     - name: OPENWEBUI_API_URL
       value: https://gpu.aet.cit.tum.de/api
     - name: OPENWEBUI_MODEL
@@ -142,6 +144,8 @@ genaisvcweaviate:
       value: "text2vec-transformers"
     - name: TRANSFORMERS_INFERENCE_API
       value: "http://genai-svc-t2v-transformers:8080"
+    - name: MODULES_TRANSFORMERS_INFERENCE_API_TIMEOUT_SECONDS
+      value: "300"
   persistence:
     enabled: true
     size: 1Gi
@@ -161,6 +165,8 @@ genaisvct2vtransformers:
   env:
     - name: ENABLE_CUDA
       value: "0"
+    - name: STARTUP_TIMEOUT_SECONDS
+      value: "300"
 
 # MinIO Object Storage for GenAI Service
 genaisvcminio:

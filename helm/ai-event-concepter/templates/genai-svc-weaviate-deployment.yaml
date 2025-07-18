@@ -28,6 +28,15 @@ spec:
               name: http
             - containerPort: {{ .Values.genaisvcweaviate.service.grpcTargetPort }}
               name: grpc
+          readinessProbe:
+            httpGet:
+              path: /v1/.well-known/ready
+              port: {{ .Values.genaisvcweaviate.service.targetPort }}
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
           env:
             {{- range .Values.genaisvcweaviate.env }}
             - name: {{ .name }}
