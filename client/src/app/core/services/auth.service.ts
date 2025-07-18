@@ -156,6 +156,11 @@ export class AuthService {
   }
 
   private isTokenExpired(token: string): boolean {
+    // Check if token is valid string
+    if (!token || typeof token !== 'string') {
+      return true; // Consider null/undefined/non-string tokens as expired
+    }
+    
     // Handle mock tokens (they don't expire)
     if (token.startsWith('mock-token-')) {
       console.log('🔧 Mock token detected, never expires:', token);
