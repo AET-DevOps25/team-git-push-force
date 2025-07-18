@@ -183,6 +183,34 @@ jobs:
           export SKIP_WEAVIATE=true
           cd genai-svc
           python -m pytest tests/ -v
+          
+  test_client:
+    name: Run Client Unit Tests
+    needs: [generate_api_code]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download client artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: client-code
+          path: ./client
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: './client/package-lock.json'
+
+      - name: Install dependencies
+        run: |
+          cd client
+          npm ci
+
+      - name: Run Angular tests
+        run: |
+          cd client
+          npm test -- --watch=false --browsers=ChromeHeadless
 
   build_docs:
     name: Build API Documentation
@@ -219,7 +247,7 @@ jobs:
 
   build_images:
     name: Build Docker Images
-    needs: [test_java, test_python]
+    needs: [test_java, test_python, test_client]
     runs-on: ubuntu-latest
     strategy:
       matrix:
