@@ -180,7 +180,6 @@ genaisvcminio:
       value: "minioadmin"
     - name: MINIO_ROOT_PASSWORD
       value: "minioadmin"
-  command: "server /data --console-address \":9001\""
   persistence:
     enabled: true
     size: 10Gi
