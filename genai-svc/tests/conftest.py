@@ -14,6 +14,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import the app
 import app
 
+@pytest.fixture
+def client():
+    """Create a test client for the app."""
+    with app.app.test_client() as client:
+        yield client
+
 @pytest.fixture(scope="session", autouse=True)
 def load_env():
     """Load environment variables from .env file."""

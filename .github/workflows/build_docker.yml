@@ -156,6 +156,7 @@ jobs:
 
       - name: Run Python tests
         run: |
+          export SKIP_WEAVIATE=true
           cd genai-svc
           python -m pytest tests/ -v
 

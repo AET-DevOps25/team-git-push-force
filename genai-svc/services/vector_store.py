@@ -68,6 +68,18 @@ class VectorStoreService:
 
     def _initialize_weaviate_client(self):
         """Initialize and configure the Weaviate client"""
+        # Skip Weaviate connection if SKIP_WEAVIATE env var is set
+        if os.getenv("SKIP_WEAVIATE", "false").lower() == "true":
+            print("SKIP_WEAVIATE is set. Mocking Weaviate client for tests.")
+            class MockWeaviateClient:
+                def __init__(self):
+                    pass
+                def __getattr__(self, name):
+                    def method(*args, **kwargs):
+                        return None
+                    return method
+            self.client = MockWeaviateClient()
+            return
         try:
             # Get Weaviate configuration from environment variables
             weaviate_url = os.getenv("WEAVIATE_URL", "http://localhost:8080")

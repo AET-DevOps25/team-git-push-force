@@ -5,6 +5,7 @@ from genai_models.models.get_gen_ai_service_health200_response_vector_store impo
 from services.vector_store import vector_store_service
 from services.llm_service import llm_service
 from utils.serialization import to_camel_case_dict
+import datetime
 
 def get_gen_ai_service_health():
     """Get health status of the GenAI service"""
@@ -42,4 +43,6 @@ def get_gen_ai_service_health():
             collections=0  # Placeholder
         )
     )
-    return to_camel_case_dict(response)
+    response_dict = to_camel_case_dict(response)
+    response_dict["timestamp"] = datetime.datetime.utcnow().isoformat() + "Z"
+    return response_dict

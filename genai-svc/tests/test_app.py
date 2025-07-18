@@ -52,7 +52,7 @@ class TestAppEndpoints:
         assert data['service'] == 'genai-service'
         assert 'timestamp' in data
         assert 'models' in data
-        assert 'vector_store' in data
+        assert 'vectorStore' in data
 
     @patch('services.llm_service.llm_service.llm')
     def test_langchain_test_endpoint(self, mock_llm, client):
@@ -82,7 +82,7 @@ class TestControllerFunctions:
         assert response['service'] == 'genai-service'
         assert 'timestamp' in response
         assert 'models' in response
-        assert 'vector_store' in response
+        assert 'vectorStore' in response
 
     @patch('services.llm_service.ConversationalRetrievalChain')
     def test_chat_with_ai_assistant(self, mock_chain_constructor):
