@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-event-concepter-genai-svc-minio
+spec:
+  replicas: {{ .Values.genaisvcminio.replicaCount }}
+  selector:
+    matchLabels:
+      app: ai-event-concepter-genai-svc-minio-selector
+  template:
+    metadata:
+      labels:
+        app: ai-event-concepter-genai-svc-minio-selector
+    spec:
+      containers:
+        - name: minio
+          image: "{{ .Values.genaisvcminio.image.repository }}:{{ .Values.genaisvcminio.image.tag }}"
+          imagePullPolicy: {{ .Values.genaisvcminio.image.pullPolicy }}
+          command: ["/bin/sh"]
+          args: ["-c", "server /data --console-address \":9001\""]
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+          ports:
+            - containerPort: {{ .Values.genaisvcminio.service.targetPort }}
+              name: api
+            - containerPort: {{ .Values.genaisvcminio.service.consoleTargetPort }}
+              name: console
+          env:
+            {{- range .Values.genaisvcminio.env }}
+            - name: {{ .name }}
+              value: "{{ .value }}"
+            {{- end }}
+          volumeMounts:
+            - name: minio-data
+              mountPath: /data
+      volumes:
+        - name: minio-data
+          {{- if .Values.genaisvcminio.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: ai-event-concepter-genai-svc-minio-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}

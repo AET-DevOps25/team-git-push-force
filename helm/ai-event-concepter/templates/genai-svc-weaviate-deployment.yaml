@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-event-concepter-genai-svc-weaviate
+spec:
+  replicas: {{ .Values.genaisvcweaviate.replicaCount }}
+  selector:
+    matchLabels:
+      app: ai-event-concepter-genai-svc-weaviate-selector
+  template:
+    metadata:
+      labels:
+        app: ai-event-concepter-genai-svc-weaviate-selector
+    spec:
+      containers:
+        - name: weaviate
+          image: "{{ .Values.genaisvcweaviate.image.repository }}:{{ .Values.genaisvcweaviate.image.tag }}"
+          imagePullPolicy: {{ .Values.genaisvcweaviate.image.pullPolicy }}
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+          ports:
+            - containerPort: {{ .Values.genaisvcweaviate.service.targetPort }}
+              name: http
+            - containerPort: {{ .Values.genaisvcweaviate.service.grpcTargetPort }}
+              name: grpc
+          env:
+            {{- range .Values.genaisvcweaviate.env }}
+            - name: {{ .name }}
+              value: "{{ .value }}"
+            {{- end }}
+          volumeMounts:
+            - name: weaviate-data
+              mountPath: /var/lib/weaviate
+      volumes:
+        - name: weaviate-data
+          {{- if .Values.genaisvcweaviate.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: ai-event-concepter-genai-svc-weaviate-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
