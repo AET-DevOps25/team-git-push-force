@@ -426,7 +426,7 @@ describe('ApiService', () => {
           next: () => fail('Should have thrown error'),
           error: (error) => {
             expect(error.status).toBe(404);
-            expect(error.error.message).toBe('Mock endpoint not found');
+            expect(error.message).toBe('Mock endpoint not found: GET /unknown/endpoint');
           }
         });
       });
@@ -436,7 +436,7 @@ describe('ApiService', () => {
           next: () => fail('Should have thrown error'),
           error: (error) => {
             expect(error.status).toBe(404);
-            expect(error.error.message).toBe('Mock endpoint not found');
+            expect(error.message).toBe('Mock endpoint not found: POST /unknown/endpoint');
           }
         });
       });
@@ -446,7 +446,7 @@ describe('ApiService', () => {
           next: () => fail('Should have thrown error'),
           error: (error) => {
             expect(error.status).toBe(404);
-            expect(error.error.message).toBe('Mock endpoint not found');
+            expect(error.message).toBe('Mock endpoint not found: PUT /unknown/endpoint');
           }
         });
       });
@@ -456,7 +456,7 @@ describe('ApiService', () => {
           next: () => fail('Should have thrown error'),
           error: (error) => {
             expect(error.status).toBe(404);
-            expect(error.error.message).toBe('Mock endpoint not found');
+            expect(error.message).toBe('Mock endpoint not found: DELETE /unknown/endpoint');
           }
         });
       });

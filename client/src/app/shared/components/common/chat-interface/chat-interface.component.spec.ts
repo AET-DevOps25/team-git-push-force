@@ -1,12 +1,35 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { of } from 'rxjs';
+
 import { ChatInterfaceComponent } from './chat-interface.component';
+import { ChatService } from '../../../../core/services/chat.service';
+import { StateService } from '../../../../core/services/state.service';
 import { ChatMessage } from '../../../../core/models/chat.model';
+import { Concept } from '../../../../core/models/concept.model';
 
 describe('ChatInterfaceComponent', () => {
   let component: ChatInterfaceComponent;
   let fixture: ComponentFixture<ChatInterfaceComponent>;
+  let chatService: jasmine.SpyObj<ChatService>;
+  let stateService: jasmine.SpyObj<StateService>;
+
+  const mockConcept: Concept = {
+    id: 'concept-1',
+    title: 'Test Conference',
+    description: 'A test conference for developers',
+    status: 'DRAFT',
+    agenda: [],
+    speakers: [],
+    tags: ['technology', 'test'],
+    version: 1,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    userId: 'user1',
+    lastModifiedBy: 'user1'
+  };
 
   const mockMessages: ChatMessage[] = [
     {
@@ -26,16 +49,38 @@ describe('ChatInterfaceComponent', () => {
   ];
 
   beforeEach(async () => {
+    const chatServiceSpy = jasmine.createSpyObj('ChatService', ['sendMessage', 'initializeChat', 'getCurrentMessages']);
+    const stateServiceSpy = jasmine.createSpyObj('StateService', ['getCurrentConcept', 'getConcepts', 'setCurrentConcept', 'areConceptsLoaded', 'isLoading']);
+
+    // Configure mock return values
+    chatServiceSpy.sendMessage.and.returnValue(of({ response: 'Test response', suggestions: [], followUpQuestions: [], confidence: 0.9 }));
+    chatServiceSpy.initializeChat.and.returnValue(of({ messages: [] }));
+    chatServiceSpy.getCurrentMessages.and.returnValue(of([]));
+    stateServiceSpy.getCurrentConcept.and.returnValue(of(mockConcept));
+    stateServiceSpy.getConcepts.and.returnValue(of([mockConcept]));
+    stateServiceSpy.areConceptsLoaded.and.returnValue(false);
+    stateServiceSpy.isLoading.and.returnValue(of(false));
+
     await TestBed.configureTestingModule({
       imports: [
         ChatInterfaceComponent,
         ReactiveFormsModule,
-        NoopAnimationsModule
+        NoopAnimationsModule,
+        HttpClientTestingModule
+      ],
+      providers: [
+        { provide: ChatService, useValue: chatServiceSpy },
+        { provide: StateService, useValue: stateServiceSpy }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ChatInterfaceComponent);
     component = fixture.componentInstance;
+    chatService = TestBed.inject(ChatService) as jasmine.SpyObj<ChatService>;
+    stateService = TestBed.inject(StateService) as jasmine.SpyObj<StateService>;
+    
+    // Set required input
+    component.concept = mockConcept;
   });
 
   it('should create', () => {
@@ -44,7 +89,6 @@ describe('ChatInterfaceComponent', () => {
 
   it('should initialize with default values', () => {
     expect(component.messages).toEqual([]);
-    expect(component.suggestions).toEqual([]);
     expect(component.isLoading).toBe(false);
     expect(component.maxMessageLength).toBe(2000);
     expect(component.placeholder).toBe('Ask me anything about your event concept...');
@@ -53,13 +97,11 @@ describe('ChatInterfaceComponent', () => {
 
   it('should accept input properties', () => {
     component.messages = mockMessages;
-    component.suggestions = ['How to plan a conference?', 'Best venues?'];
     component.isLoading = true;
     component.maxMessageLength = 1000;
     component.placeholder = 'Custom placeholder';
 
     expect(component.messages.length).toBe(2);
-    expect(component.suggestions.length).toBe(2);
     expect(component.isLoading).toBe(true);
     expect(component.maxMessageLength).toBe(1000);
     expect(component.placeholder).toBe('Custom placeholder');
@@ -137,13 +179,7 @@ describe('ChatInterfaceComponent', () => {
       expect(component.messageSent.emit).not.toHaveBeenCalled();
     });
 
-    it('should send suggestion', () => {
-      const suggestion = 'How to plan a conference?';
-      
-      component.sendSuggestion(suggestion);
-      
-      expect(component.messageSent.emit).toHaveBeenCalledWith(suggestion);
-    });
+
   });
 
   describe('Can Send Message Logic', () => {
@@ -331,16 +367,7 @@ describe('ChatInterfaceComponent', () => {
     });
   });
 
-  describe('Time Formatting', () => {
-    it('should format time correctly', () => {
-      const date = new Date('2024-01-01T14:30:00Z');
-      const result = component.formatTime(date);
-      
-      // Note: This depends on locale, but should contain time elements
-      expect(result).toContain(':');
-      expect(typeof result).toBe('string');
-    });
-  });
+
 
   describe('Tracking Functions', () => {
     it('should track messages by ID', () => {

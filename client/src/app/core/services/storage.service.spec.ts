@@ -247,9 +247,10 @@ describe('StorageService', () => {
 
       service.removeItem('test-key');
 
-      // When localStorage is unavailable, removeItem should not be called at all
+      // When localStorage is unavailable, only the availability test should be called
       expect(localStorageSpy.removeItem).toHaveBeenCalledWith('__storage_test__');
       expect(localStorageSpy.removeItem).toHaveBeenCalledTimes(1); // Only the availability test call
+      expect(localStorageSpy.removeItem).not.toHaveBeenCalledWith('test-key');
     });
   });
 
