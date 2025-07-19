@@ -1,21 +1,21 @@
-# ---------- DEVELOPMENT DOCKERFILE ----------
+# ---------- OPTIMIZED DEVELOPMENT DOCKERFILE ----------
 FROM node:22-alpine
 WORKDIR /app
 
 # Install Angular CLI globally
 RUN npm install -g @angular/cli
 
-# Copy package files first for better caching
+# Copy package files for dependency installation
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (this layer will be cached)
+RUN npm ci --only=production=false
 
-# Copy source code (this will be overridden by volume mount)
-COPY . .
+# Create node_modules volume placeholder
+RUN mkdir -p node_modules
 
 # Expose Angular dev server port
 EXPOSE 4200
 
-# Start development server with hot reload using development configuration
+# Start development server with hot reload
 CMD ["ng", "serve", "--configuration=development", "--host", "0.0.0.0", "--port", "4200", "--poll", "2000"] 
