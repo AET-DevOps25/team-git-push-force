@@ -185,10 +185,20 @@ export class ConceptDetailComponent implements OnInit, OnDestroy {
           return;
         }
 
-        // Verify it's a PDF by checking the blob type
-        if (blob.type && !blob.type.includes('pdf') && !blob.type.includes('octet-stream')) {
+        // More lenient content type check - let's see what we're actually getting
+        if (blob.type && blob.type.includes('text/html')) {
+          // Likely an error page, let's read it
+          blob.text().then(text => {
+            console.error('Received HTML response instead of PDF:', text);
+            alert('Failed to download PDF: Server returned an error page.');
+          });
+          return;
+        }
+
+        // Verify it's a PDF by checking the blob type (more lenient check)
+        if (blob.type && !blob.type.includes('pdf') && !blob.type.includes('octet-stream') && !blob.type.includes('application/')) {
           console.error('Received unexpected content type:', blob.type);
-          alert('Failed to download PDF: Unexpected file type received.');
+          alert(`Failed to download PDF: Unexpected file type received (${blob.type}).`);
           return;
         }
 
