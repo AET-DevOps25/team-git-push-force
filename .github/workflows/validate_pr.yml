@@ -1,0 +1,77 @@
+name: Validate Pull Request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate_code:
+    name: Validate Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Validate API Specifications
+        if: ${{ contains(github.event.pull_request.files.*.filename, 'api/') }}
+        run: |
+          npm install -g @redocly/cli@latest
+          redocly lint api/*.yaml --format summary
+
+      - name: Validate Java Code
+        if: ${{ contains(github.event.pull_request.files.*.filename, '.java') }}
+        run: |
+          cd gateway && ./gradlew checkstyleMain checkstyleTest -x test || true
+          cd ../user-svc && ./gradlew checkstyleMain checkstyleTest -x test || true
+          cd ../concept-svc && ./gradlew checkstyleMain checkstyleTest -x test || true
+
+      - name: Validate TypeScript Code
+        if: ${{ contains(github.event.pull_request.files.*.filename, '.ts') || contains(github.event.pull_request.files.*.filename, '.tsx') }}
+        run: |
+          cd client
+          npm ci
+          npm run lint
+
+      - name: Validate Python Code
+        if: ${{ contains(github.event.pull_request.files.*.filename, '.py') }}
+        run: |
+          cd genai-svc
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          python -m pylint --disable=all --enable=unused-import,undefined-variable,unused-variable src/
+
+  check_size:
+    name: Check PR Size
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        run: |
+          git diff --stat $(git merge-base HEAD origin/${{ github.base_ref }}) HEAD | tail -n 1 > changes.txt
+          CHANGES=$(cat changes.txt | awk '{print $1}')
+          echo "Total changes: $CHANGES"
+          if [ $CHANGES -gt 500 ]; then
+            echo "::warning::Large PR detected with $CHANGES changes. Consider splitting this PR into smaller ones."
+          fi

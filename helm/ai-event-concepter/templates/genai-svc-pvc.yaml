@@ -1,0 +1,15 @@
+{{- if .Values.genaisvc.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: genai-svc-models
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.genaisvc.persistence.size }}
+  {{- if .Values.genaisvc.persistence.storageClass }}
+  storageClassName: {{ .Values.genaisvc.persistence.storageClass }}
+  {{- end }}
+{{- end }}
