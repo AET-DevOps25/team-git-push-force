@@ -4,6 +4,8 @@ metadata:
   name: ai-event-concepter-genai-svc
 spec:
   replicas: {{ .Values.genaisvc.replicaCount }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: ai-event-concepter-genai-svc-selector
@@ -11,6 +13,8 @@ spec:
     metadata:
       labels:
         app: ai-event-concepter-genai-svc-selector
+      annotations:
+        rollme: "{{ randAlphaNum 5 }}"
     spec:
       imagePullSecrets:
         - name: ghcr
@@ -20,11 +24,11 @@ spec:
           imagePullPolicy: {{ .Values.genaisvc.image.pullPolicy }}
           resources:
             limits:
-              cpu: "500m"
-              memory: "512Mi"
+              cpu: "1000m"
+              memory: "2Gi"
             requests:
-              cpu: "200m"
-              memory: "256Mi"
+              cpu: "500m"
+              memory: "1Gi"
           ports:
             - containerPort: {{ .Values.genaisvc.service.targetPort }}
           env:
@@ -32,6 +36,17 @@ spec:
             - name: {{ .name }}
               value: "{{ .value }}"
             {{- end }}
+          {{- if .Values.genaisvc.persistence.enabled }}
+          volumeMounts:
+            - name: models-storage
+              mountPath: {{ .Values.genaisvc.persistence.mountPath }}
+          {{- end }}
           envFrom:
             - secretRef:
                 name: genai-svc-secret
+      {{- if .Values.genaisvc.persistence.enabled }}
+      volumes:
+        - name: models-storage
+          persistentVolumeClaim:
+            claimName: genai-svc-models
+      {{- end }}

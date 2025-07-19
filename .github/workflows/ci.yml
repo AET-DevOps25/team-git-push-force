@@ -1,4 +1,4 @@
-name: Build Docker Images
+name: CI Pipeline
 
 on:
   push:
@@ -11,8 +11,31 @@ on:
       - dev
 
 jobs:
-  generate_api_code:
+  validate_api:
+    name: Validate API Specifications
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Redocly CLI
+        run: npm install -g @redocly/cli@latest
+
+      - name: Lint OpenAPI Specifications
+        run: |
+          redocly lint api/*.yaml --format summary
+
+  generate_api_code:
+    name: Generate Code from OpenAPI
+    runs-on: ubuntu-latest
+    needs: [validate_api]
+    if: ${{ always() && (needs.validate_api.result == 'success' || needs.validate_api.result == 'skipped') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -96,9 +119,9 @@ jobs:
           path: ./genai-svc
           if-no-files-found: error
 
-  test-java:
+  test_java:
     name: Run Java Tests
-    needs: generate_api_code
+    needs: [generate_api_code]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -132,9 +155,9 @@ jobs:
           ls -la
           ./gradlew build test
 
-  test-python:
+  test_python:
     name: Run Python Tests
-    needs: generate_api_code
+    needs: [generate_api_code]
     runs-on: ubuntu-latest
     steps:
       - name: Download genai-svc artifact
@@ -159,10 +182,71 @@ jobs:
           export SKIP_WEAVIATE=true
           cd genai-svc
           python -m pytest tests/ -v
+          
+  test_client:
+    name: Run Client Unit Tests
+    needs: [generate_api_code]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download client artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: client-code
+          path: ./client
 
-  build:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: './client/package-lock.json'
+
+      - name: Install dependencies
+        run: |
+          cd client
+          npm ci
+
+      - name: Run Angular tests
+        run: |
+          cd client
+          npm test -- --watch=false --browsers=ChromeHeadless
+
+  build_docs:
+    name: Build API Documentation
+    runs-on: ubuntu-latest
+    needs: [validate_api]
+    if: ${{ always() && (needs.validate_api.result == 'success' || needs.validate_api.result == 'skipped') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Redoc CLI
+        run: npm install -g redoc-cli
+
+      - name: Build Documentation
+        run: |
+          mkdir -p docs/api
+          for spec in api/*.yaml; do
+            filename=$(basename "$spec" .yaml)
+            redoc-cli bundle "$spec" -o "docs/api/$filename.html"
+          done
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs
+          branch: gh-pages
+
+  build_images:
     name: Build Docker Images
-    needs: [test-java, test-python, generate_api_code]
+    needs: [test_java, test_python, test_client]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -212,3 +296,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  complete_ci:
+    name: CI Pipeline Complete
+    needs: [build_images, build_docs]
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Pipeline Complete
+        run: echo "CI Pipeline completed successfully"

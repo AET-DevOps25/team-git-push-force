@@ -1,0 +1,23 @@
+# This file defines code ownership for automatic review assignments
+
+# Default owners for everything in the repo
+* @lenni108 @sfdamm @ClaudiaDuenzinger
+
+# Specific service owners
+/api/ @lenni108 @sfdamm
+/client/ @lenni108
+/gateway/ @sfdamm
+/user-svc/ @ClaudiaDuenzinger
+/concept-svc/ @lenni108
+/genai-svc/ @sfdamm
+
+# Infrastructure and CI/CD
+/.github/workflows/ @sfdamm
+/helm/ai-event-concepter/ @sfdamm
+/helm/monitor/ @ClaudiaDuenzinger
+/infrastructure/ @lenni108
+/monitoring/ @ClaudiaDuenzinger
+
+# Documentation
+/docs/ @lenni108
+*.md @lenni108 @sfdamm @ClaudiaDuenzinger

@@ -1,0 +1,15 @@
+{{- if .Values.genaisvct2vtransformers.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: genai-svc-t2v-transformers-models
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.genaisvct2vtransformers.persistence.size }}
+  {{- if .Values.genaisvct2vtransformers.persistence.storageClass }}
+  storageClassName: {{ .Values.genaisvct2vtransformers.persistence.storageClass }}
+  {{- end }}
+{{- end }}
