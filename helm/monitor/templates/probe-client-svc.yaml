@@ -1,10 +1,10 @@
 apiVersion: monitoring.coreos.com/v1
 kind: Probe
 metadata:
-  name: client-svc-uptime
+  name: client-svc
   namespace: team-git-push-force-monitor
 spec:
-  jobName: client-svc-uptime
+  jobName: client-svc
   interval: 30s
   module: http_2xx
   prober:

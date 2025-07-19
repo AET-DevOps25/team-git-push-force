@@ -1,10 +1,10 @@
 apiVersion: monitoring.coreos.com/v1
 kind: Probe
 metadata:
-  name: genai-svc-weaviate-uptime
+  name: genai-svc-weaviate
   namespace: team-git-push-force-monitor
 spec:
-  jobName: genai-svc-weaviate-uptime
+  jobName: genai-svc-weaviate
   interval: 30s
   module: http_2xx
   prober:

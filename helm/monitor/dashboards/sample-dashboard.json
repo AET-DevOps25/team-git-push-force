@@ -9,40 +9,40 @@
             "pluginName": "Prometheus"
         }
     ],
-    "__requires": [
-        {
-            "type": "grafana",
-            "id": "grafana",
-            "name": "Grafana",
-            "version": "8.0.0"
-        },
-        {
-            "type": "datasource",
-            "id": "prometheus",
-            "name": "Prometheus",
-            "version": "1.0.0"
-        }
-    ],
-    "id": null,
-    "title": "AI Event Concepter - Application Overview",
-    "uid": "ai-event-concepter",
+    "title": "AI Event Concepter - Application Overview (Working Example)",
+    "uid": "ai-event-concepter-example",
     "tags": [
         "ai-event-concepter",
         "microservices",
         "monitoring"
     ],
-    "style": "dark",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
     "timezone": "browser",
     "panels": [
+        {
+            "type": "row",
+            "title": "Service Health",
+            "id": 100,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "collapsed": false
+        },
         {
             "id": 1,
             "title": "Service Health Overview",
             "type": "stat",
+            "datasource": "${DS_PROMETHEUS}",
             "targets": [
                 {
-                    "expr": "up",
-                    "legendFormat": "{{job}}:{{instance}}",
-                    "datasource": "Prometheus"
+                    "expr": "min by(job)(up)",
+                    "legendFormat": "{{job}}",
+                    "refId": "A"
                 }
             ],
             "fieldConfig": {
@@ -65,182 +65,522 @@
                 }
             },
             "gridPos": {
-                "h": 8,
-                "w": 12,
+                "h": 4,
+                "w": 24,
                 "x": 0,
-                "y": 0
+                "y": 1
             }
+        },
+        {
+            "id": 11,
+            "title": "All Services Healthy?",
+            "type": "stat",
+            "datasource": "${DS_PROMETHEUS}",
+            "targets": [
+                {
+                    "expr": "min(up)",
+                    "legendFormat": "healthy",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": 0
+                            },
+                            {
+                                "color": "green",
+                                "value": 1
+                            }
+                        ]
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 0,
+                "y": 5
+            }
+        },
+        {
+            "type": "row",
+            "title": "Traffic & Errors",
+            "id": 200,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 10
+            },
+            "collapsed": false
         },
         {
             "id": 2,
             "title": "Request Count",
             "type": "graph",
+            "datasource": "${DS_PROMETHEUS}",
             "targets": [
                 {
                     "expr": "sum by (job) (rate(http_server_requests_seconds_count[5m]))",
                     "legendFormat": "{{job}}",
-                    "datasource": "Prometheus"
+                    "refId": "A"
                 },
                 {
                     "expr": "sum by (job) (rate(flask_http_request_duration_seconds_count[5m]))",
                     "legendFormat": "{{job}}",
-                    "datasource": "Prometheus"
+                    "refId": "B"
                 },
                 {
                     "expr": "sum(rate(nginx_ingress_controller_requests{service=~\"client-svc.*\"}[5m]))",
                     "legendFormat": "client",
-                    "datasource": "Prometheus"
-                }
-            ],
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 0
-            }
-        },
-        {
-            "id": 3,
-            "title": "Latency: Response Time (95th percentile)",
-            "type": "graph",
-            "targets": [
-                {
-                    "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_requests_seconds_bucket[5m])))",
-                    "legendFormat": "{{job}}",
-                    "datasource": "Prometheus"
-                },
-                {
-                    "expr": "histogram_quantile(0.95, sum by (le, job) (rate(flask_http_request_duration_seconds_bucket[5m])))",
-                    "legendFormat": "{{job}}",
-                    "datasource": "Prometheus"
+                    "refId": "C"
                 }
             ],
             "gridPos": {
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 8
+                "y": 11
+            }
+        },
+        {
+            "id": 10,
+            "title": "HTTP Success Rate (%)",
+            "type": "stat",
+            "datasource": "${DS_PROMETHEUS}",
+            "targets": [
+                {
+                    "expr": "(sum(rate(http_server_requests_seconds_count{status!~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m]))) * 100",
+                    "legendFormat": "success_rate",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": 99
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 99.9
+                            },
+                            {
+                                "color": "green",
+                                "value": 99.95
+                            }
+                        ]
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 12,
+                "y": 11
             }
         },
         {
             "id": 4,
             "title": "Error Rate",
             "type": "graph",
+            "datasource": "${DS_PROMETHEUS}",
             "targets": [
                 {
                     "expr": "sum by (job) (rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]))",
                     "legendFormat": "{{job}} - 5xx errors",
-                    "datasource": "Prometheus"
+                    "refId": "A"
                 },
                 {
                     "expr": "sum by (job) (rate(http_server_requests_seconds_count{status=~\"4..\"}[5m]))",
                     "legendFormat": "{{job}} - 4xx errors",
-                    "datasource": "Prometheus"
+                    "refId": "B"
                 },
                 {
                     "expr": "sum by (job) (rate(flask_http_request_duration_seconds_count{status=~\"5..\"}[5m]))",
                     "legendFormat": "{{job}} - 5xx errors",
-                    "datasource": "Prometheus"
+                    "refId": "C"
                 }
             ],
             "gridPos": {
                 "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 8
+                "w": 24,
+                "x": 0,
+                "y": 15
             }
+        },
+        {
+            "type": "row",
+            "title": "Latency",
+            "id": 300,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 24
+            },
+            "collapsed": false
+        },
+        {
+            "id": 3,
+            "title": "Latency: Response Time (95th percentile)",
+            "type": "graph",
+            "datasource": "${DS_PROMETHEUS}",
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_requests_seconds_bucket[5m])))",
+                    "legendFormat": "{{job}}",
+                    "refId": "A"
+                },
+                {
+                    "expr": "histogram_quantile(0.95, sum by (le, job) (rate(flask_http_request_duration_seconds_bucket[5m])))",
+                    "legendFormat": "{{job}}",
+                    "refId": "B"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 25
+            }
+        },
+        {
+            "id": 12,
+            "title": "Latency: P50 & P99",
+            "type": "graph",
+            "datasource": "${DS_PROMETHEUS}",
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.5, sum by (le, job) (rate(http_server_requests_seconds_bucket[5m])))",
+                    "legendFormat": "P50 - {{job}}",
+                    "refId": "A"
+                },
+                {
+                    "expr": "histogram_quantile(0.99, sum by (le, job) (rate(http_server_requests_seconds_bucket[5m])))",
+                    "legendFormat": "P99 - {{job}}",
+                    "refId": "B"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 33
+            }
+        },
+        {
+            "id": 13,
+            "title": "Max Observed Latency",
+            "type": "stat",
+            "datasource": "${DS_PROMETHEUS}",
+            "targets": [
+                {
+                    "expr": "max_over_time(histogram_quantile(0.99, sum by (le, job) (rate(http_server_requests_seconds_bucket[1m])))[5m:1m])",
+                    "legendFormat": "max_p99",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 0.5
+                            },
+                            {
+                                "color": "red",
+                                "value": 1
+                            }
+                        ]
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 0,
+                "y": 41
+            }
+        },
+        {
+            "type": "row",
+            "title": "Resource Usage",
+            "id": 400,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 46
+            },
+            "collapsed": false
         },
         {
             "id": 5,
             "title": "Memory Usage",
             "type": "graph",
+            "datasource": "${DS_PROMETHEUS}",
             "targets": [
                 {
                     "expr": "sum by (job) (jvm_memory_used_bytes)",
                     "legendFormat": "{{job}}",
-                    "datasource": "Prometheus"
+                    "refId": "A"
                 },
                 {
                     "expr": "sum by (job) (python_memory_bytes_used)",
                     "legendFormat": "{{job}}",
-                    "datasource": "Prometheus"
+                    "refId": "B"
                 }
             ],
             "gridPos": {
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 16
+                "y": 47
+            }
+        },
+        {
+            "id": 14,
+            "title": "Memory Saturation (% of Limit)",
+            "type": "stat",
+            "datasource": "${DS_PROMETHEUS}",
+            "targets": [
+                {
+                    "expr": "100 * sum(container_memory_usage_bytes{container!=\"POD\"}) by (pod) / sum(kube_pod_container_resource_limits_memory_bytes{container!=\"POD\"}) by (pod)",
+                    "legendFormat": "mem_saturation",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 75
+                            },
+                            {
+                                "color": "red",
+                                "value": 90
+                            }
+                        ]
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 12,
+                "y": 47
             }
         },
         {
             "id": 6,
             "title": "CPU Usage",
             "type": "graph",
+            "datasource": "${DS_PROMETHEUS}",
             "targets": [
                 {
                     "expr": "rate(process_cpu_seconds_total[5m]) * 100",
                     "legendFormat": "{{job}}",
-                    "datasource": "Prometheus"
+                    "refId": "A"
                 },
                 {
                     "expr": "rate(python_cpu_seconds_total[5m]) * 100",
                     "legendFormat": "{{job}}",
-                    "datasource": "Prometheus"
-                }
-            ],
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 16
-            }
-        },
-        {
-            "id": 7,
-            "title": "Database Connections",
-            "type": "graph",
-            "targets": [
-                {
-                    "expr": "sum(pg_stat_activity_count{datname!~\"postgres|template0|template1\"}) by (datname, state)",
-                    "legendFormat": "{{datname}} - {{state}}",
-                    "datasource": "Prometheus"
+                    "refId": "B"
                 }
             ],
             "gridPos": {
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 24
+                "y": 55
+            }
+        },
+        {
+            "id": 15,
+            "title": "CPU Saturation (% of Limit)",
+            "type": "stat",
+            "datasource": "${DS_PROMETHEUS}",
+            "targets": [
+                {
+                    "expr": "100 * sum(rate(container_cpu_usage_seconds_total{container!=\"POD\"}[5m])) by (pod) / sum(kube_pod_container_resource_limits_cpu_cores{container!=\"POD\"}) by (pod)",
+                    "legendFormat": "cpu_saturation",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 75
+                            },
+                            {
+                                "color": "red",
+                                "value": 90
+                            }
+                        ]
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 12,
+                "y": 55
+            }
+        },
+        {
+            "type": "row",
+            "title": "Database",
+            "id": 500,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 60
+            },
+            "collapsed": false
+        },
+        {
+            "id": 7,
+            "title": "Database Connections",
+            "type": "graph",
+            "datasource": "${DS_PROMETHEUS}",
+            "targets": [
+                {
+                    "expr": "sum(pg_stat_activity_count{datname!~\"postgres|template0|template1\"}) by (datname, state)",
+                    "legendFormat": "{{datname}} - {{state}}",
+                    "refId": "A"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 61
+            }
+        },
+        {
+            "id": 16,
+            "title": "DB Connection Saturation",
+            "type": "stat",
+            "datasource": "${DS_PROMETHEUS}",
+            "targets": [
+                {
+                    "expr": "sum(pg_stat_activity_count) / 100 * 100",
+                    "legendFormat": "db_conn_saturation",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 80
+                            },
+                            {
+                                "color": "red",
+                                "value": 90
+                            }
+                        ]
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 12,
+                "y": 61
             }
         },
         {
             "id": 9,
             "title": "Database Transaction Rate",
             "type": "graph",
+            "datasource": "${DS_PROMETHEUS}",
             "targets": [
                 {
                     "expr": "sum by (datname) (rate(pg_stat_database_xact_commit{datname!~\"postgres|template0|template1\"}[5m]))",
                     "legendFormat": "{{datname}} - commits",
-                    "datasource": "Prometheus"
+                    "refId": "A"
                 },
                 {
                     "expr": "sum by (datname) (rate(pg_stat_database_xact_rollback{datname!~\"postgres|template0|template1\"}[5m]))",
                     "legendFormat": "{{datname}} - rollbacks",
-                    "datasource": "Prometheus"
+                    "refId": "B"
                 }
             ],
             "gridPos": {
                 "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 24
+                "w": 24,
+                "x": 0,
+                "y": 65
             }
+        },
+        {
+            "type": "row",
+            "title": "Service Version & Deploys",
+            "id": 600,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 74
+            },
+            "collapsed": false
         },
         {
             "id": 8,
             "title": "Service Version Overview",
             "type": "table",
+            "datasource": "${DS_PROMETHEUS}",
             "targets": [
                 {
                     "expr": "app_version_info",
@@ -262,13 +602,24 @@
                 "h": 8,
                 "w": 24,
                 "x": 0,
-                "y": 32
+                "y": 75
             }
         }
     ],
+    "annotations": {
+        "list": [
+            {
+                "name": "Deployments",
+                "type": "query",
+                "datasource": "${DS_PROMETHEUS}",
+                "expr": "changes(kube_deployment_status_replicas_updated_total[1h])",
+                "enable": true,
+                "iconColor": "rgba(0, 211, 255, 1)"
+            }
+        ]
+    },
     "time": {
         "from": "now-1h",
         "to": "now"
-    },
-    "refresh": "30s"
+    }
 }

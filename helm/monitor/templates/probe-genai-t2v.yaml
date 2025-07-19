@@ -1,10 +1,10 @@
 apiVersion: monitoring.coreos.com/v1
 kind: Probe
 metadata:
-  name: genai-svc-t2v-transformers-uptime
+  name: genai-svc-t2v-transformers
   namespace: team-git-push-force-monitor
 spec:
-  jobName: genai-svc-t2v-transformers-uptime
+  jobName: genai-svc-t2v-transformers
   interval: 30s
   module: http_2xx
   prober:
