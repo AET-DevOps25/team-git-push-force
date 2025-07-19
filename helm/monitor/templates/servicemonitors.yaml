@@ -1,0 +1,199 @@
+# ServiceMonitor for Gateway
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: gateway-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /actuator/prometheus
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+    targetPort: 8080
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: gateway
+      monitoring: "true"
+---
+# ServiceMonitor for User Service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: user-svc-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /actuator/prometheus
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+    targetPort: 8080
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: user-svc
+      monitoring: "true"
+---
+# ServiceMonitor for Concept Service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: concept-svc-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /actuator/prometheus
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+    targetPort: 8080
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: concept-svc
+      monitoring: "true"
+---
+# ServiceMonitor for GenAI Service (Python Flask/FastAPI)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: genai-svc-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /metrics
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+    targetPort: 8083
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: genai-svc
+      monitoring: "true"
+---
+# ServiceMonitor for Client Service (Angular Frontend) - Health check
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: client-svc-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+    targetPort: 80
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: client
+      monitoring: "true"
+---
+# ServiceMonitor for MinIO Object Storage - Metrics endpoint
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: genai-svc-minio-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /minio/v2/metrics/cluster
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+    targetPort: 9000
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: genai-svc-minio
+      monitoring: "true"
+---
+# ServiceMonitor for Weaviate Vector Database - Metrics endpoint
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: genai-svc-weaviate-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /v1/meta
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+    targetPort: 8080
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: genai-svc-weaviate
+      monitoring: "true"
+---
+# ServiceMonitor for T2V Transformers AI Service - Health endpoint
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: genai-svc-t2v-transformers-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+    targetPort: 8080
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: genai-svc-t2v-transformers
+      monitoring: "true" 

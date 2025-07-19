@@ -1,0 +1,108 @@
+# Prometheus Custom Resource for Prometheus Operator
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus
+  namespace: team-git-push-force-monitor
+  labels:
+    {{- include "monitoring.labels" . | nindent 4 }}
+spec:
+  serviceAccountName: prometheus
+  serviceMonitorSelector:
+    matchLabels:
+      app: prometheus
+  serviceMonitorNamespaceSelector: {}
+  ruleSelector:
+    matchLabels:
+      app: prometheus
+  ruleNamespaceSelector: {}
+  alerting:
+    alertmanagers:
+    - namespace: team-git-push-force-monitor
+      name: alertmanager
+      port: web
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+  retention: 15d
+  storage:
+    volumeClaimTemplate:
+      spec:
+        {{- if .Values.prometheus.persistence.storageClassName }}
+        storageClassName: {{ .Values.prometheus.persistence.storageClassName }}
+        {{- end }}
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.prometheus.persistence.size | default "10Gi" }}
+  securityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 0
+  version: v2.52.0
+---
+# PrometheusRule for alerting rules
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: prometheus-rules
+  namespace: team-git-push-force-monitor
+  labels:
+    app: prometheus
+    {{- include "monitoring.labels" . | nindent 4 }}
+spec:
+  groups:
+  - name: ai-event-concepter
+    rules:
+    # Service availability alerts
+    - alert: ServiceDown
+      expr: up == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Service {{`{{`}} $labels.instance {{`}}`}} is down"
+        description: "Service {{`{{`}} $labels.instance {{`}}`}} has been down for more than 1 minute."
+
+    # High memory usage
+    - alert: HighMemoryUsage
+      expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High memory usage on {{`{{`}} $labels.instance {{`}}`}}"
+        description: "Memory usage is above 85% on {{`{{`}} $labels.instance {{`}}`}}"
+
+    # High CPU usage
+    - alert: HighCPUUsage
+      expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage on {{`{{`}} $labels.instance {{`}}`}}"
+        description: "CPU usage is above 80% on {{`{{`}} $labels.instance {{`}}`}}"
+
+    # Spring Boot specific alerts
+    - alert: SpringBootHighErrorRate
+      expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.1
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High error rate in Spring Boot service {{`{{`}} $labels.service {{`}}`}}"
+        description: "Error rate is above 0.1 errors per second in {{`{{`}} $labels.service {{`}}`}}"
+
+    - alert: SpringBootHighResponseTime
+      expr: histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])) > 2
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High response time in Spring Boot service {{`{{`}} $labels.service {{`}}`}}"
+        description: "95th percentile response time is above 2 seconds in {{`{{`}} $labels.service {{`}}`}}" 

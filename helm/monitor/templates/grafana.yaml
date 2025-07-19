@@ -1,3 +1,13 @@
+# Grafana ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana
+  labels:
+    app: grafana
+    {{- include "monitoring.labels" . | nindent 4 }}
+---
+# Grafana Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -54,6 +64,7 @@ spec:
             name: grafana-dashboards
 {{- if .Values.grafana.persistence.enabled }}
 ---
+# Grafana PVC
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -69,4 +80,56 @@ spec:
   {{- if .Values.grafana.persistence.storageClassName }}
   storageClassName: {{ .Values.grafana.persistence.storageClassName }}
   {{- end }}
+{{- end }}
+---
+# Grafana Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  labels:
+    app: grafana
+    {{- include "monitoring.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.grafana.service.port }}
+      targetPort: {{ .Values.grafana.service.port }}
+      protocol: TCP
+      name: http
+  selector:
+    app: grafana
+{{- if .Values.ingress.enabled }}
+---
+# Grafana Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  {{- $annotations := .Values.ingress.annotations | default dict }}
+  {{- if $annotations }}
+  annotations:
+    {{- toYaml $annotations | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    - hosts:
+        - "{{ .Values.ingress.host }}"
+      secretName: "grafana-tls"
+  {{- end }}
+  rules:
+    - host: "{{ .Values.ingress.host }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
 {{- end }} 

@@ -1,4 +1,6 @@
-{{- if .Values.prometheus.ingress.enabled -}}
+{{- if .Values.prometheus.ingress.enabled }}
+---
+# Prometheus Ingress
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -32,3 +34,34 @@ spec:
                 port:
                   number: 9090
 {{- end }}
+{{- if .Values.alertmanager.ingress.enabled }}
+---
+# Alertmanager Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alertmanager-ingress
+  labels:
+    app: alertmanager
+  annotations:
+    {{- toYaml .Values.alertmanager.ingress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.alertmanager.ingress.className }}
+  {{- if .Values.alertmanager.ingress.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.alertmanager.ingress.host }}
+      secretName: alertmanager-tls
+  {{- end }}
+  rules:
+    - host: {{ .Values.alertmanager.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: alertmanager
+                port:
+                  number: 9093
+{{- end }} 
