@@ -11,7 +11,13 @@ public class AgendaItemMapper {
         }
         
         AgendaItemEntity entity = new AgendaItemEntity();
-        entity.setId(dto.getId());
+        
+        // Only set ID if it's provided in the DTO
+        // If ID is null, JPA will generate a new UUID automatically
+        if (dto.getId() != null) {
+            entity.setId(dto.getId());
+        }
+        
         entity.setTime(dto.getTime());
         entity.setTitle(dto.getTitle());
         entity.setDescription(dto.getDescription());

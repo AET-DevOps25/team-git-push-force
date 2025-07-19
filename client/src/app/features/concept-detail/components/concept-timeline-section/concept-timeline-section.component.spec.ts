@@ -257,25 +257,6 @@ describe('ConceptTimelineSectionComponent', () => {
     });
   });
 
-  describe('isComplete', () => {
-    it('should return true when concept has agenda items', () => {
-      component.concept = mockConcept;
-      expect(component.isComplete()).toBe(true);
-    });
-
-    it('should return false when concept has no agenda', () => {
-      const conceptWithoutAgenda = { ...mockConcept, agenda: [] };
-      component.concept = conceptWithoutAgenda;
-      expect(component.isComplete()).toBe(false);
-    });
-
-    it('should return false when agenda is undefined', () => {
-      const conceptWithUndefinedAgenda = { ...mockConcept, agenda: undefined as any };
-      component.concept = conceptWithUndefinedAgenda;
-      expect(component.isComplete()).toBe(false);
-    });
-  });
-
   describe('hasSuggestions', () => {
     it('should return true when concept suggestion has agenda', () => {
       // Create suggestions with agenda items

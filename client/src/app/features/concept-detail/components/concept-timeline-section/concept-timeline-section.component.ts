@@ -124,11 +124,6 @@ export class ConceptTimelineSectionComponent implements OnDestroy {
     this.clearSuggestion('update', update);
   }
 
-  // Check if section is complete
-  isComplete(): boolean {
-    return !!(this.concept.agenda?.length);
-  }
-
   // Check if section has suggestions
   hasSuggestions(): boolean {
     return !!(this.suggestions?.conceptSuggestion?.agenda?.length ||

@@ -80,8 +80,8 @@ export class DashboardComponent {
   // Helper methods
   getStatusIcon(status: string): string {
     switch (status) {
-      case 'DRAFT': return 'edit_note';
-      case 'IN_PROGRESS': return 'hourglass_top';
+      case 'DRAFT': return 'edit';
+      case 'IN_PROGRESS': return 'trending_up';
       case 'COMPLETED': return 'check_circle';
       case 'ARCHIVED': return 'archive';
       default: return 'event_note';

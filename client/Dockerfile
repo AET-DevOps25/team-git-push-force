@@ -2,13 +2,16 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
+# Define build arguments
+ARG BUILD_ENV=production
+
 # speed up rebuilds: first copy lock files only
 COPY package*.json ./
 RUN npm ci --ignore-scripts
 
-# now copy sources and build for production
+# now copy sources and build for specified environment
 COPY . .
-RUN npm run build -- --configuration=production
+RUN npm run build -- --configuration=${BUILD_ENV}
 
 # ---------- 2. RUNTIME STAGE ----------
 FROM nginx:1.27-alpine

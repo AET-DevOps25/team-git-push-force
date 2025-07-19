@@ -31,7 +31,7 @@ export interface EventDetails {
 }
 
 export interface AgendaItem {
-  id: string;
+  id?: string;  // Made optional - backend will generate if not provided
   time: string;
   title: string;
   description?: string;
@@ -41,7 +41,7 @@ export interface AgendaItem {
 }
 
 export interface Speaker {
-  id: string;
+  id?: string;  // Made optional - backend will generate if not provided
   name: string;
   expertise: string;
   suggestedTopic?: string;

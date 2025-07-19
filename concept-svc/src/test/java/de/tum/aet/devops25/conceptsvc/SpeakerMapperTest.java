@@ -181,4 +181,75 @@ class SpeakerMapperTest {
         assertThat(dto.getBio()).isNull();
         assertThat(dto.getConfirmed()).isFalse(); // Default value in entity
     }
+
+    @Test
+    void testToEntity_WithIdProvidedSetsId() {
+        // Given - Frontend provides ID (existing speaker)
+        UUID providedId = UUID.randomUUID();
+        Speaker speaker = new Speaker();
+        speaker.setId(providedId); // ID is provided
+        speaker.setName("Existing Speaker");
+        speaker.setExpertise("AI Research");
+        speaker.setConfirmed(true);
+
+        // When
+        SpeakerEntity entity = SpeakerMapper.toEntity(speaker);
+
+        // Then
+        assertThat(entity).isNotNull();
+        assertThat(entity.getId()).isEqualTo(providedId); // ID should be set
+        assertThat(entity.getName()).isEqualTo("Existing Speaker");
+        assertThat(entity.getExpertise()).isEqualTo("AI Research");
+        assertThat(entity.getConfirmed()).isTrue();
+    }
+
+    @Test
+    void testToEntity_WithNoIdLetsJpaGenerate() {
+        // Given - Frontend doesn't provide ID (new speaker)
+        Speaker speaker = new Speaker();
+        // No ID set - this is the new behavior from frontend
+        speaker.setName("New Speaker");
+        speaker.setExpertise("Machine Learning");
+        speaker.setSuggestedTopic("Future of ML");
+        speaker.setBio("New speaker joining the conference");
+        speaker.setConfirmed(false);
+
+        // When
+        SpeakerEntity entity = SpeakerMapper.toEntity(speaker);
+
+        // Then
+        assertThat(entity).isNotNull();
+        assertThat(entity.getId()).isNull(); // ID should be null - JPA will generate it
+        assertThat(entity.getName()).isEqualTo("New Speaker");
+        assertThat(entity.getExpertise()).isEqualTo("Machine Learning");
+        assertThat(entity.getSuggestedTopic()).isEqualTo("Future of ML");
+        assertThat(entity.getBio()).isEqualTo("New speaker joining the conference");
+        assertThat(entity.getConfirmed()).isFalse();
+    }
+
+    @Test
+    void testConditionalIdBehavior_SimulatesJpaLifecycle() {
+        // Given - Frontend creates speaker without ID
+        Speaker frontendSpeaker = new Speaker();
+        frontendSpeaker.setName("Conference Speaker");
+        frontendSpeaker.setExpertise("Data Science");
+        frontendSpeaker.setConfirmed(false);
+
+        // When - Backend processes the speaker
+        SpeakerEntity entity = SpeakerMapper.toEntity(frontendSpeaker);
+        
+        // Simulate JPA generating ID after save
+        UUID jpaGeneratedId = UUID.randomUUID();
+        entity.setId(jpaGeneratedId);
+        
+        // Convert back to DTO for response
+        Speaker responseSpeaker = SpeakerMapper.toDto(entity);
+
+        // Then
+        assertThat(entity.getId()).isEqualTo(jpaGeneratedId); // Entity has generated ID
+        assertThat(responseSpeaker.getId()).isEqualTo(jpaGeneratedId); // Response includes generated ID
+        assertThat(responseSpeaker.getName()).isEqualTo("Conference Speaker");
+        assertThat(responseSpeaker.getExpertise()).isEqualTo("Data Science");
+        assertThat(responseSpeaker.getConfirmed()).isFalse();
+    }
 } 

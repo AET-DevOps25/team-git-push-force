@@ -4,8 +4,8 @@ export interface ProcessedDocument {
   type: 'INDUSTRY_REPORT' | 'BRAND_DECK' | 'PAST_EVENT_DEBRIEF' | 'GUIDELINES' | 'OTHER';
   status: 'PROCESSING' | 'COMPLETED' | 'FAILED';
   s3Location: string;
-  uploadedAt: Date;
-  processedAt?: Date;
+  uploadedAt: string; // ISO date-time string per OpenAPI spec
+  processedAt?: string; // ISO date-time string per OpenAPI spec
 }
 
 export interface DocumentUploadResult {
@@ -13,6 +13,6 @@ export interface DocumentUploadResult {
   filename: string;
   size: number;
   mimeType: string;
-  uploadedAt: Date;
+  uploadedAt: string; // ISO date-time string per OpenAPI spec
   status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 } 

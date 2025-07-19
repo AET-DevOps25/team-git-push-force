@@ -63,48 +63,65 @@
     </div>
     
     <div class="concepts-container" *ngIf="recentConcepts$ | async as recentConcepts">
-      <div class="concepts-grid" *ngIf="recentConcepts.length > 0">
-        <mat-card 
-          *ngFor="let concept of recentConcepts; trackBy: trackByConcept" 
-          class="concept-card"
-          (click)="viewConcept(concept.id)">
-          
-          <div class="concept-header">
-            <div class="concept-avatar" [class]="'status-' + concept.status.toLowerCase().replace('_', '-')">
-              <mat-icon>{{ getStatusIcon(concept.status) }}</mat-icon>
+            <!-- Concepts Grid -->
+            <div class="concepts-grid" *ngIf="recentConcepts.length > 0">
+              <div 
+                *ngFor="let concept of recentConcepts; trackBy: trackByConcept" 
+                class="concept-card"
+                (click)="viewConcept(concept.id)">
+                
+                <div class="concept-header">
+                  <div class="concept-avatar" [class]="'status-' + concept.status.toLowerCase().replace('_', '-')">
+                    <mat-icon>{{ getStatusIcon(concept.status) }}</mat-icon>
+                  </div>
+                  <div class="concept-meta-top">
+                    <span class="concept-date">{{ concept.updatedAt | date:'MMM d, yyyy' }}</span>
+                    <div class="status-indicator" [class]="'status-' + concept.status.toLowerCase().replace('_', '-')"></div>
+                  </div>
+                </div>
+                
+                <div class="concept-content">
+                  <h3 class="concept-title">{{ concept.title }}</h3>
+                  <p class="concept-description">{{ concept.description }}</p>
+                  
+                  <div class="concept-details">
+                    <div class="detail-item" *ngIf="concept.eventDetails?.format">
+                      <mat-icon>place</mat-icon>
+                      <span>{{ concept.eventDetails?.format | titlecase }}</span>
+                    </div>
+                    <div class="detail-item" *ngIf="concept.eventDetails?.capacity">
+                      <mat-icon>people</mat-icon>
+                      <span>{{ concept.eventDetails?.capacity }} attendees</span>
+                    </div>
+                    <div class="detail-item" *ngIf="concept.eventDetails?.duration">
+                      <mat-icon>schedule</mat-icon>
+                      <span>{{ concept.eventDetails?.duration }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="concept-tags" *ngIf="concept.tags.length > 0">
+                    <span *ngFor="let tag of concept.tags.slice(0, 3)" class="tag">
+                      {{ tag }}
+                    </span>
+                    <span *ngIf="concept.tags.length > 3" class="tag-more">
+                      +{{ concept.tags.length - 3 }}
+                    </span>
+                  </div>
+                </div>
+                
+                <div class="concept-footer">
+                  <div class="status-badge" [class]="'status-' + concept.status.toLowerCase().replace('_', '-')">
+                    <mat-icon>{{ getStatusIcon(concept.status) }}</mat-icon>
+                    <span>{{ getStatusDisplayName(concept.status) }}</span>
+                  </div>
+                  <div class="concept-actions">
+                    <button mat-icon-button class="action-btn" matTooltip="Edit">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="concept-meta-top">
-              <span class="concept-date">{{ concept.updatedAt | date:'MMM d, yyyy' }}</span>
-              <div class="status-indicator" [class]="'status-' + concept.status.toLowerCase().replace('_', '-')"></div>
-            </div>
-          </div>
-          
-          <div class="concept-content">
-            <h3 class="concept-title">{{ concept.title }}</h3>
-            <p class="concept-description">{{ concept.description }}</p>
-            
-            <div class="concept-tags" *ngIf="concept.tags.length > 0">
-              <span *ngFor="let tag of concept.tags.slice(0, 3)" class="tag">
-                {{ tag }}
-              </span>
-              <span *ngIf="concept.tags.length > 3" class="tag-more">
-                +{{ concept.tags.length - 3 }}
-              </span>
-            </div>
-          </div>
-          
-          <div class="concept-footer">
-            <span class="status-badge" [class]="'status-' + concept.status.toLowerCase().replace('_', '-')">
-              {{ getStatusDisplayName(concept.status) }}
-            </span>
-            <div class="concept-actions">
-              <button mat-icon-button class="action-btn">
-                <mat-icon>edit</mat-icon>
-              </button>
-            </div>
-          </div>
-        </mat-card>
-      </div>
       
       <!-- Enhanced Empty State -->
       <div *ngIf="recentConcepts.length === 0" class="empty-state">
