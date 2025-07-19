@@ -1,0 +1,152 @@
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: [CI Pipeline]
+    types:
+      - completed
+    branches:
+      - main
+      - dev
+
+jobs:
+  # Check if we should deploy based on the workflow_run event
+  evaluate_deployment:
+    name: Evaluate Deployment Conditions
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    outputs:
+      deploy_environment: ${{ steps.set-env.outputs.environment }}
+      should_deploy: ${{ steps.set-env.outputs.should_deploy }}
+    steps:
+      - name: Set environment based on branch
+        id: set-env
+        run: |
+          if [[ "${{ github.event.workflow_run.head_branch }}" == "main" ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event.workflow_run.head_branch }}" == "dev" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "environment=none" >> $GITHUB_OUTPUT
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
+
+  # Deploy to staging environment
+  deploy_staging:
+    name: Deploy to Staging
+    needs: [evaluate_deployment]
+    if: ${{ needs.evaluate_deployment.outputs.should_deploy == 'true' && needs.evaluate_deployment.outputs.deploy_environment == 'staging' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "latest"
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+
+      - name: Run Helm Upgrade
+        run: |
+          cd helm/ai-event-concepter
+          helm upgrade --install ai-event-concepter . \
+            --namespace team-git-push-force-dev \
+            --create-namespace \
+            --set ingress.host=dev-aieventconcepter.student.k8s.aet.cit.tum.de \
+            --set client.image.tag=dev \
+            --set gateway.image.tag=dev \
+            --set usersvc.image.tag=dev \
+            --set conceptsvc.image.tag=dev \
+            --set genaisvc.image.tag=dev
+
+      - name: Rollout Restart Deployments
+        run: |
+          kubectl rollout restart deployment -n team-git-push-force-dev
+
+      - name: Verify Deployment
+        run: |
+          echo "Verifying deployment to staging environment..."
+          RETRY_COUNT=0
+          MAX_RETRIES=10
+          until kubectl get pods -n team-git-push-force-dev -l app.kubernetes.io/name=ai-event-concepter -o jsonpath='{.items[*].status.containerStatuses[*].ready}' | grep -q "true" || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+            echo "Waiting for pods to be ready... ($(($RETRY_COUNT+1))/$MAX_RETRIES)"
+            sleep 10
+            RETRY_COUNT=$((RETRY_COUNT+1))
+          done
+
+          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo "Pods didn't become ready within the timeout period"
+            kubectl get pods -n team-git-push-force-dev
+            exit 1
+          fi
+
+          echo "✅ Staging deployment verified successfully!"
+
+  # Deploy to production environment
+  deploy_production:
+    name: Deploy to Production
+    needs: [evaluate_deployment]
+    if: ${{ needs.evaluate_deployment.outputs.should_deploy == 'true' && needs.evaluate_deployment.outputs.deploy_environment == 'production' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "latest"
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+
+      - name: Run Helm
+        run: |
+          cd helm/ai-event-concepter
+          helm upgrade --debug --install -n team-git-push-force ai-event-concepter . \
+            --set ingress.host=aieventconcepter.student.k8s.aet.cit.tum.de
+          kubectl rollout restart deployment -n team-git-push-force
+
+      - name: Verify Deployment
+        run: |
+          echo "Verifying deployment to production environment..."
+          RETRY_COUNT=0
+          MAX_RETRIES=10
+          until kubectl get pods -n team-git-push-force -l app.kubernetes.io/name=ai-event-concepter -o jsonpath='{.items[*].status.containerStatuses[*].ready}' | grep -q "true" || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+            echo "Waiting for pods to be ready... ($(($RETRY_COUNT+1))/$MAX_RETRIES)"
+            sleep 10
+            RETRY_COUNT=$((RETRY_COUNT+1))
+          done
+
+          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo "Pods didn't become ready within the timeout period"
+            kubectl get pods -n team-git-push-force
+            exit 1
+          fi
+
+          echo "✅ Production deployment verified successfully!"

@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-svc-db
+  name: ai-event-concepter-user-svc-db
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: user-svc-db-selector
+      app: ai-event-concepter-user-svc-db-selector
   template:
     metadata:
       labels:
-        app: user-svc-db-selector
+        app: ai-event-concepter-user-svc-db-selector
     spec:
       containers:
         - name: user-svc-db

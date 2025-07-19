@@ -115,6 +115,25 @@ genaisvc:
       value: http://genai-svc-minio:9000
     - name: MINIO_BUCKET
       value: concepts
+    - name: TRANSFORMERS_CACHE
+      value: "/models/cache"
+    - name: HF_HOME
+      value: "/models/home"
+    - name: HF_DATASETS_CACHE
+      value: "/models/datasets"
+    - name: TRANSFORMERS_OFFLINE
+      value: "1"
+    - name: HF_HUB_OFFLINE
+      value: "1"
+    - name: GUNICORN_WORKERS
+      value: "1"
+    - name: GUNICORN_THREADS
+      value: "2"
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClass: ""
+    mountPath: "/models"
   # Secrets are managed externally using kubectl
   # See README.md for instructions
 
@@ -128,8 +147,8 @@ genaisvcweaviate:
     type: ClusterIP
     port: 8080
     targetPort: 8080
-    grpcPort: 8081
-    grpcTargetPort: 8081
+    grpcPort: 50051
+    grpcTargetPort: 50051
   replicaCount: 1
   env:
     - name: QUERY_DEFAULTS_LIMIT
@@ -147,7 +166,7 @@ genaisvcweaviate:
     - name: MODULES_TRANSFORMERS_INFERENCE_API_TIMEOUT_SECONDS
       value: "300"
   persistence:
-    enabled: true
+    enabled: false
     size: 1Gi
     storageClass: ""
 
@@ -167,6 +186,25 @@ genaisvct2vtransformers:
       value: "0"
     - name: STARTUP_TIMEOUT_SECONDS
       value: "300"
+    - name: TRANSFORMERS_CACHE
+      value: "/models/cache"
+    - name: HF_HOME
+      value: "/models/home"
+    - name: HF_DATASETS_CACHE
+      value: "/models/datasets"
+    - name: TRANSFORMERS_OFFLINE
+      value: "1"
+    - name: HF_HUB_OFFLINE
+      value: "1"
+    - name: GUNICORN_WORKERS
+      value: "1"
+    - name: GUNICORN_THREADS
+      value: "2"
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClass: ""
+    mountPath: "/models"
 
 # MinIO Object Storage for GenAI Service
 genaisvcminio:
@@ -187,7 +225,7 @@ genaisvcminio:
     - name: MINIO_ROOT_PASSWORD
       value: "minioadmin"
   persistence:
-    enabled: true
+    enabled: false
     size: 10Gi
     storageClass: ""
 
