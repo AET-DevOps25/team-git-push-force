@@ -16,7 +16,7 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                         CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
+            CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
     }
@@ -28,11 +28,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // Allow preflight requests
-                        .requestMatchers("/", "/health").permitAll()
-                        .requestMatchers("/api/concepts/**").authenticated()
-                        .anyRequest().authenticated())
+                .requestMatchers("/", "/health", "/actuator/prometheus").permitAll()
+                .requestMatchers("/api/concepts/**").authenticated()
+                .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
-} 
+}

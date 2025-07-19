@@ -29,7 +29,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Make it stateless
                 .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/", "/api/users/register", "/api/users/login", "/health").permitAll()
+                .requestMatchers("/", "/api/users/register", "/api/users/login", "/health", "/actuator/prometheus").permitAll()
                 .anyRequest().authenticated()
                 )
                 // Use custom authentication entry point
