@@ -4,5 +4,5 @@
 # Run code generation
 ./api/scripts/gen-all.sh
 
-# Start Docker Compose with local development configuration
-docker-compose -f docker-compose.local.yml up --build
+# Start Docker Compose with development configuration (default)
+docker-compose up --build
