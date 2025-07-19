@@ -24,12 +24,6 @@
             <h4 class="speaker-name">{{ speaker.name }}</h4>
             <p class="speaker-expertise">{{ speaker.expertise }}</p>
           </div>
-          <div class="speaker-status">
-            <mat-icon [class.confirmed]="speaker.confirmed" 
-                      [class.pending]="!speaker.confirmed">
-              {{ speaker.confirmed ? 'check_circle' : 'schedule' }}
-            </mat-icon>
-          </div>
         </div>
         <div class="speaker-details" *ngIf="speaker.suggestedTopic || speaker.bio">
           <p class="suggested-topic" *ngIf="speaker.suggestedTopic">
