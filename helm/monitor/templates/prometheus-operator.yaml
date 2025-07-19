@@ -16,6 +16,7 @@ spec:
     matchLabels:
       app: prometheus
   ruleNamespaceSelector: {}
+  probeSelector: {}
   alerting:
     alertmanagers:
     - namespace: team-git-push-force-monitor

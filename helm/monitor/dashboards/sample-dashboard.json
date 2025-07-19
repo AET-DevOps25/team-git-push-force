@@ -73,12 +73,22 @@
         },
         {
             "id": 2,
-            "title": "Request Rate",
+            "title": "Request Count",
             "type": "graph",
             "targets": [
                 {
-                    "expr": "sum by (job, method, uri) (rate(http_server_requests_seconds_count[5m]))",
-                    "legendFormat": "{{job}} - {{method}} {{uri}}",
+                    "expr": "sum by (job) (rate(http_server_requests_seconds_count[5m]))",
+                    "legendFormat": "{{job}}",
+                    "datasource": "Prometheus"
+                },
+                {
+                    "expr": "sum by (job) (rate(flask_http_request_duration_seconds_count[5m]))",
+                    "legendFormat": "{{job}}",
+                    "datasource": "Prometheus"
+                },
+                {
+                    "expr": "sum(rate(nginx_ingress_controller_requests{service=~\"client-svc.*\"}[5m]))",
+                    "legendFormat": "client",
                     "datasource": "Prometheus"
                 }
             ],
@@ -91,11 +101,16 @@
         },
         {
             "id": 3,
-            "title": "Response Time (95th percentile)",
+            "title": "Latency: Response Time (95th percentile)",
             "type": "graph",
             "targets": [
                 {
                     "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_requests_seconds_bucket[5m])))",
+                    "legendFormat": "{{job}}",
+                    "datasource": "Prometheus"
+                },
+                {
+                    "expr": "histogram_quantile(0.95, sum by (le, job) (rate(flask_http_request_duration_seconds_bucket[5m])))",
                     "legendFormat": "{{job}}",
                     "datasource": "Prometheus"
                 }
@@ -121,6 +136,11 @@
                     "expr": "sum by (job) (rate(http_server_requests_seconds_count{status=~\"4..\"}[5m]))",
                     "legendFormat": "{{job}} - 4xx errors",
                     "datasource": "Prometheus"
+                },
+                {
+                    "expr": "sum by (job) (rate(flask_http_request_duration_seconds_count{status=~\"5..\"}[5m]))",
+                    "legendFormat": "{{job}} - 5xx errors",
+                    "datasource": "Prometheus"
                 }
             ],
             "gridPos": {
@@ -136,8 +156,13 @@
             "type": "graph",
             "targets": [
                 {
-                    "expr": "jvm_memory_used_bytes / jvm_memory_max_bytes * 100",
-                    "legendFormat": "{{job}} - {{area}}",
+                    "expr": "sum by (job) (jvm_memory_used_bytes)",
+                    "legendFormat": "{{job}}",
+                    "datasource": "Prometheus"
+                },
+                {
+                    "expr": "sum by (job) (python_memory_bytes_used)",
+                    "legendFormat": "{{job}}",
                     "datasource": "Prometheus"
                 }
             ],
@@ -157,6 +182,11 @@
                     "expr": "rate(process_cpu_seconds_total[5m]) * 100",
                     "legendFormat": "{{job}}",
                     "datasource": "Prometheus"
+                },
+                {
+                    "expr": "rate(python_cpu_seconds_total[5m]) * 100",
+                    "legendFormat": "{{job}}",
+                    "datasource": "Prometheus"
                 }
             ],
             "gridPos": {
@@ -172,13 +202,8 @@
             "type": "graph",
             "targets": [
                 {
-                    "expr": "hikaricp_connections_active",
-                    "legendFormat": "{{job}} - Active",
-                    "datasource": "Prometheus"
-                },
-                {
-                    "expr": "hikaricp_connections_idle",
-                    "legendFormat": "{{job}} - Idle",
+                    "expr": "sum(pg_stat_activity_count{datname!~\"postgres|template0|template1\"}) by (datname, state)",
+                    "legendFormat": "{{datname}} - {{state}}",
                     "datasource": "Prometheus"
                 }
             ],
@@ -186,6 +211,29 @@
                 "h": 8,
                 "w": 12,
                 "x": 0,
+                "y": 24
+            }
+        },
+        {
+            "id": 9,
+            "title": "Database Transaction Rate",
+            "type": "graph",
+            "targets": [
+                {
+                    "expr": "sum by (datname) (rate(pg_stat_database_xact_commit{datname!~\"postgres|template0|template1\"}[5m]))",
+                    "legendFormat": "{{datname}} - commits",
+                    "datasource": "Prometheus"
+                },
+                {
+                    "expr": "sum by (datname) (rate(pg_stat_database_xact_rollback{datname!~\"postgres|template0|template1\"}[5m]))",
+                    "legendFormat": "{{datname}} - rollbacks",
+                    "datasource": "Prometheus"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
                 "y": 24
             }
         },

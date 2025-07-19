@@ -8,6 +8,9 @@ spec:
   endpoints:
   - port: http
     interval: 15s
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-monitor
   selector:
     matchLabels:
       app: postgres-exporter-user-db
@@ -22,6 +25,9 @@ spec:
   endpoints:
   - port: http
     interval: 15s
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-monitor
   selector:
     matchLabels:
       app: postgres-exporter-concept-db
@@ -36,6 +42,14 @@ spec:
   endpoints:
   - port: http-metrics
     interval: 15s
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-monitor
   selector:
     matchLabels:
-      app: redis-exporter 
+      app: redis-exporter

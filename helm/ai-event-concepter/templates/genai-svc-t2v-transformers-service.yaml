@@ -11,4 +11,5 @@ spec:
   ports:
     - port: {{ .Values.genaisvct2vtransformers.service.port }}
       targetPort: {{ .Values.genaisvct2vtransformers.service.targetPort }}
+      name: http
   type: {{ .Values.genaisvct2vtransformers.service.type }}
