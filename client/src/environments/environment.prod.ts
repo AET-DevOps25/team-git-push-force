@@ -4,4 +4,4 @@ export const environment = {
   apiUrl: 'https://aieventconcepter.student.k8s.aet.cit.tum.de/api',
   mockDelay: 0,
   enableLogging: false
-}; 
+};

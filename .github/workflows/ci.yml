@@ -286,6 +286,19 @@ jobs:
             type=ref,event=pr
             type=sha
 
+      - name: Set build arguments for client
+        id: build-args
+        run: |
+          if [[ "${{ matrix.service }}" == "client" ]]; then
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              echo "build_env=production" >> $GITHUB_OUTPUT
+            elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+              echo "build_env=staging" >> $GITHUB_OUTPUT
+            else
+              echo "build_env=development" >> $GITHUB_OUTPUT
+            fi
+          fi
+
       - name: Build and push Docker Image
         uses: docker/build-push-action@v5
         with:
@@ -295,6 +308,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ${{ matrix.service == 'client' && format('BUILD_ENV={0}', steps.build-args.outputs.build_env) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
