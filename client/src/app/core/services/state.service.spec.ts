@@ -1,11 +1,15 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { StateService, AppState } from './state.service';
+import { ConceptService } from './concept.service';
 import { User } from '../models/user.model';
 import { Concept } from '../models/concept.model';
 import { ChatMessage } from '../models/chat.model';
+import { of } from 'rxjs';
 
 describe('StateService', () => {
   let service: StateService;
+  let conceptService: jasmine.SpyObj<ConceptService>;
 
   const mockUser: User = {
     id: '1',
@@ -53,10 +57,22 @@ describe('StateService', () => {
   };
 
   beforeEach(() => {
+    const conceptServiceSpy = jasmine.createSpyObj('ConceptService', ['getConcepts', 'createConcept', 'updateConcept']);
+
+    // Configure mock return values
+    conceptServiceSpy.getConcepts.and.returnValue(of({ content: [], totalElements: 0, totalPages: 0 }));
+    conceptServiceSpy.createConcept.and.returnValue(of(mockConcept));
+    conceptServiceSpy.updateConcept.and.returnValue(of(mockConcept));
+
     TestBed.configureTestingModule({
-      providers: [StateService]
+      imports: [HttpClientTestingModule],
+      providers: [
+        StateService,
+        { provide: ConceptService, useValue: conceptServiceSpy }
+      ]
     });
     service = TestBed.inject(StateService);
+    conceptService = TestBed.inject(ConceptService) as jasmine.SpyObj<ConceptService>;
   });
 
   describe('Initial State', () => {
@@ -115,6 +131,8 @@ describe('StateService', () => {
     });
 
     it('should add concept to empty array', (done) => {
+      // Set conceptsLoaded to true to prevent automatic loading from ConceptService
+      service.setConcepts([]);
       service.addConcept(mockConcept);
 
       service.getConcepts().subscribe(concepts => {

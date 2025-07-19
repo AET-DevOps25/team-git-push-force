@@ -98,6 +98,8 @@ export class CreateConceptComponent implements OnInit {
       this.conceptService.createConcept(conceptRequest).subscribe({
         next: (concept) => {
           console.log('Concept created successfully:', concept);
+          // Add concept to state so it's immediately available
+          this.stateService.addConcept(concept);
           // Navigate to the new concept
           this.router.navigate(['/concepts', concept.id]);
         },
