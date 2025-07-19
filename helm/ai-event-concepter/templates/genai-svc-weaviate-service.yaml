@@ -2,6 +2,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: genai-svc-weaviate
+  labels:
+    app: genai-svc-weaviate
+    monitoring: "true"
 spec:
   selector:
     app: ai-event-concepter-genai-svc-weaviate-selector

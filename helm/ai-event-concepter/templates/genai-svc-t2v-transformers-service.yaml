@@ -2,6 +2,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: genai-svc-t2v-transformers
+  labels:
+    app: genai-svc-t2v-transformers
+    monitoring: "true"
 spec:
   selector:
     app: ai-event-concepter-genai-svc-t2v-transformers-selector
