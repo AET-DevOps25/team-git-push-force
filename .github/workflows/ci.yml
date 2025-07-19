@@ -252,8 +252,6 @@ jobs:
     strategy:
       matrix:
         service: [client, gateway, user-svc, concept-svc, genai-svc]
-    outputs:
-      image_tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Download service artifact
         uses: actions/download-artifact@v4
