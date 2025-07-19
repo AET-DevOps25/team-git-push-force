@@ -69,7 +69,7 @@ describe('ConceptService', () => {
   };
 
   beforeEach(() => {
-    const apiServiceSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put', 'delete']);
+    const apiServiceSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put', 'delete', 'downloadBlob']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -323,20 +323,20 @@ describe('ConceptService', () => {
       const conceptId = 'concept-1';
       const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
 
-      apiService.get.and.returnValue(of(mockBlob));
+      apiService.downloadBlob.and.returnValue(of(mockBlob));
 
       service.downloadConceptPdf(conceptId).subscribe(blob => {
         expect(blob).toEqual(mockBlob);
       });
 
-      expect(apiService.get).toHaveBeenCalledWith(`/api/concepts/${conceptId}/pdf`);
+      expect(apiService.downloadBlob).toHaveBeenCalledWith(`/api/concepts/${conceptId}/pdf`);
     });
 
     it('should handle download PDF error', () => {
       const conceptId = 'concept-1';
       const errorMessage = 'PDF generation failed';
 
-      apiService.get.and.returnValue(throwError(() => new Error(errorMessage)));
+      apiService.downloadBlob.and.returnValue(throwError(() => new Error(errorMessage)));
 
       service.downloadConceptPdf(conceptId).subscribe({
         next: () => fail('Should have failed'),

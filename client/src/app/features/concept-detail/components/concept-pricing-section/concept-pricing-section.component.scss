@@ -39,33 +39,13 @@ mat-expansion-panel {
         flex-shrink: 0;
       }
       
-      .suggestion-indicator {
-        color: #667eea;
-        font-size: 1.125rem !important;
-        width: 1.125rem !important;
-        height: 1.125rem !important;
-        animation: pulse-glow 2s ease-in-out infinite;
-        margin-left: vars.$spacing-sm;
-      }
-
-      .completion-icon {
+      .suggestion-icon {
         margin-left: auto;
+        color: #667eea;
         font-size: 1.25rem !important;
         width: 1.25rem !important;
         height: 1.25rem !important;
-        
-        &.complete {
-          color: #4CAF50;
-        }
-        
-        &.incomplete {
-          color: #FF9800;
-        }
-        
-        &.has-suggestions {
-          color: #667eea;
-          animation: pulse-glow 2s ease-in-out infinite;
-        }
+        animation: pulse-glow 2s ease-in-out infinite;
       }
     }
   }

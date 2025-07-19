@@ -280,53 +280,6 @@ describe('ConceptFoundationSectionComponent', () => {
     });
   });
 
-  describe('isComplete', () => {
-    it('should return true when section is complete', () => {
-      expect(component.isComplete()).toBeTruthy();
-    });
-
-    it('should return false when theme is missing', () => {
-      component.concept = {
-        ...mockConcept,
-        eventDetails: {
-          ...mockEventDetails,
-          theme: undefined
-        }
-      };
-      expect(component.isComplete()).toBeFalsy();
-    });
-
-    it('should return false when objectives are missing', () => {
-      component.concept = {
-        ...mockConcept,
-        eventDetails: {
-          ...mockEventDetails,
-          objectives: []
-        }
-      };
-      expect(component.isComplete()).toBeFalsy();
-    });
-
-    it('should return false when target audience is missing', () => {
-      component.concept = {
-        ...mockConcept,
-        eventDetails: {
-          ...mockEventDetails,
-          targetAudience: undefined
-        }
-      };
-      expect(component.isComplete()).toBeFalsy();
-    });
-
-    it('should return false when eventDetails is missing', () => {
-      component.concept = {
-        ...mockConcept,
-        eventDetails: undefined
-      };
-      expect(component.isComplete()).toBeFalsy();
-    });
-  });
-
   describe('hasSuggestions', () => {
     it('should return true when has field suggestions', () => {
       expect(component.hasSuggestions()).toBeTruthy();

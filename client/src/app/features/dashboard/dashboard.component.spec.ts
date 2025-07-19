@@ -113,8 +113,8 @@ describe('DashboardComponent', () => {
 
   describe('Helper Methods', () => {
     it('should return correct status icons', () => {
-      expect(component.getStatusIcon('DRAFT')).toBe('edit_note');
-      expect(component.getStatusIcon('IN_PROGRESS')).toBe('hourglass_top');
+      expect(component.getStatusIcon('DRAFT')).toBe('edit');
+      expect(component.getStatusIcon('IN_PROGRESS')).toBe('trending_up');
       expect(component.getStatusIcon('COMPLETED')).toBe('check_circle');
       expect(component.getStatusIcon('ARCHIVED')).toBe('archive');
       expect(component.getStatusIcon('UNKNOWN')).toBe('event_note');

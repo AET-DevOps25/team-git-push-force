@@ -8,11 +8,12 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog } from '@angular/material/dialog';
 import { StateService } from '../../core/services/state.service';
 import { ConceptService } from '../../core/services/concept.service';
 import { ChatService } from '../../core/services/chat.service';
-import { Concept } from '../../core/models/concept.model';
+import { Concept, ConceptStatus } from '../../core/models/concept.model';
 import { ChatResponse } from '../../core/models/chat.model';
 import { ChatInterfaceComponent } from '../../shared/components/common/chat-interface/chat-interface.component';
 import { DocumentsDialogComponent, DocumentsDialogData } from '../../shared/components/common/documents-dialog/documents-dialog.component';
@@ -36,6 +37,7 @@ import { takeUntil, take } from 'rxjs/operators';
     MatChipsModule,
     MatExpansionModule,
     MatDividerModule,
+    MatMenuModule,
     ChatInterfaceComponent,
     ConceptFoundationSectionComponent,
     ConceptTimelineSectionComponent,
@@ -56,6 +58,10 @@ export class ConceptDetailComponent implements OnInit, OnDestroy {
   expandTimeline = false;
   expandSpeakers = false;
   expandPricing = false;
+  
+  // Status management
+  isUpdatingStatus = false;
+  availableStatuses: ConceptStatus[] = ['DRAFT', 'IN_PROGRESS', 'COMPLETED', 'ARCHIVED'];
   
   private destroy$ = new Subject<void>();
   private chatInitialized = new Set<string>();
@@ -172,6 +178,20 @@ export class ConceptDetailComponent implements OnInit, OnDestroy {
   exportPDF(): void {
     this.conceptService.downloadConceptPdf(this.conceptId).subscribe({
       next: (blob: Blob) => {
+        // Verify we received a valid blob
+        if (!blob || blob.size === 0) {
+          console.error('Received empty blob for PDF download');
+          alert('Failed to download PDF: Empty response received.');
+          return;
+        }
+
+        // Verify it's a PDF by checking the blob type
+        if (blob.type && !blob.type.includes('pdf') && !blob.type.includes('octet-stream')) {
+          console.error('Received unexpected content type:', blob.type);
+          alert('Failed to download PDF: Unexpected file type received.');
+          return;
+        }
+
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -180,12 +200,88 @@ export class ConceptDetailComponent implements OnInit, OnDestroy {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+        
+        console.log('PDF downloaded successfully');
       },
       error: (error: any) => {
         console.error('Error downloading PDF:', error);
-        alert('Failed to download PDF. Please try again.');
+        
+        let errorMessage = 'Failed to download PDF. ';
+        if (error.status === 401) {
+          errorMessage += 'Please log in again.';
+        } else if (error.status === 404) {
+          errorMessage += 'Concept not found.';
+        } else if (error.status === 500) {
+          errorMessage += 'Server error occurred.';
+        } else if (error.status === 0) {
+          errorMessage += 'Network connection error.';
+        } else {
+          errorMessage += 'Please try again.';
+        }
+        
+        alert(errorMessage);
       }
     });
+  }
+
+  changeStatus(newStatus: ConceptStatus): void {
+    if (!this.concept || this.concept.status === newStatus || this.isUpdatingStatus) {
+      return;
+    }
+
+    this.isUpdatingStatus = true;
+    
+    this.conceptService.updateConceptStatus(this.conceptId, newStatus).subscribe({
+      next: (updatedConcept: Concept) => {
+        // Update local concept
+        this.concept = updatedConcept;
+        
+        // Update state service
+        this.stateService.updateConcept(updatedConcept);
+        
+        this.isUpdatingStatus = false;
+        this.cdr.markForCheck();
+        
+        console.log(`Status updated to ${newStatus}`);
+      },
+      error: (error: any) => {
+        console.error('Error updating status:', error);
+        
+        let errorMessage = 'Failed to update status. ';
+        if (error.status === 401) {
+          errorMessage += 'Please log in again.';
+        } else if (error.status === 404) {
+          errorMessage += 'Concept not found.';
+        } else if (error.status === 500) {
+          errorMessage += 'Server error occurred.';
+        } else if (error.status === 0) {
+          errorMessage += 'Network connection error.';
+        } else {
+          errorMessage += 'Please try again.';
+        }
+        
+        alert(errorMessage);
+        this.isUpdatingStatus = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  getStatusOptions(): ConceptStatus[] {
+    if (!this.concept) return this.availableStatuses;
+    
+    // Filter out current status from options
+    return this.availableStatuses.filter(status => status !== this.concept!.status);
+  }
+
+  getStatusDescription(status: ConceptStatus): string {
+    switch (status) {
+      case 'DRAFT': return 'Work in progress, not finalized';
+      case 'IN_PROGRESS': return 'Currently being developed';
+      case 'COMPLETED': return 'Finalized and ready';
+      case 'ARCHIVED': return 'Stored for future reference';
+      default: return '';
+    }
   }
 
   openDocumentsDialog(): void {

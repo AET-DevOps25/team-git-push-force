@@ -440,31 +440,6 @@ describe('ConceptPricingSectionComponent', () => {
     });
   });
 
-  describe('isComplete', () => {
-    it('should return true when concept has regular pricing', () => {
-      component.concept = mockConcept;
-      expect(component.isComplete()).toBe(true);
-    });
-
-    it('should return false when concept has no pricing', () => {
-      component.concept = mockConceptWithoutPricing;
-      expect(component.isComplete()).toBe(false);
-    });
-
-    it('should return false when concept pricing exists but no regular price', () => {
-      const conceptWithPricingButNoRegular = {
-        ...mockConcept,
-        pricing: {
-          currency: 'USD',
-          earlyBird: 80,
-          vip: 200
-        }
-      };
-      component.concept = conceptWithPricingButNoRegular;
-      expect(component.isComplete()).toBe(false);
-    });
-  });
-
   describe('hasSuggestions', () => {
     it('should return true when pricing suggestions exist and differ', () => {
       component.concept = mockConcept;

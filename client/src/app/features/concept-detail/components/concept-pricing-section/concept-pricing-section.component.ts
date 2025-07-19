@@ -148,11 +148,6 @@ export class ConceptPricingSectionComponent implements OnDestroy, OnChanges {
     this.cdr.detectChanges();
   }
 
-  // Check if section is complete
-  isComplete(): boolean {
-    return !!(this.concept.pricing?.regular);
-  }
-
   // Check if section has suggestions
   hasSuggestions(): boolean {
     return !!this.getPricingSuggestion();

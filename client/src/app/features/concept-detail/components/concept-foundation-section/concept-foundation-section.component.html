@@ -4,12 +4,10 @@
     <mat-panel-title>
       <mat-icon class="section-icon">foundation</mat-icon>
       <span>Event Foundation</span>
-      <mat-icon class="completion-icon" 
-                [class.complete]="isComplete()"
-                [class.incomplete]="!isComplete()"
-                [class.has-suggestions]="hasSuggestions()"
-                [title]="hasSuggestions() ? 'Has pending AI suggestions' : (isComplete() ? 'Section complete' : 'Section incomplete')">
-        {{ hasSuggestions() ? 'auto_awesome' : (isComplete() ? 'check_circle' : 'radio_button_unchecked') }}
+      <mat-icon class="suggestion-icon" 
+                *ngIf="hasSuggestions()"
+                [title]="'Has pending AI suggestions'">
+        auto_awesome
       </mat-icon>
     </mat-panel-title>
   </mat-expansion-panel-header>

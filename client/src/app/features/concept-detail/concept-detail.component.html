@@ -10,10 +10,33 @@
           <div class="header-info">
             <div class="title-row">
               <h1 class="concept-title">{{ concept.title }}</h1>
-              <div class="status-badge" [ngClass]="getStatusClass(concept.status)">
+              <button 
+                mat-button 
+                [matMenuTriggerFor]="statusMenu"
+                class="status-badge" 
+                [ngClass]="getStatusClass(concept.status)"
+                [disabled]="isUpdatingStatus">
                 <mat-icon [color]="getStatusColor(concept.status)">{{ getStatusIcon(concept.status) }}</mat-icon>
                 <span>{{ getStatusDisplayName(concept.status) }}</span>
-              </div>
+                <mat-icon class="dropdown-icon" *ngIf="!isUpdatingStatus">expand_more</mat-icon>
+                <mat-icon class="loading-icon" *ngIf="isUpdatingStatus">refresh</mat-icon>
+              </button>
+              
+              <!-- Status Change Menu -->
+              <mat-menu #statusMenu="matMenu" class="status-menu">
+                <button 
+                  mat-menu-item 
+                  *ngFor="let status of getStatusOptions()" 
+                  (click)="changeStatus(status)"
+                  class="status-option"
+                  [ngClass]="'status-option-' + status.toLowerCase().replace('_', '-')">
+                  <mat-icon>{{ getStatusIcon(status) }}</mat-icon>
+                  <div class="status-option-content">
+                    <span class="status-name">{{ getStatusDisplayName(status) }}</span>
+                    <span class="status-description">{{ getStatusDescription(status) }}</span>
+                  </div>
+                </button>
+              </mat-menu>
             </div>
             <div class="theme-row" *ngIf="concept.eventDetails?.theme">
               <mat-icon class="theme-icon">auto_awesome</mat-icon>

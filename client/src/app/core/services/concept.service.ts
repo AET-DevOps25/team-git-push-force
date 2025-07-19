@@ -57,7 +57,7 @@ export class ConceptService {
 
   // Download concept as PDF
   downloadConceptPdf(id: string): Observable<Blob> {
-    return this.apiService.get<Blob>(`/api/concepts/${id}/pdf`);
+    return this.apiService.downloadBlob(`/api/concepts/${id}/pdf`);
   }
 
   // Update concept status

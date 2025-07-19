@@ -155,13 +155,6 @@ export class ConceptFoundationSectionComponent implements OnDestroy {
     this.cdr.detectChanges();
   }
 
-  // Check if section is complete
-  isComplete(): boolean {
-    return !!(this.concept.eventDetails?.theme && 
-             this.concept.eventDetails?.objectives?.length &&
-             this.concept.eventDetails?.targetAudience);
-  }
-
   // Check if section has suggestions
   hasSuggestions(): boolean {
     if (!this.suggestions?.conceptSuggestion) return false;
