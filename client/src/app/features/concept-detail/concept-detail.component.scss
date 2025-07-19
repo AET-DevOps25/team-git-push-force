@@ -390,6 +390,7 @@
   .loading-card {
     max-width: 400px;
     text-align: center;
+    padding: vars.$spacing-md;
     
     .loading-content {
       .loading-icon {

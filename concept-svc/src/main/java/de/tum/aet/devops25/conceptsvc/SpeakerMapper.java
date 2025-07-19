@@ -11,7 +11,13 @@ public class SpeakerMapper {
         }
         
         SpeakerEntity entity = new SpeakerEntity();
-        entity.setId(dto.getId());
+        
+        // Only set ID if it's provided in the DTO
+        // If ID is null, JPA will generate a new UUID automatically
+        if (dto.getId() != null) {
+            entity.setId(dto.getId());
+        }
+        
         entity.setName(dto.getName());
         entity.setExpertise(dto.getExpertise());
         entity.setSuggestedTopic(dto.getSuggestedTopic());

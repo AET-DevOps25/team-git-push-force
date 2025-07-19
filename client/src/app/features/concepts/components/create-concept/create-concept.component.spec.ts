@@ -127,14 +127,6 @@ describe('CreateConceptComponent', () => {
       titleControl?.markAsTouched();
       expect(component.getFieldErrorMessage(component.basicInfoForm, 'title')).toBe('Minimum 3 characters required');
     });
-
-    it('should generate unique IDs', () => {
-      const id1 = component['generateId']();
-      const id2 = component['generateId']();
-      expect(id1).toBeDefined();
-      expect(id2).toBeDefined();
-      expect(id1).not.toBe(id2);
-    });
   });
 
   describe('Form Submission', () => {
