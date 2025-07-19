@@ -385,8 +385,15 @@ sketch
 /user-svc/src/main/java/de/tum/aet/devops25/api/generated/
 /genai-svc/genai_models/
 
+# OpenAPI Generator metadata directories
+**/.openapi-generator/
+
 # OpenAPI Generator CLI configuration
 openapitools.json
+
+### Gradle Build Artifacts ###
+.gradle/
+*/.gradle/
 
 ### Infrastructure ###
 # Terraform

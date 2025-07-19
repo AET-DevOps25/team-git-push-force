@@ -31,6 +31,8 @@ dependencies {
 	implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
 	implementation 'io.swagger.core.v3:swagger-annotations:2.2.20'
 	implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
 	// JWT dependencies
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'

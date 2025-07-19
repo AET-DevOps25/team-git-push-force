@@ -5,6 +5,8 @@ import pathlib
 from flask import jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
+from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_client import Gauge
 
 # Load environment variables first
 load_dotenv()
@@ -22,6 +24,9 @@ app.add_api('openapi.yaml', arguments={'title': 'AI Event Concepter - GenAI Serv
 
 # Get the underlying Flask app
 flask_app = app.app
+
+# Set up metrics endpoint
+metrics = PrometheusMetrics(flask_app)
 
 # Set custom JSON encoder
 flask_app.json_encoder = JSONEncoder

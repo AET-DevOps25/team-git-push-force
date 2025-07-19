@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  labels:
+    app: prometheus
+data:
+  rules.yml: |
+    groups:
+      - name: ai-event-concepter
+        rules:
+          # Service availability alerts
+          - alert: ServiceDown
+            expr: up == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Service {{`{{`}} $labels.instance {{`}}`}} is down"
+              description: "Service {{`{{`}} $labels.instance {{`}}`}} has been down for more than 1 minute."
+
+          # High memory usage
+          - alert: HighMemoryUsage
+            expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage on {{`{{`}} $labels.instance {{`}}`}}"
+              description: "Memory usage is above 85% on {{`{{`}} $labels.instance {{`}}`}}"
+
+          # High CPU usage
+          - alert: HighCPUUsage
+            expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage on {{`{{`}} $labels.instance {{`}}`}}"
+              description: "CPU usage is above 80% on {{`{{`}} $labels.instance {{`}}`}}"
+
+          # Disk space running out
+          - alert: DiskSpaceFilling
+            expr: (node_filesystem_avail_bytes{mountpoint="/"} * 100) / node_filesystem_size_bytes{mountpoint="/"} < 10
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Disk space filling up on {{`{{`}} $labels.instance {{`}}`}}"
+              description: "Disk usage is above 90% on {{`{{`}} $labels.instance {{`}}`}}"
+
+          # Spring Boot specific alerts
+          - alert: SpringBootHighErrorRate
+            expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.1
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High error rate in Spring Boot service {{`{{`}} $labels.service {{`}}`}}"
+              description: "Error rate is above 0.1 errors per second in {{`{{`}} $labels.service {{`}}`}}"
+
+          - alert: SpringBootHighResponseTime
+            expr: histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])) > 2
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High response time in Spring Boot service {{`{{`}} $labels.service {{`}}`}}"
+              description: "95th percentile response time is above 2 seconds in {{`{{`}} $labels.service {{`}}`}}"
+
+          # Database alerts
+          - alert: PostgresHighConnections
+            expr: pg_stat_database_numbackends > 80
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High number of PostgreSQL connections"
+              description: "PostgreSQL has more than 80 active connections"
+
+          # Container alerts
+          - alert: ContainerHighMemoryUsage
+            expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes * 100) > 85
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage in container {{`{{`}} $labels.name {{`}}`}}"
+              description: "Container {{`{{`}} $labels.name {{`}}`}} is using more than 85% of its memory limit" 
