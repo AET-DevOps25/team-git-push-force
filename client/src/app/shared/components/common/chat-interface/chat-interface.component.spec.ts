@@ -1,41 +1,68 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { of } from 'rxjs';
 import { ChatInterfaceComponent } from './chat-interface.component';
-import { ChatMessage } from '../../../../core/models/chat.model';
+import { ChatMessage, ChatResponse } from '../../../../core/models/chat.model';
+import { Concept } from '../../../../core/models/concept.model';
+import { ChatService } from '../../../../core/services/chat.service';
+import { StateService } from '../../../../core/services/state.service';
 
 describe('ChatInterfaceComponent', () => {
   let component: ChatInterfaceComponent;
   let fixture: ComponentFixture<ChatInterfaceComponent>;
+  let mockChatService: jasmine.SpyObj<ChatService>;
+  let mockStateService: jasmine.SpyObj<StateService>;
+
+  const mockConcept: Concept = {
+    id: 'concept-1',
+    title: 'Test Concept',
+    description: 'Test Description'
+  } as any;
 
   const mockMessages: ChatMessage[] = [
     {
       id: 'msg-1',
       role: 'user',
       content: 'Hello, can you help me plan an event?',
-      timestamp: new Date('2024-01-01T10:00:00Z'),
-      conversationId: 'conv-1'
+      timestamp: new Date('2024-01-01T10:00:00Z')
     },
     {
       id: 'msg-2',
       role: 'assistant',
       content: 'Of course! I can help you plan your event. **What type of event** are you looking to organize?',
-      timestamp: new Date('2024-01-01T10:01:00Z'),
-      conversationId: 'conv-1'
+      timestamp: new Date('2024-01-01T10:01:00Z')
     }
   ];
 
   beforeEach(async () => {
+    const chatServiceSpy = jasmine.createSpyObj('ChatService', ['sendMessage']);
+    const stateServiceSpy = jasmine.createSpyObj('StateService', ['getChatMessages', 'isLoading']);
+
     await TestBed.configureTestingModule({
       imports: [
         ChatInterfaceComponent,
         ReactiveFormsModule,
         NoopAnimationsModule
+      ],
+      providers: [
+        { provide: ChatService, useValue: chatServiceSpy },
+        { provide: StateService, useValue: stateServiceSpy }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ChatInterfaceComponent);
     component = fixture.componentInstance;
+    mockChatService = TestBed.inject(ChatService) as jasmine.SpyObj<ChatService>;
+    mockStateService = TestBed.inject(StateService) as jasmine.SpyObj<StateService>;
+
+    // Set up default mock returns
+    mockStateService.getChatMessages.and.returnValue(of([]));
+    mockStateService.isLoading.and.returnValue(of(false));
+    mockChatService.sendMessage.and.returnValue(of({} as ChatResponse));
+
+    // Set required input
+    component.concept = mockConcept;
   });
 
   it('should create', () => {
@@ -44,8 +71,9 @@ describe('ChatInterfaceComponent', () => {
 
   it('should initialize with default values', () => {
     expect(component.messages).toEqual([]);
-    expect(component.suggestions).toEqual([]);
     expect(component.isLoading).toBe(false);
+    expect(component.isInitializing).toBe(true);
+    expect(component.isAiThinking).toBe(false);
     expect(component.maxMessageLength).toBe(2000);
     expect(component.placeholder).toBe('Ask me anything about your event concept...');
     expect(component.inputRows).toBe(1);
@@ -53,14 +81,10 @@ describe('ChatInterfaceComponent', () => {
 
   it('should accept input properties', () => {
     component.messages = mockMessages;
-    component.suggestions = ['How to plan a conference?', 'Best venues?'];
-    component.isLoading = true;
     component.maxMessageLength = 1000;
     component.placeholder = 'Custom placeholder';
 
     expect(component.messages.length).toBe(2);
-    expect(component.suggestions.length).toBe(2);
-    expect(component.isLoading).toBe(true);
     expect(component.maxMessageLength).toBe(1000);
     expect(component.placeholder).toBe('Custom placeholder');
   });
@@ -73,20 +97,20 @@ describe('ChatInterfaceComponent', () => {
       expect(component.messageControl.hasError('required')).toBeTruthy();
     });
 
-         it('should validate max length', () => {
-       component.maxMessageLength = 10;
-       // Recreate control with new max length
-       component.messageControl = new FormControl('', [
-         Validators.required,
-         Validators.maxLength(component.maxMessageLength)
-       ]);
-       
-       component.messageControl.setValue('This is a very long message that exceeds the limit');
-       expect(component.messageControl.hasError('maxlength')).toBeTruthy();
+    it('should validate max length', () => {
+      component.maxMessageLength = 10;
+      // Recreate control with new max length
+      component.messageControl = new FormControl('', [
+        Validators.required,
+        Validators.maxLength(component.maxMessageLength)
+      ]);
+      
+      component.messageControl.setValue('This is a very long message that exceeds the limit');
+      expect(component.messageControl.hasError('maxlength')).toBeTruthy();
 
-       component.messageControl.setValue('Short');
-       expect(component.messageControl.hasError('maxlength')).toBeFalsy();
-     });
+      component.messageControl.setValue('Short');
+      expect(component.messageControl.hasError('maxlength')).toBeFalsy();
+    });
 
     it('should be valid with proper content', () => {
       fixture.detectChanges();
@@ -100,49 +124,76 @@ describe('ChatInterfaceComponent', () => {
     beforeEach(() => {
       fixture.detectChanges();
       spyOn(component.messageSent, 'emit');
+      spyOn(component.suggestionsReceived, 'emit');
     });
 
-         it('should send message when valid', () => {
-       component.messageControl.setValue('Test message');
-       
-       component.sendMessage();
-       
-       expect(component.messageSent.emit).toHaveBeenCalledWith('Test message');
-       expect(component.messageControl.value).toBe(null); // reset() sets to null
-       expect(component.inputRows).toBe(1);
-     });
+    it('should send message when valid', () => {
+      component.messageControl.setValue('Test message');
+      component.isInitializing = false;
+      component.isAiThinking = false;
+      
+      component.sendMessage();
+      
+      expect(component.messageSent.emit).toHaveBeenCalledWith('Test message');
+      expect(component.messageControl.value).toBe(null); // reset() sets to null
+      expect(component.inputRows).toBe(1);
+      expect(mockChatService.sendMessage).toHaveBeenCalled();
+    });
 
     it('should not send empty message', () => {
       component.messageControl.setValue('   ');
+      component.isInitializing = false;
+      component.isAiThinking = false;
       
       component.sendMessage();
       
       expect(component.messageSent.emit).not.toHaveBeenCalled();
+      expect(mockChatService.sendMessage).not.toHaveBeenCalled();
     });
 
-    it('should not send when loading', () => {
-      component.isLoading = true;
+    it('should not send when AI is thinking', () => {
+      component.isAiThinking = true;
       component.messageControl.setValue('Test message');
       
       component.sendMessage();
       
       expect(component.messageSent.emit).not.toHaveBeenCalled();
+      expect(mockChatService.sendMessage).not.toHaveBeenCalled();
     });
 
-    it('should not send when form is invalid', () => {
-      component.messageControl.setValue('');
+    it('should not send when initializing', () => {
+      component.isInitializing = true;
+      component.messageControl.setValue('Test message');
       
       component.sendMessage();
       
       expect(component.messageSent.emit).not.toHaveBeenCalled();
+      expect(mockChatService.sendMessage).not.toHaveBeenCalled();
     });
 
-    it('should send suggestion', () => {
-      const suggestion = 'How to plan a conference?';
+    it('should not send when form is invalid', () => {
+      component.messageControl.setValue('');
+      component.isInitializing = false;
+      component.isAiThinking = false;
       
-      component.sendSuggestion(suggestion);
+      component.sendMessage();
       
-      expect(component.messageSent.emit).toHaveBeenCalledWith(suggestion);
+      expect(component.messageSent.emit).not.toHaveBeenCalled();
+      expect(mockChatService.sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('should add temporary message immediately', () => {
+      component.messageControl.setValue('Test message');
+      component.isInitializing = false;
+      component.isAiThinking = false;
+      const initialMessageCount = component.messages.length;
+      
+      component.sendMessage();
+      
+      expect(component.messages.length).toBe(initialMessageCount + 1);
+      expect(component.messages[component.messages.length - 1].content).toBe('Test message');
+      expect(component.messages[component.messages.length - 1].role).toBe('user');
+      expect(component.messages[component.messages.length - 1].id).toContain('temp-');
     });
   });
 
@@ -152,35 +203,48 @@ describe('ChatInterfaceComponent', () => {
     });
 
     it('should return true when conditions are met', () => {
-      component.isLoading = false;
+      component.isAiThinking = false;
+      component.isInitializing = false;
       component.messageControl.setValue('Valid message');
       
       expect(component.canSendMessage()).toBe(true);
     });
 
-    it('should return false when loading', () => {
-      component.isLoading = true;
+    it('should return false when AI is thinking', () => {
+      component.isAiThinking = true;
+      component.isInitializing = false;
+      component.messageControl.setValue('Valid message');
+      
+      expect(component.canSendMessage()).toBe(false);
+    });
+
+    it('should return false when initializing', () => {
+      component.isAiThinking = false;
+      component.isInitializing = true;
       component.messageControl.setValue('Valid message');
       
       expect(component.canSendMessage()).toBe(false);
     });
 
     it('should return false when form is invalid', () => {
-      component.isLoading = false;
+      component.isAiThinking = false;
+      component.isInitializing = false;
       component.messageControl.setValue('');
       
       expect(component.canSendMessage()).toBe(false);
     });
 
     it('should return false when message is only whitespace', () => {
-      component.isLoading = false;
+      component.isAiThinking = false;
+      component.isInitializing = false;
       component.messageControl.setValue('   ');
       
       expect(component.canSendMessage()).toBe(false);
     });
 
     it('should return false when message control value is null', () => {
-      component.isLoading = false;
+      component.isAiThinking = false;
+      component.isInitializing = false;
       component.messageControl.setValue(null);
       
       expect(component.canSendMessage()).toBe(false);
@@ -331,14 +395,38 @@ describe('ChatInterfaceComponent', () => {
     });
   });
 
-  describe('Time Formatting', () => {
-    it('should format time correctly', () => {
-      const date = new Date('2024-01-01T14:30:00Z');
-      const result = component.formatTime(date);
-      
-      // Note: This depends on locale, but should contain time elements
-      expect(result).toContain(':');
-      expect(typeof result).toBe('string');
+  describe('Button Tooltip', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
+    it('should return initialization message when initializing', () => {
+      component.isInitializing = true;
+      const result = component.getButtonTooltip();
+      expect(result).toBe('Please wait while AI assistant initializes');
+    });
+
+    it('should return thinking message when AI is thinking', () => {
+      component.isInitializing = false;
+      component.isAiThinking = true;
+      const result = component.getButtonTooltip();
+      expect(result).toBe('AI is processing your message');
+    });
+
+    it('should return enter message prompt when form is invalid', () => {
+      component.isInitializing = false;
+      component.isAiThinking = false;
+      component.messageControl.setValue('');
+      const result = component.getButtonTooltip();
+      expect(result).toBe('Enter a message to send');
+    });
+
+    it('should return send message when ready', () => {
+      component.isInitializing = false;
+      component.isAiThinking = false;
+      component.messageControl.setValue('Valid message');
+      const result = component.getButtonTooltip();
+      expect(result).toBe('Send message (Enter)');
     });
   });
 

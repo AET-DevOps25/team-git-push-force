@@ -1,5 +1,5 @@
 <div class="concept-detail-container">
-  <div *ngIf="concept$ | async as concept" class="concept-content">
+  <div *ngIf="concept && !isLoading" class="concept-content">
     <!-- Enhanced Header with Theme -->
     <div class="header-section">
       <div class="header-card">
@@ -39,25 +39,25 @@
           <app-concept-foundation-section
             [concept]="concept"
             [suggestions]="currentSuggestions"
-            [expanded]="shouldExpandFoundation(concept)">
+            [expanded]="expandFoundation">
           </app-concept-foundation-section>
 
           <app-concept-timeline-section
             [concept]="concept"
             [suggestions]="currentSuggestions"
-            [expanded]="shouldExpandTimeline(concept)">
+            [expanded]="expandTimeline">
           </app-concept-timeline-section>
 
           <app-concept-speakers-section
             [concept]="concept"
             [suggestions]="currentSuggestions"
-            [expanded]="shouldExpandSpeakers(concept)">
+            [expanded]="expandSpeakers">
           </app-concept-speakers-section>
 
           <app-concept-pricing-section
             [concept]="concept"
             [suggestions]="currentSuggestions"
-            [expanded]="shouldExpandPricing(concept)">
+            [expanded]="expandPricing">
           </app-concept-pricing-section>
 
         </mat-accordion>
@@ -85,7 +85,7 @@
   </div>
 
   <!-- Enhanced Loading State -->
-  <div *ngIf="!(concept$ | async)" class="loading-state">
+  <div *ngIf="isLoading" class="loading-state">
     <div class="loading-card glass-card">
       <div class="loading-content">
         <div class="loading-icon">

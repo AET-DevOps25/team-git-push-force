@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -10,6 +10,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
 import { StateService } from '../../core/services/state.service';
 import { ConceptService } from '../../core/services/concept.service';
+import { ChatService } from '../../core/services/chat.service';
 import { Concept } from '../../core/models/concept.model';
 import { ChatResponse } from '../../core/models/chat.model';
 import { ChatInterfaceComponent } from '../../shared/components/common/chat-interface/chat-interface.component';
@@ -17,12 +18,13 @@ import { ConceptFoundationSectionComponent } from './components/concept-foundati
 import { ConceptTimelineSectionComponent } from './components/concept-timeline-section/concept-timeline-section.component';
 import { ConceptSpeakersSectionComponent } from './components/concept-speakers-section/concept-speakers-section.component';
 import { ConceptPricingSectionComponent } from './components/concept-pricing-section/concept-pricing-section.component';
-import { Observable, Subject, combineLatest } from 'rxjs';
-import { map, takeUntil, filter, take } from 'rxjs/operators';
+import { Observable, Subject, timer } from 'rxjs';
+import { takeUntil, take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-concept-detail',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     MatCardModule,
@@ -42,59 +44,118 @@ import { map, takeUntil, filter, take } from 'rxjs/operators';
   styleUrl: './concept-detail.component.scss'
 })
 export class ConceptDetailComponent implements OnInit, OnDestroy {
-  concept$: Observable<Concept | null>;
+  concept: Concept | null = null;
   conceptId: string;
   currentSuggestions?: ChatResponse;
+  isLoading = true;
+  
+  // Expansion states
+  expandFoundation = false;
+  expandTimeline = false;
+  expandSpeakers = false;
+  expandPricing = false;
+  
   private destroy$ = new Subject<void>();
+  private chatInitialized = new Set<string>();
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private stateService: StateService,
-    private conceptService: ConceptService
+    private conceptService: ConceptService,
+    private chatService: ChatService,
+    private cdr: ChangeDetectorRef
   ) {
     this.conceptId = this.route.snapshot.params['id'];
-    
-    // Set up concept observable that automatically finds the concept by ID
-    this.concept$ = combineLatest([
-      this.stateService.getConcepts(),
-      this.stateService.getCurrentConcept()
-    ]).pipe(
-      map(([concepts, currentConcept]) => {
-        // If current concept matches our ID, use it
-        if (currentConcept?.id === this.conceptId) {
-          return currentConcept;
-        }
-        
-        // Otherwise find it in the concepts list
-        const foundConcept = concepts.find(c => c.id === this.conceptId);
-        if (foundConcept && foundConcept.id !== currentConcept?.id) {
-          // Set it as current concept if it's different
-          this.stateService.setCurrentConcept(foundConcept);
-        }
-        
-        return foundConcept || null;
-      }),
-      takeUntil(this.destroy$)
-    );
   }
 
   ngOnInit(): void {
-    // Check if concept exists, if not redirect
-    this.concept$.pipe(
-      filter(concept => concept === null), // Only emit when concept is definitely null (after loading)
+    // Timeout to prevent infinite loading
+    timer(15000).pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => {
-      // Only redirect if concepts are loaded but concept is still not found
-      if (this.stateService.areConceptsLoaded()) {
+      if (this.isLoading) {
+        this.isLoading = false;
+        this.router.navigate(['/concepts']);
+        this.cdr.markForCheck();
+      }
+    });
+
+    // Load and find the concept
+    this.stateService.getConcepts().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(concepts => {
+      if (concepts.length > 0) {
+        const foundConcept = concepts.find(c => c.id === this.conceptId);
+        
+        if (foundConcept) {
+          this.concept = foundConcept;
+          this.isLoading = false;
+          // Don't call setCurrentConcept here as it causes infinite loop
+          this.updateExpansionStates(foundConcept);
+          this.initializeChatIfNeeded(foundConcept);
+        } else if (this.stateService.areConceptsLoaded()) {
+          this.isLoading = false;
+          this.router.navigate(['/concepts']);
+        }
+      } else if (this.stateService.areConceptsLoaded()) {
+        this.isLoading = false;
         this.router.navigate(['/concepts']);
       }
+      
+      this.cdr.markForCheck();
     });
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private initializeChatIfNeeded(concept: Concept): void {
+    if (!this.chatInitialized.has(concept.id)) {
+      this.chatInitialized.add(concept.id);
+      
+      this.stateService.getUser().pipe(
+        take(1)
+      ).subscribe(user => {
+        if (user) {
+          // Set loading state before initializing
+          this.stateService.setLoading('chat', true);
+          
+          this.chatService.initializeChat(
+            concept.id,
+            user.id,
+            concept.title,
+            user.preferences
+          ).subscribe({
+            next: () => {
+              this.stateService.setLoading('chat', false);
+            },
+            error: (error) => {
+              console.error('Failed to initialize chat:', error);
+              this.stateService.setLoading('chat', false);
+            }
+          });
+        }
+      });
+    }
+  }
+
+  private updateExpansionStates(concept: Concept): void {
+    this.expandFoundation = this.shouldExpandFoundation(concept);
+    this.expandTimeline = this.shouldExpandTimeline(concept);
+    this.expandSpeakers = this.shouldExpandSpeakers(concept);
+    this.expandPricing = this.shouldExpandPricing(concept);
+  }
+
+  onSuggestionsReceived(suggestions: ChatResponse): void {
+    this.currentSuggestions = suggestions;
+    
+    if (this.concept) {
+      this.updateExpansionStates(this.concept);
+      this.cdr.markForCheck();
+    }
   }
 
   goBack(): void {
@@ -124,11 +185,6 @@ export class ConceptDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  onSuggestionsReceived(suggestions: ChatResponse): void {
-    this.currentSuggestions = suggestions;
-  }
-
-  // Smart expansion logic for accordions
   shouldExpandFoundation(concept: Concept): boolean {
     // Expand if missing key foundation data OR has field suggestions
     const hasFieldSuggestions = this.currentSuggestions?.conceptUpdates?.suggestions?.some(s =>

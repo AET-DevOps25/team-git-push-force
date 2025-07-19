@@ -60,14 +60,6 @@ export class ConceptService {
     return this.apiService.get<Blob>(`/api/concepts/${id}/pdf`);
   }
 
-  // Apply AI concept suggestion
-  applyConceptSuggestion(id: string, suggestion: any, applyMode: 'REPLACE' | 'MERGE' = 'MERGE'): Observable<Concept> {
-    return this.apiService.post<Concept>(`/api/concepts/${id}/apply-suggestion`, {
-      suggestion,
-      applyMode
-    });
-  }
-
   // Update concept status
   updateConceptStatus(id: string, status: ConceptStatus): Observable<Concept> {
     return this.updateConcept(id, { status });
