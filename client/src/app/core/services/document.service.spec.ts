@@ -255,7 +255,7 @@ describe('DocumentService', () => {
   });
 
   describe('Error Handling', () => {
-    it('should log upload errors to console', () => {
+    it('should log upload errors to console', (done) => {
       const testFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
       const conceptId = 'test-concept-id';
       const consoleErrorSpy = spyOn(console, 'error');
@@ -263,21 +263,33 @@ describe('DocumentService', () => {
       apiService.upload.and.returnValue(throwError(() => new Error('Network error')));
 
       service.uploadDocuments([testFile], conceptId).subscribe({
-        error: () => {
+        next: () => {
+          fail('Should have failed');
+          done();
+        },
+        error: (error) => {
           expect(consoleErrorSpy).toHaveBeenCalledWith('DocumentService upload error:', jasmine.any(Error));
+          expect(error.message).toBe('Network error');
+          done();
         }
       });
     });
 
-    it('should ensure loading state is reset on upload error', () => {
+    it('should ensure loading state is reset on upload error', (done) => {
       const testFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
       const conceptId = 'test-concept-id';
 
       apiService.upload.and.returnValue(throwError(() => new Error('Network error')));
 
       service.uploadDocuments([testFile], conceptId).subscribe({
+        next: () => {
+          fail('Should have failed');
+          done();
+        },
         error: () => {
+          expect(stateService.setLoading).toHaveBeenCalledWith('uploadDocuments', true);
           expect(stateService.setLoading).toHaveBeenCalledWith('uploadDocuments', false);
+          done();
         }
       });
     });
