@@ -8,12 +8,14 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatDialog } from '@angular/material/dialog';
 import { StateService } from '../../core/services/state.service';
 import { ConceptService } from '../../core/services/concept.service';
 import { ChatService } from '../../core/services/chat.service';
 import { Concept } from '../../core/models/concept.model';
 import { ChatResponse } from '../../core/models/chat.model';
 import { ChatInterfaceComponent } from '../../shared/components/common/chat-interface/chat-interface.component';
+import { DocumentsDialogComponent, DocumentsDialogData } from '../../shared/components/common/documents-dialog/documents-dialog.component';
 import { ConceptFoundationSectionComponent } from './components/concept-foundation-section/concept-foundation-section.component';
 import { ConceptTimelineSectionComponent } from './components/concept-timeline-section/concept-timeline-section.component';
 import { ConceptSpeakersSectionComponent } from './components/concept-speakers-section/concept-speakers-section.component';
@@ -64,7 +66,8 @@ export class ConceptDetailComponent implements OnInit, OnDestroy {
     private stateService: StateService,
     private conceptService: ConceptService,
     private chatService: ChatService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog
   ) {
     this.conceptId = this.route.snapshot.params['id'];
   }
@@ -182,6 +185,24 @@ export class ConceptDetailComponent implements OnInit, OnDestroy {
         console.error('Error downloading PDF:', error);
         alert('Failed to download PDF. Please try again.');
       }
+    });
+  }
+
+  openDocumentsDialog(): void {
+    if (!this.concept) return;
+
+    const dialogData: DocumentsDialogData = {
+      conceptId: this.concept.id,
+      conceptTitle: this.concept.title
+    };
+
+    this.dialog.open(DocumentsDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      maxHeight: '80vh',
+      disableClose: false,
+      data: dialogData,
+      panelClass: 'documents-dialog-panel'
     });
   }
 

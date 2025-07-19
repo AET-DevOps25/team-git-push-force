@@ -4,11 +4,13 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { ConceptDetailComponent } from './concept-detail.component';
 import { StateService } from '../../core/services/state.service';
 import { ConceptService } from '../../core/services/concept.service';
 import { ChatService } from '../../core/services/chat.service';
+import { DocumentService } from '../../core/services/document.service';
 import { Concept } from '../../core/models/concept.model';
 
 describe('ConceptDetailComponent', () => {
@@ -17,6 +19,8 @@ describe('ConceptDetailComponent', () => {
   let stateService: jasmine.SpyObj<StateService>;
   let conceptService: jasmine.SpyObj<ConceptService>;
   let chatService: jasmine.SpyObj<ChatService>;
+  let documentService: jasmine.SpyObj<DocumentService>;
+  let dialog: jasmine.SpyObj<MatDialog>;
   let cdr: jasmine.SpyObj<ChangeDetectorRef>;
   let router: Router;
   let activatedRoute: ActivatedRoute;
@@ -67,6 +71,8 @@ describe('ConceptDetailComponent', () => {
     ]);
     const conceptServiceSpy = jasmine.createSpyObj('ConceptService', ['getConceptById', 'updateConcept', 'downloadConceptPdf']);
     const chatServiceSpy = jasmine.createSpyObj('ChatService', ['sendMessage', 'initializeChat']);
+    const documentServiceSpy = jasmine.createSpyObj('DocumentService', ['getConceptDocuments', 'uploadDocument', 'deleteDocument']);
+    const dialogSpy = jasmine.createSpyObj('MatDialog', ['open']);
     const cdrSpy = jasmine.createSpyObj('ChangeDetectorRef', ['markForCheck', 'detectChanges']);
 
     await TestBed.configureTestingModule({
@@ -80,6 +86,8 @@ describe('ConceptDetailComponent', () => {
         { provide: StateService, useValue: stateServiceSpy },
         { provide: ConceptService, useValue: conceptServiceSpy },
         { provide: ChatService, useValue: chatServiceSpy },
+        { provide: DocumentService, useValue: documentServiceSpy },
+        { provide: MatDialog, useValue: dialogSpy },
         { provide: ChangeDetectorRef, useValue: cdrSpy },
         {
           provide: ActivatedRoute,
@@ -95,6 +103,8 @@ describe('ConceptDetailComponent', () => {
     stateService = TestBed.inject(StateService) as jasmine.SpyObj<StateService>;
     conceptService = TestBed.inject(ConceptService) as jasmine.SpyObj<ConceptService>;
     chatService = TestBed.inject(ChatService) as jasmine.SpyObj<ChatService>;
+    documentService = TestBed.inject(DocumentService) as jasmine.SpyObj<DocumentService>;
+    dialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
     cdr = TestBed.inject(ChangeDetectorRef) as jasmine.SpyObj<ChangeDetectorRef>;
     router = TestBed.inject(Router);
     activatedRoute = TestBed.inject(ActivatedRoute);
@@ -227,6 +237,31 @@ describe('ConceptDetailComponent', () => {
       expect(conceptService.downloadConceptPdf).toHaveBeenCalledWith(component.conceptId);
       expect(window.URL.createObjectURL).toHaveBeenCalled();
     });
+
+    it('should open documents dialog when openDocumentsDialog is called', () => {
+      component.openDocumentsDialog();
+
+      expect(dialog.open).toHaveBeenCalledWith(jasmine.any(Function), {
+        width: '600px',
+        maxWidth: '90vw',
+        maxHeight: '80vh',
+        disableClose: false,
+        data: {
+          conceptId: 'test-concept-id',
+          conceptTitle: 'Test Conference'
+        },
+        panelClass: 'documents-dialog-panel'
+      });
+    });
+
+    it('should not open documents dialog when concept is null', () => {
+      stateService.getCurrentConcept.and.returnValue(of(null));
+      component.concept = null;
+
+      component.openDocumentsDialog();
+
+      expect(dialog.open).not.toHaveBeenCalled();
+    });
   });
 
   describe('Helper Methods', () => {
@@ -275,7 +310,8 @@ describe('ConceptDetailComponent', () => {
         stateService,
         conceptService,
         chatService,
-        cdr
+        cdr,
+        dialog
       );
 
       expect(testComponent.conceptId).toBeUndefined();
@@ -292,7 +328,8 @@ describe('ConceptDetailComponent', () => {
         stateService,
         conceptService,
         chatService,
-        cdr
+        cdr,
+        dialog
       );
 
       expect(testComponent.conceptId).toBeNull();

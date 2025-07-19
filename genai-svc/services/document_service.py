@@ -73,14 +73,29 @@ class DocumentService:
             vector_store_service.add_texts(texts=chunks, metadatas=metadatas)
 
         # Create and return processed document info
+        # Determine document type based on file extension
+        file_extension = filename.lower().split('.')[-1] if '.' in filename else ''
+        doc_type = "OTHER"  # Default type
+        if file_extension == 'pdf' and 'report' in filename.lower():
+            doc_type = "INDUSTRY_REPORT"
+        elif file_extension in ['doc', 'docx'] and 'brand' in filename.lower():
+            doc_type = "BRAND_DECK"
+        elif 'debrief' in filename.lower() or 'event' in filename.lower():
+            doc_type = "PAST_EVENT_DEBRIEF"
+        elif 'guideline' in filename.lower() or 'guide' in filename.lower():
+            doc_type = "GUIDELINES"
+        
+        # Build S3 location URL
+        s3_location = f"s3://{self.bucket_name}/{s3_key}"
+        
         return ProcessedDocument(
             id=document_id,
             filename=filename,
-            concept_id=concept_id,
-            upload_date=datetime.datetime.now().isoformat(),
-            size=len(text),
-            status="PROCESSED",
-            chunk_count=len(chunks)
+            type=doc_type,
+            status="COMPLETED",
+            s3_location=s3_location,
+            uploaded_at=datetime.datetime.now(),
+            processed_at=datetime.datetime.now()
         )
 
     def _extract_text(self, file) -> str:
