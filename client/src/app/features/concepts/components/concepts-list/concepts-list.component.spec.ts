@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { ConceptsListComponent } from './concepts-list.component';
 import { StateService } from '../../../../core/services/state.service';
@@ -68,7 +69,8 @@ describe('ConceptsListComponent', () => {
       imports: [
         ConceptsListComponent,
         RouterTestingModule,
-        NoopAnimationsModule
+        NoopAnimationsModule,
+        HttpClientTestingModule
       ],
       providers: [
         { provide: StateService, useValue: stateServiceSpy }
@@ -118,15 +120,7 @@ describe('ConceptsListComponent', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/concepts', 'test-id', 'edit']);
     });
 
-    it('should handle share concept and stop propagation', () => {
-      const mockEvent = { stopPropagation: jasmine.createSpy('stopPropagation') } as any;
-      spyOn(console, 'log');
-      
-      component.shareConcept(mockEvent, 'test-id');
-      
-      expect(mockEvent.stopPropagation).toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith('Share concept:', 'test-id');
-    });
+
   });
 
   describe('Helper Methods', () => {

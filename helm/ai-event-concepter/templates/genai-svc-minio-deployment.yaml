@@ -16,8 +16,8 @@ spec:
         - name: minio
           image: "{{ .Values.genaisvcminio.image.repository }}:{{ .Values.genaisvcminio.image.tag }}"
           imagePullPolicy: {{ .Values.genaisvcminio.image.pullPolicy }}
-          command: ["/bin/sh"]
-          args: ["-c", "server /data --console-address \":9001\""]
+          command: ["minio"]
+          args: ["server", "/data", "--console-address", ":9001"]
           resources:
             limits:
               cpu: "500m"

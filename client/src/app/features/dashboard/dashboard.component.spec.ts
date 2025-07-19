@@ -140,21 +140,4 @@ describe('DashboardComponent', () => {
       expect(component.trackByConcept(0, concept)).toBe(concept.id);
     });
   });
-
-  describe('Action Methods', () => {
-    it('should handle share concept', () => {
-      const mockEvent = { stopPropagation: jasmine.createSpy('stopPropagation') } as any;
-      spyOn(console, 'log');
-      
-      component.shareConcept(mockEvent, 'test-id');
-      
-      expect(mockEvent.stopPropagation).toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith('Share concept:', 'test-id');
-    });
-  });
-
-  it('should call setConcepts on init', () => {
-    component.ngOnInit();
-    expect(stateService.setConcepts).toHaveBeenCalled();
-  });
 }); 

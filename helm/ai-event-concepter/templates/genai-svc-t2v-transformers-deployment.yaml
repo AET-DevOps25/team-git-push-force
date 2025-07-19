@@ -25,6 +25,15 @@ spec:
               memory: "2Gi"
           ports:
             - containerPort: {{ .Values.genaisvct2vtransformers.service.targetPort }}
+          readinessProbe:
+            httpGet:
+              path: /.well-known/ready
+              port: {{ .Values.genaisvct2vtransformers.service.targetPort }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
           env:
             {{- range .Values.genaisvct2vtransformers.env }}
             - name: {{ .name }}

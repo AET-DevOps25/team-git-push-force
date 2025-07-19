@@ -190,12 +190,11 @@ describe('ConfirmationDialogComponent', () => {
         message: 'Test message'
       });
 
-      spyOn(component, 'onConfirm');
       const confirmButton = fixture.nativeElement.querySelector('button[color="primary"]') as HTMLElement;
       
       if (confirmButton) {
         confirmButton.click();
-        expect(component.onConfirm).toHaveBeenCalled();
+        expect(mockDialogRef.close).toHaveBeenCalledWith(true);
       } else {
         // Fallback test to ensure component methods work
         component.onConfirm();

@@ -20,7 +20,7 @@ class VectorStoreService:
         self.embeddings = None
         self._initialize_weaviate_client()
 
-    def _wait_for_weaviate_ready(self, weaviate_url, timeout=120, check_interval=5):
+    def _wait_for_weaviate_ready(self, weaviate_url, timeout=None, check_interval=5):
         """Wait for Weaviate to be ready and responding to requests
 
         Args:
@@ -31,31 +31,56 @@ class VectorStoreService:
         Returns:
             bool: True if Weaviate is ready, False if timeout occurred
         """
+        # Get timeout from environment variable if not provided
+        if timeout is None:
+            timeout = int(os.getenv("WEAVIATE_TIMEOUT", "120"))
         print(f"Waiting for Weaviate to be ready at {weaviate_url}...")
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
-                # First try the v1 ready endpoint
+                # Try both endpoints in parallel to avoid issues with one endpoint not working
+                v1_ready_endpoint_ok = False
+                meta_endpoint_ok = False
+                
+                # Try the meta endpoint first as it's more reliable
+                try:
+                    response = requests.get(f"{weaviate_url}/v1/meta", timeout=5)
+                    if response.status_code == 200:
+                        print(f"Weaviate meta endpoint accessible after {time.time() - start_time:.2f} seconds")
+                        meta_endpoint_ok = True
+                except (requests.RequestException, ValueError) as e2:
+                    print(f"Weaviate not yet ready (meta endpoint): {e2}")
+                
+                # Also try the v1 ready endpoint
                 try:
                     response = requests.get(f"{weaviate_url}/v1/.well-known/ready", timeout=5)
                     if response.status_code == 200:
-                        ready_data = response.json()
-                        ready_status = ready_data.get("ready", False)
-                        if ready_status:
-                            print(f"Weaviate is ready after {time.time() - start_time:.2f} seconds")
-                            return True
+                        # Check if response has content before trying to parse JSON
+                        if response.text and response.text.strip():
+                            try:
+                                ready_data = response.json()
+                                ready_status = ready_data.get("ready", False)
+                                if ready_status:
+                                    print(f"Weaviate v1 ready endpoint reports ready after {time.time() - start_time:.2f} seconds")
+                                    v1_ready_endpoint_ok = True
+                                else:
+                                    print(f"Weaviate v1 endpoint reached but service reports not ready: {ready_data}")
+                            except ValueError as json_err:
+                                print(f"Error parsing JSON from v1 ready endpoint: {json_err}")
+                                # If we got a 200 response but invalid JSON, consider the service ready anyway
+                                # This handles cases where the endpoint returns non-JSON but is actually working
+                                print(f"Considering Weaviate ready despite JSON parsing error (got status 200)")
+                                v1_ready_endpoint_ok = True
                         else:
-                            print(f"Weaviate endpoint reached but service reports not ready: {ready_data}")
-                except (requests.RequestException, ValueError) as e:
-                    # Try the legacy meta endpoint as fallback
-                    print(f"Error with v1 ready endpoint: {e}, trying legacy endpoint")
-                    try:
-                        response = requests.get(f"{weaviate_url}/v1/meta", timeout=5)
-                        if response.status_code == 200:
-                            print(f"Weaviate meta endpoint accessible after {time.time() - start_time:.2f} seconds")
-                            return True
-                    except (requests.RequestException, ValueError) as e2:
-                        print(f"Weaviate not yet ready (meta endpoint): {e2}")
+                            print("Weaviate v1 ready endpoint returned empty response with status 200")
+                            # Empty response with 200 status code - consider the service ready
+                            v1_ready_endpoint_ok = True
+                except (requests.RequestException) as e:
+                    print(f"Error with v1 ready endpoint: {e}")
+                
+                # If either endpoint indicates readiness, consider Weaviate ready
+                if meta_endpoint_ok or v1_ready_endpoint_ok:
+                    return True
             except Exception as e:
                 print(f"Unexpected error checking Weaviate readiness: {e}")
 
@@ -89,7 +114,7 @@ class VectorStoreService:
 
             # Perform readiness check for Docker Compose setup
             if not use_embedded and not weaviate_url.startswith("http://localhost"):
-                self._wait_for_weaviate_ready(weaviate_url, timeout=60, check_interval=5)
+                self._wait_for_weaviate_ready(weaviate_url, check_interval=5)
 
             # Initialize client with appropriate configuration
             if use_embedded:
@@ -185,7 +210,7 @@ class VectorStoreService:
         # Additional check for readiness before attempting to access collections
         # This helps prevent "leader not found" errors
         weaviate_url = os.getenv("WEAVIATE_URL", "http://localhost:8080")
-        self._wait_for_weaviate_ready(weaviate_url, timeout=30, check_interval=2)
+        self._wait_for_weaviate_ready(weaviate_url, check_interval=2)
 
         # First, try to see if collection exists and check its properties
         collection_exists = False
