@@ -145,7 +145,7 @@ spec:
     - team-git-push-force-dev
   selector:
     matchLabels:
-      app.kubernetes.io/instance: genai-svc-minio
+      app: genai-svc-minio
 ---
 # ServiceMonitor for Weaviate Vector Database - Metrics endpoint
 apiVersion: monitoring.coreos.com/v1
@@ -169,7 +169,7 @@ spec:
     - team-git-push-force-dev
   selector:
     matchLabels:
-      app.kubernetes.io/instance: genai-svc-weaviate
+      app: genai-svc-weaviate
 ---
 # ServiceMonitor for T2V Transformers AI Service - Health endpoint
 apiVersion: monitoring.coreos.com/v1
@@ -193,4 +193,4 @@ spec:
     - team-git-push-force-dev
   selector:
     matchLabels:
-      app.kubernetes.io/instance: genai-svc-t2v-transformers 
+      app: genai-svc-t2v-transformers 
