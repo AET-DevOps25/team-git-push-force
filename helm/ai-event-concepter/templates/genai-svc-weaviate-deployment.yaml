@@ -18,11 +18,11 @@ spec:
           imagePullPolicy: {{ .Values.genaisvcweaviate.image.pullPolicy }}
           resources:
             limits:
-              cpu: "1000m"
-              memory: "2Gi"
-            requests:
               cpu: "500m"
               memory: "1Gi"
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
           ports:
             - containerPort: {{ .Values.genaisvcweaviate.service.targetPort }}
               name: http
@@ -32,7 +32,7 @@ spec:
             httpGet:
               path: /v1/.well-known/ready
               port: {{ .Values.genaisvcweaviate.service.targetPort }}
-            initialDelaySeconds: 60
+            initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
             successThreshold: 1

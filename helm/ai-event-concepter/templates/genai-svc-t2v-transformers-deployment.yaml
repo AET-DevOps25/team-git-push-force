@@ -4,6 +4,8 @@ metadata:
   name: ai-event-concepter-genai-svc-t2v-transformers
 spec:
   replicas: {{ .Values.genaisvct2vtransformers.replicaCount }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: ai-event-concepter-genai-svc-t2v-transformers-selector
@@ -18,11 +20,11 @@ spec:
           imagePullPolicy: {{ .Values.genaisvct2vtransformers.image.pullPolicy }}
           resources:
             limits:
-              cpu: "2000m"
-              memory: "4Gi"
+              cpu: "500m"
+              memory: "1Gi"
             requests:
-              cpu: "1000m"
-              memory: "2Gi"
+              cpu: "200m"
+              memory: "512Mi"
           ports:
             - containerPort: {{ .Values.genaisvct2vtransformers.service.targetPort }}
           readinessProbe:
@@ -39,3 +41,14 @@ spec:
             - name: {{ .name }}
               value: "{{ .value }}"
             {{- end }}
+          {{- if .Values.genaisvct2vtransformers.persistence.enabled }}
+          volumeMounts:
+            - name: models-storage
+              mountPath: {{ .Values.genaisvct2vtransformers.persistence.mountPath }}
+          {{- end }}
+      {{- if .Values.genaisvct2vtransformers.persistence.enabled }}
+      volumes:
+        - name: models-storage
+          persistentVolumeClaim:
+            claimName: genai-svc-t2v-transformers-models
+      {{- end }}

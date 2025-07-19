@@ -87,7 +87,6 @@ services:
     networks:
       - service-network
       - concept-db-network
-      - user-db-network
       - monitoring-network
     depends_on:
       - concept-svc-db
