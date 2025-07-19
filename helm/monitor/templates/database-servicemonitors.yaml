@@ -1,0 +1,41 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: postgres-exporter-user-db-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - port: http
+    interval: 15s
+  selector:
+    matchLabels:
+      app: postgres-exporter-user-db
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: postgres-exporter-concept-db-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - port: http
+    interval: 15s
+  selector:
+    matchLabels:
+      app: postgres-exporter-concept-db
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: redis-exporter-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - port: http-metrics
+    interval: 15s
+  selector:
+    matchLabels:
+      app: redis-exporter 
