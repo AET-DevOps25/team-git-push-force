@@ -103,9 +103,9 @@ nodeExporter:
       memory: "256Mi"
       cpu: "200m"
 
-# cAdvisor configuration
+# cAdvisor configuration - DISABLED due to permission issues
 cadvisor:
-  enabled: true
+  enabled: false
   image:
     repository: gcr.io/cadvisor/cadvisor
     tag: v0.47.2

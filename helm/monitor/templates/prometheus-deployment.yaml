@@ -148,6 +148,7 @@ spec:
         - name: root
           hostPath:
             path: /
+{{- if .Values.cadvisor.enabled }}
 ---
 # cAdvisor for container metrics
 apiVersion: v1
@@ -220,6 +221,7 @@ spec:
         - name: devicemapper
           hostPath:
             path: /dev/disk
+{{- end }}
 ---
 # Alertmanager
 apiVersion: v1
