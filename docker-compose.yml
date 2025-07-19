@@ -1,8 +1,22 @@
+# Docker Compose configuration for AI Event Concepter
+# 
+# Environment Configuration:
+# - Default: Uses development environment for client build
+# - Staging: Set CLIENT_BUILD_ENV=staging before running docker-compose
+# - Production: Set CLIENT_BUILD_ENV=production before running docker-compose
+#
+# Examples:
+# - docker-compose up (uses development)
+# - CLIENT_BUILD_ENV=staging docker-compose up
+# - CLIENT_BUILD_ENV=production docker-compose up
+
 services:
   # Client service (Angular frontend)
   client:
     build:
       context: ./client
+      args:
+        BUILD_ENV: ${CLIENT_BUILD_ENV:-development}
     ports:
       - "3000:80"
     depends_on:
@@ -87,7 +101,6 @@ services:
     networks:
       - service-network
       - concept-db-network
-      - user-db-network
       - monitoring-network
     depends_on:
       - concept-svc-db
