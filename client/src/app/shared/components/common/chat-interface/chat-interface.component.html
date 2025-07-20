@@ -1,0 +1,70 @@
+<mat-card class="chat-container">
+  <!-- Messages Area -->
+  <div class="messages-container" #messagesContainer>
+    <div class="messages-list">
+
+      
+      <!-- Chat Messages -->
+      <div class="message" 
+           *ngFor="let message of messages; trackBy: trackByMessage"
+           [class.user-message]="message.role === 'user'"
+           [class.assistant-message]="message.role === 'assistant'">
+        <div class="message-avatar">
+          <mat-icon>{{ message.role === 'user' ? 'person' : 'smart_toy' }}</mat-icon>
+        </div>
+        <div class="message-content">
+          <div class="message-text" [innerHTML]="formatMessage(message.content)"></div>
+        </div>
+      </div>
+      
+      <!-- Loading Message -->
+      <div class="message assistant-message" *ngIf="isLoading">
+        <div class="message-avatar">
+          <mat-icon>smart_toy</mat-icon>
+        </div>
+        <div class="message-content">
+          <div class="message-text typing">
+            <mat-spinner diameter="16"></mat-spinner>
+            <span>AI is thinking...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  
+  <!-- Input Area -->
+  <div class="chat-input">
+    <mat-form-field appearance="outline" class="message-input">
+      <mat-label>Type your message...</mat-label>
+      <textarea matInput 
+                [formControl]="messageControl"
+                [rows]="inputRows"
+                (keydown.enter)="onEnterKey($any($event))"
+                (input)="adjustTextareaHeight()"
+                placeholder="Ask me anything about your event concept..."
+                cdkTextareaAutosize
+                #messageTextarea></textarea>
+      
+      <mat-hint *ngIf="messageControl.value">
+        {{ (messageControl.value || '').length }}/{{ maxMessageLength }} characters
+      </mat-hint>
+      
+      <mat-error *ngIf="messageControl.hasError('required')">
+        Message is required
+      </mat-error>
+      <mat-error *ngIf="messageControl.hasError('maxlength')">
+        Message is too long (max {{ maxMessageLength }} characters)
+      </mat-error>
+    </mat-form-field>
+    
+    <button mat-fab 
+            color="primary"
+            (click)="sendMessage()"
+            [disabled]="!canSendMessage()"
+            class="send-button">
+      <mat-icon>{{ isLoading ? 'stop' : 'send' }}</mat-icon>
+    </button>
+  </div>
+</mat-card> 

@@ -57,3 +57,73 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Environment Configuration
+
+The application supports multiple environments:
+
+- **Development**: Uses `environment.ts` (default for local development)
+- **Staging**: Uses `environment.staging.ts` (for the staging environment)
+- **Production**: Uses `environment.prod.ts` (for the production environment)
+
+## Building with Docker
+
+The Dockerfile supports building the application for different environments using the `BUILD_ENV` build argument.
+
+### Building for Production (default)
+
+```bash
+docker build -t client .
+```
+
+This will use the production environment configuration by default.
+
+### Building for Staging
+
+```bash
+docker build -t client --build-arg BUILD_ENV=staging .
+```
+
+This will use the staging environment configuration.
+
+### Building for Development
+
+```bash
+docker build -t client --build-arg BUILD_ENV=development .
+```
+
+This will use the development environment configuration.
+
+## Environment Configuration Files
+
+The environment configuration files are located in `src/environments/`:
+
+- `environment.ts`: Development environment
+- `environment.staging.ts`: Staging environment
+- `environment.prod.ts`: Production environment
+
+Each file contains environment-specific settings like API URLs and feature flags.
+
+## CI/CD Integration
+
+The project's CI/CD pipeline automatically sets the appropriate `BUILD_ENV` value based on the Git branch:
+
+- **main branch**: Uses `BUILD_ENV=production` for production deployments
+- **dev branch**: Uses `BUILD_ENV=staging` for staging deployments
+- **other branches**: Uses `BUILD_ENV=development` as a fallback
+
+This is implemented in the GitHub Actions workflow (`.github/workflows/ci.yml`), which automatically builds and deploys the application with the correct environment configuration.
+
+### Manual CI/CD Example
+
+For manual CI/CD integration, you can use the `BUILD_ENV` build argument to specify the target environment:
+
+```yaml
+# Example for staging deployment
+docker build -t client --build-arg BUILD_ENV=staging .
+
+# Example for production deployment
+docker build -t client --build-arg BUILD_ENV=production .
+```
+
+This ensures that the correct environment configuration is used for each deployment target.

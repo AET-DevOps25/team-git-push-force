@@ -1,7 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: user-service
+  name: user-svc
+  labels:
+    app: user-svc
+    monitoring: "true"
 spec:
   selector:
     app: ai-event-concepter-user-svc-selector
@@ -9,4 +12,5 @@ spec:
     - port: {{ .Values.usersvc.service.port }}
       targetPort: {{ .Values.usersvc.service.targetPort }}
       protocol: TCP
+      name: http
   type: {{ .Values.usersvc.service.type }}

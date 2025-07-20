@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-event-concepter-user-svc-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-event-concepter-user-svc-db-selector
+  template:
+    metadata:
+      labels:
+        app: ai-event-concepter-user-svc-db-selector
+    spec:
+      containers:
+        - name: user-svc-db
+          image: "{{ .Values.userdb.image.repository }}:{{ .Values.userdb.image.tag }}"
+          imagePullPolicy: {{ .Values.userdb.image.pullPolicy }}
+          resources:
+            limits:
+              cpu: {{ .Values.userdb.resources.limits.cpu | quote }}
+              memory: {{ .Values.userdb.resources.limits.memory | quote }}
+            requests:
+              cpu: {{ .Values.userdb.resources.requests.cpu | quote }}
+              memory: {{ .Values.userdb.resources.requests.memory | quote }}
+          ports:
+            - containerPort: {{ .Values.userdb.service.targetPort }}
+          env:
+            {{- range .Values.userdb.env }}
+            - name: {{ .name }}
+              value: "{{ .value }}"
+            {{- end }}
+          volumeMounts:
+            - name: user-svc-db-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: user-svc-db-data
+          emptyDir: {}

@@ -1,0 +1,5 @@
+apiVersion: v2
+name: monitoring
+version: 0.1.0
+description: A minimal Helm chart for Prometheus and Grafana in a single namespace
+# No dependencies 

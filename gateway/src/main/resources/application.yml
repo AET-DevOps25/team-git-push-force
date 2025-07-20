@@ -1,0 +1,100 @@
+app:
+  version: 1.0.0
+spring:
+  application:
+    name: gateway
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      routes:
+        - id: api_redirect
+          uri: forward:/health
+          predicates:
+            - Path=/api
+        - id: api_health_route
+          uri: forward:/health
+          predicates:
+            - Path=/api/health
+        - id: root_redirect
+          uri: forward:/health
+          predicates:
+            - Path=/
+        - id: auth_route
+          uri: forward:/api/auth
+          predicates:
+            - Path=/api/auth/**
+        - id: user_health_route
+          uri: ${user-svc.url}
+          predicates:
+            - Path=/api/users/health
+          filters:
+            - RewritePath=/api/users/health, /health
+        - id: user_service_route
+          uri: ${user-svc.url}
+          predicates:
+            - Path=/api/users/**
+        - id: concept_health_route
+          uri: ${concept-svc.url}
+          predicates:
+            - Path=/api/concepts/health
+          filters:
+            - RewritePath=/api/concepts/health, /health
+        - id: concept_service_route
+          uri: ${concept-svc.url}
+          predicates:
+            - Path=/api/concepts/**
+        - id: genai_health_route
+          uri: ${genai-svc.url}
+          predicates:
+            - Path=/api/genai/health
+          filters:
+            - RewritePath=/api/genai/health, /health
+        - id: genai_service_route
+          uri: ${genai-svc.url}
+          predicates:
+            - Path=/api/genai/**
+
+user-svc:
+  url: ${USER_SERVICE_URL:http://user-svc:8081}
+
+concept-svc:
+  url: ${CONCEPT_SERVICE_URL:http://concept-svc:8082}
+
+genai-svc:
+  url: ${GENAI_SERVICE_URL:http://genai-svc:8083}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+      base-path: /actuator
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+user-svc:
+  url: http://localhost:8081
+
+concept-svc:
+  url: http://localhost:8082
+
+genai-svc:
+  url: http://localhost:8083
+
+jwt:
+  secret: ${JWT_SECRET:defaultSecretKeyForDevelopmentEnvironmentOnly}
+  expiration: ${JWT_EXPIRATION:3600000} # 1 hour in milliseconds
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days in milliseconds

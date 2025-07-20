@@ -1,0 +1,145 @@
+<div class="concepts-container">
+  <!-- Hero Header Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="welcome-text">
+        <h1 class="hero-title">
+          <mat-icon class="title-icon">event_note</mat-icon>
+          My Concepts
+        </h1>
+        <p class="hero-subtitle">Manage and explore your event ideas and projects</p>
+      </div>
+      <div class="hero-actions">
+        <button mat-raised-button color="primary" (click)="createConcept()" class="hero-cta">
+          <mat-icon>add_circle</mat-icon>
+          Create New Concept
+        </button>
+      </div>
+    </div>
+    <div class="hero-illustration">
+      <div class="floating-card card-1">
+        <mat-icon>event</mat-icon>
+      </div>
+      <div class="floating-card card-2">
+        <mat-icon>lightbulb</mat-icon>
+      </div>
+      <div class="floating-card card-3">
+        <mat-icon>auto_awesome</mat-icon>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filters Section -->
+  <section class="filters-section">
+    <div class="filters-container">
+      <div class="search-container">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search concepts</mat-label>
+          <input matInput 
+                 [(ngModel)]="searchQuery" 
+                 (ngModelChange)="onSearchChange()"
+                 placeholder="Search by title, description, or tags...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <div class="filter-container">
+        <mat-form-field appearance="outline" class="status-filter">
+          <mat-label>Filter by Status</mat-label>
+          <mat-select [(ngModel)]="statusFilter" (ngModelChange)="onStatusFilterChange()">
+            <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+  </section>
+
+  <!-- Concepts Grid Section -->
+  <section class="concepts-section">
+    <div class="concepts-content" *ngIf="filteredConcepts$ | async as concepts">
+      <!-- Concepts Grid -->
+      <div class="concepts-grid" *ngIf="concepts.length > 0">
+        <div 
+          *ngFor="let concept of concepts; trackBy: trackByConcept" 
+          class="concept-card"
+          (click)="viewConcept(concept.id)">
+          
+          <div class="concept-header">
+            <div class="concept-avatar" [class]="'status-' + concept.status.toLowerCase().replace('_', '-')">
+              <mat-icon>{{ getStatusIcon(concept.status) }}</mat-icon>
+            </div>
+            <div class="concept-meta-top">
+              <span class="concept-date">{{ concept.updatedAt | date:'MMM d, yyyy' }}</span>
+              <div class="status-indicator" [class]="'status-' + concept.status.toLowerCase().replace('_', '-')"></div>
+            </div>
+          </div>
+          
+          <div class="concept-content">
+            <h3 class="concept-title">{{ concept.title }}</h3>
+            <p class="concept-description">{{ concept.description }}</p>
+            
+            <div class="concept-details">
+              <div class="detail-item" *ngIf="concept.eventDetails?.format">
+                <mat-icon>place</mat-icon>
+                <span>{{ concept.eventDetails?.format | titlecase }}</span>
+              </div>
+              <div class="detail-item" *ngIf="concept.eventDetails?.capacity">
+                <mat-icon>people</mat-icon>
+                <span>{{ concept.eventDetails?.capacity }} attendees</span>
+              </div>
+              <div class="detail-item" *ngIf="concept.eventDetails?.duration">
+                <mat-icon>schedule</mat-icon>
+                <span>{{ concept.eventDetails?.duration }}</span>
+              </div>
+            </div>
+            
+            <div class="concept-tags" *ngIf="concept.tags.length > 0">
+              <span *ngFor="let tag of concept.tags.slice(0, 3)" class="tag">
+                {{ tag }}
+              </span>
+              <span *ngIf="concept.tags.length > 3" class="tag-more">
+                +{{ concept.tags.length - 3 }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="concept-footer">
+            <div class="status-badge" [class]="'status-' + concept.status.toLowerCase().replace('_', '-')">
+              <mat-icon>{{ getStatusIcon(concept.status) }}</mat-icon>
+              <span>{{ getStatusDisplayName(concept.status) }}</span>
+            </div>
+            <div class="concept-actions">
+              <button mat-icon-button class="action-btn" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Enhanced Empty State -->
+      <div *ngIf="concepts.length === 0" class="empty-state">
+        <div class="empty-illustration">
+          <div class="empty-icon-bg">
+            <mat-icon class="empty-icon">event_note</mat-icon>
+          </div>
+        </div>
+        <div class="empty-content">
+          <h3 class="empty-title">No concepts found</h3>
+          <p class="empty-description" *ngIf="searchQuery || statusFilter !== 'ALL'">
+            Try adjusting your search criteria or filters to find what you're looking for.
+          </p>
+          <p class="empty-description" *ngIf="!searchQuery && statusFilter === 'ALL'">
+            Ready to bring your ideas to life? Create your first event concept and let our AI help you plan something amazing.
+          </p>
+          <button mat-raised-button color="primary" (click)="createConcept()" class="empty-cta">
+            <mat-icon>add_circle</mat-icon>
+            Create Your First Concept
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div> 

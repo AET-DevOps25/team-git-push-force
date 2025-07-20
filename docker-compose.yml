@@ -1,24 +1,38 @@
+# Docker Compose configuration for AI Event Concepter
+# 
+# Environment Configuration:
+# - Default: Uses development environment for client build
+# - Staging: Set CLIENT_BUILD_ENV=staging before running docker-compose
+# - Production: Set CLIENT_BUILD_ENV=production before running docker-compose
+#
+# Examples:
+# - docker-compose up (uses development)
+# - CLIENT_BUILD_ENV=staging docker-compose up
+# - CLIENT_BUILD_ENV=production docker-compose up
+
 services:
   # Client service (Angular frontend)
   client:
     build:
       context: ./client
+      args:
+        BUILD_ENV: ${CLIENT_BUILD_ENV:-development}
     ports:
       - "3000:80"
     depends_on:
-      - server
+      - gateway
     networks:
       - frontend-network
-      - backend-network
 
   # API Gateway (Spring Boot)
-  server:
+  gateway:
     build:
-      context: ./server
+      context: ./gateway
     ports:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_MAIN_WEB_APPLICATION_TYPE=reactive
       - USER_SERVICE_URL=http://user-svc:8080
       - CONCEPT_SERVICE_URL=http://concept-svc:8080
       - GENAI_SERVICE_URL=http://genai-svc:8083
@@ -27,7 +41,9 @@ services:
       - concept-svc
       - genai-svc
     networks:
-      - backend-network
+      - frontend-network
+      - service-network
+      - monitoring-network
 
   # User Service (Spring Boot)
   user-svc:
@@ -37,8 +53,36 @@ services:
       - "8081:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://user-svc-db:5432/eventdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
     networks:
-      - backend-network
+      - service-network
+      - user-db-network
+      - monitoring-network
+    depends_on:
+      - user-svc-db
+
+  user-svc-db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=eventdb
+    networks:
+      - user-db-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    #volumes:
+      #- eventdb_data:/var/lib/postgresql/data
 
   # Concept Service (Spring Boot)
   concept-svc:
@@ -48,8 +92,31 @@ services:
       - "8082:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://concept-svc-db:5432/conceptdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
     networks:
-      - backend-network
+      - service-network
+      - concept-db-network
+      - monitoring-network
+    depends_on:
+      - concept-svc-db
+
+  concept-svc-db:
+    image: postgres:15
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=conceptdb
+    networks:
+      - concept-db-network
+    #volumes:
+      #- conceptdb_data:/var/lib/postgresql/data
 
   # GenAI Service (Python Flask)
   genai-svc:
@@ -59,11 +126,234 @@ services:
       - "8083:8083"
     environment:
       - FLASK_ENV=production
+      - WEAVIATE_URL=http://genai-svc-weaviate:8080  # Updated for new service name
+      - WEAVIATE_GRPC_PORT=50051  # Explicitly set gRPC port
+      - WEAVIATE_API_KEY=${WEAVIATE_API_KEY:-}
+      - MINIO_URL=http://genai-svc-minio:9000  # Updated for new service name
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_BUCKET=concepts
+      - CONCEPT_SERVICE_URL=http://concept-svc:8080
+      - OPENWEBUI_MODEL=llama3.3:latest
+    depends_on:
+      - genai-svc-weaviate
+      - genai-svc-minio
+      - concept-svc
     networks:
-      - backend-network
+      - service-network
+      - genai-network
+      - monitoring-network
+    env_file:
+      - genai-svc/prod/.env
+
+  # Weaviate Vector Database for GenAI Service
+  genai-svc-weaviate:
+    image: semitechnologies/weaviate:1.30.5
+    ports:
+      - "8087:8080"  # HTTP port
+      - "50051:50051"  # gRPC port
+    environment:
+      - QUERY_DEFAULTS_LIMIT=20
+      - AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true
+      - PERSISTENCE_DATA_PATH=/var/lib/weaviate
+      - DEFAULT_VECTORIZER_MODULE=none
+      - ENABLE_MODULES=text2vec-transformers
+      - TRANSFORMERS_INFERENCE_API=http://genai-svc-t2v-transformers:8080
+      # Minimal single-node configuration
+      - CLUSTER_HOSTNAME=genai-svc-weaviate
+      - RAFT_BOOTSTRAP_EXPECT=1
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    networks:
+      - genai-network
+
+  # Text2Vec Transformers for Weaviate
+  genai-svc-t2v-transformers:
+    image: semitechnologies/transformers-inference:sentence-transformers-all-MiniLM-L6-v2
+    environment:
+      - ENABLE_CUDA=0
+    networks:
+      - genai-network
+
+  # MinIO Object Storage for GenAI Service
+  genai-svc-minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - genai-network
+
+  # Prometheus - Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.size=10GB'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - monitoring-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "monitoring=true"
+      - "app=prometheus"
+
+  # Alertmanager for alert routing
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - monitoring-network
+    labels:
+      - "monitoring=true"
+      - "app=alertmanager"
+
+  # Node Exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring-network
+    labels:
+      - "monitoring=true"
+      - "app=node-exporter"
+
+  # cAdvisor for container metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    ports:
+      - "8084:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    networks:
+      - monitoring-network
+    labels:
+      - "monitoring=true"
+      - "app=cadvisor"
+
+  # PostgreSQL Exporter for database metrics
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres-exporter
+    restart: unless-stopped
+    ports:
+      - "9187:9187"
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:postgres@user-svc-db:5432/eventdb?sslmode=disable"
+    networks:
+      - user-db-network
+      - monitoring-network
+    depends_on:
+      user-svc-db:
+        condition: service_healthy
+    labels:
+      - "monitoring=true"
+      - "app=postgres-exporter"
+
+  # Grafana - Visualization and Dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3030:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - monitoring-network
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "monitoring=true"
+      - "app=grafana"
 
 networks:
+  monitoring-network:
+    driver: bridge 
   frontend-network:
     driver: bridge
-  backend-network:
+  service-network:
     driver: bridge
+  user-db-network:
+    driver: bridge
+  concept-db-network:
+    driver: bridge
+  genai-network:
+    driver: bridge
+
+volumes:
+  weaviate_data:
+    driver: local
+  minio_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  alertmanager_data:
+    driver: local

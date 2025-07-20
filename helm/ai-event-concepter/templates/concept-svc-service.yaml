@@ -1,7 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: concept-service
+  name: concept-svc
+  labels:
+    app: concept-svc
+    monitoring: "true"
 spec:
   selector:
     app: ai-event-concepter-concept-svc-selector
@@ -9,4 +12,5 @@ spec:
     - port: {{ .Values.conceptsvc.service.port }}
       targetPort: {{ .Values.conceptsvc.service.targetPort }}
       protocol: TCP
+      name: http
   type: {{ .Values.conceptsvc.service.type }}

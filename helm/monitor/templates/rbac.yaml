@@ -1,0 +1,88 @@
+# Role for Prometheus service discovery in monitoring namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-discovery-monitor
+  namespace: team-git-push-force-monitor
+  labels:
+    {{- include "monitoring.labels" . | nindent 4 }}
+rules:
+- apiGroups: [""]
+  resources:
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources:
+  - configmaps
+  verbs: ["get"]
+- apiGroups: ["monitoring.coreos.com"]
+  resources:
+  - servicemonitors
+  - podmonitors
+  verbs: ["get", "list", "watch"]
+---
+# Role for Prometheus service discovery in application namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-discovery-app
+  namespace: team-git-push-force-dev
+  labels:
+    {{- include "monitoring.labels" . | nindent 4 }}
+rules:
+- apiGroups: [""]
+  resources:
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["monitoring.coreos.com"]
+  resources:
+  - servicemonitors
+  - podmonitors
+  verbs: ["get", "list", "watch"]
+---
+# RoleBinding for Prometheus in monitoring namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-discovery-monitor
+  namespace: team-git-push-force-monitor
+  labels:
+    {{- include "monitoring.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prometheus-discovery-monitor
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: team-git-push-force-monitor
+---
+# RoleBinding for Prometheus in application namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-discovery-app
+  namespace: team-git-push-force-dev
+  labels:
+    {{- include "monitoring.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prometheus-discovery-app
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: team-git-push-force-monitor
+---
+# ServiceAccount for Prometheus
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: team-git-push-force-monitor
+  labels:
+    {{- include "monitoring.labels" . | nindent 4 }} 

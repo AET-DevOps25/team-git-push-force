@@ -28,26 +28,22 @@ generate_java() {
   echo "Generating Java code..."
   check_command openapi-generator-cli
 
-  # Create output directories
-  create_dir "server/src/main/java/generated"
-  create_dir "user-svc/src/main/java/generated"
-  create_dir "concept-svc/src/main/java/generated"
-
-  # Generate code for API Gateway
+  # Generate for API Gateway
   openapi-generator-cli generate \
-    -i api/gateway.yaml \
-    -g spring \
-    -o server/src/main/java/generated \
-    --skip-validate-spec \
-    --api-package de.tum.aet.devops25.api.generated.controller \
-    --model-package de.tum.aet.devops25.api.generated.model \
-    --additional-properties=useTags=true,useSpringBoot3=true,interfaceOnly=true
+  -i api/gateway.yaml \
+  -g spring \
+  -o gateway \
+  --skip-validate-spec \
+  --api-package de.tum.aet.devops25.api.generated.controller \
+  --model-package de.tum.aet.devops25.api.generated.model \
+  --additional-properties=useTags=true,useSpringBoot3=true,interfaceOnly=true,reactive=true \
+  --library spring-boot
 
   # Generate for user-svc
   openapi-generator-cli generate \
     -i api/user-service.yaml \
     -g spring \
-    -o user-svc/src/main/java/generated \
+    -o user-svc \
     --skip-validate-spec \
     --api-package de.tum.aet.devops25.api.generated.controller \
     --model-package de.tum.aet.devops25.api.generated.model \
@@ -57,7 +53,7 @@ generate_java() {
   openapi-generator-cli generate \
     -i api/concept-service.yaml \
     -g spring \
-    -o concept-svc/src/main/java/generated \
+    -o concept-svc \
     --skip-validate-spec \
     --api-package de.tum.aet.devops25.api.generated.controller \
     --model-package de.tum.aet.devops25.api.generated.model \
@@ -66,21 +62,23 @@ generate_java() {
   echo "Java code generation complete!"
 }
 
-# Python client generation
+# Python server generation
 generate_python() {
-  echo "Generating Python client..."
-  check_command openapi-python-client
+  echo "Generating Python client and server..."
+  check_command openapi-generator-cli
 
   # Create output directories
-  create_dir "genai-svc/client"
+  create_dir "genai-svc"
 
-  # Generate client for GenAI service
-  openapi-python-client generate \
-    --path api/genai-service.yaml \
-    --output-path genai-svc/client \
-    --overwrite
+  # Generate server stubs for GenAI service
+  openapi-generator-cli generate \
+    -i api/genai-service.yaml \
+    -g python-flask \
+    -o genai-svc \
+    --skip-validate-spec \
+    --additional-properties=packageName=genai_models,serverPort=8083
 
-  echo "Python client generation complete!"
+  echo "Python server generation complete!"
 }
 
 # TypeScript SDK generation

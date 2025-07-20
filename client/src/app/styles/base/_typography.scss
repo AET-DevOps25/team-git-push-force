@@ -1,0 +1,41 @@
+// ==========================================================================
+// TYPOGRAPHY - Minimal overrides for Angular Material M3 typography
+// ==========================================================================
+
+@use '../abstracts/variables' as vars;
+
+// Angular Material M3 already provides excellent typography!
+// We only need minimal customizations for our MVP.
+
+// Base body styles (let M3 handle most typography)
+body {
+  font-family: 'Roboto', sans-serif;
+  line-height: 1.5;
+}
+
+// Only add spacing that Material doesn't provide
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: vars.$spacing-md;
+}
+
+p {
+  margin-bottom: vars.$spacing-md;
+}
+
+// Basic responsive text sizing (just what we need)
+.text-responsive {
+  font-size: 1rem;
+  
+  @media (min-width: vars.$screen-md) {
+    font-size: 1.125rem;
+  }
+}
+
+// Essential text utilities (add more when needed)
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  opacity: 0.7;
+}

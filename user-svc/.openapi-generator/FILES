@@ -1,0 +1,12 @@
+README.md
+pom.xml
+src/main/java/de/tum/aet/devops25/api/generated/controller/ApiUtil.java
+src/main/java/de/tum/aet/devops25/api/generated/controller/HealthApi.java
+src/main/java/de/tum/aet/devops25/api/generated/controller/ProfileManagementApi.java
+src/main/java/de/tum/aet/devops25/api/generated/controller/UserRegistrationApi.java
+src/main/java/de/tum/aet/devops25/api/generated/model/ErrorResponse.java
+src/main/java/de/tum/aet/devops25/api/generated/model/GetUserServiceHealth200Response.java
+src/main/java/de/tum/aet/devops25/api/generated/model/RegisterUserRequest.java
+src/main/java/de/tum/aet/devops25/api/generated/model/UpdateUserRequest.java
+src/main/java/de/tum/aet/devops25/api/generated/model/User.java
+src/main/java/de/tum/aet/devops25/api/generated/model/UserPreferences.java

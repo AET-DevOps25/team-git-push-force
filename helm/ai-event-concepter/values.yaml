@@ -5,9 +5,9 @@
 namespace:
   create: false
 
-server:
+gateway:
   image:
-    repository: ghcr.io/aet-devops25/team-git-push-force/server
+    repository: ghcr.io/aet-devops25/team-git-push-force/gateway
     tag: latest
     pullPolicy: Always
   service:
@@ -19,11 +19,11 @@ server:
     - name: SPRING_PROFILES_ACTIVE
       value: docker
     - name: USER_SERVICE_URL
-      value: http://user-service:8080
+      value: http://user-svc:8080
     - name: CONCEPT_SERVICE_URL
-      value: http://concept-service:8080
+      value: http://concept-svc:8080
     - name: GENAI_SERVICE_URL
-      value: http://genai-service:8083
+      value: http://genai-svc:8083
 
 client:
   image:
@@ -49,6 +49,18 @@ usersvc:
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: docker
+    - name: SPRING_DATASOURCE_URL
+      value: jdbc:postgresql://user-svc-db:5432/eventdb
+    - name: SPRING_DATASOURCE_USERNAME
+      value: postgres
+    - name: SPRING_DATASOURCE_PASSWORD
+      value: postgres
+    - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+      value: update
+    - name: SPRING_JPA_SHOW_SQL
+      value: "true"
+    - name: SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL
+      value: "true"
 
 conceptsvc:
   image:
@@ -63,6 +75,18 @@ conceptsvc:
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: docker
+    - name: SPRING_DATASOURCE_URL
+      value: jdbc:postgresql://concept-svc-db:5432/conceptdb
+    - name: SPRING_DATASOURCE_USERNAME
+      value: postgres
+    - name: SPRING_DATASOURCE_PASSWORD
+      value: postgres
+    - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+      value: update
+    - name: SPRING_JPA_SHOW_SQL
+      value: "true"
+    - name: SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL
+      value: "true"
 
 genaisvc:
   image:
@@ -77,10 +101,189 @@ genaisvc:
   env:
     - name: FLASK_ENV
       value: production
+    - name: WEAVIATE_URL
+      value: http://genai-svc-weaviate:8080
+    - name: WEAVIATE_API_KEY
+      value: ""
+    - name: WEAVIATE_TIMEOUT
+      value: "300"
+    - name: OPENWEBUI_API_URL
+      value: https://gpu.aet.cit.tum.de/api
+    - name: OPENWEBUI_MODEL
+      value: llama3.3:latest
+    - name: MINIO_URL
+      value: http://genai-svc-minio:9000
+    - name: MINIO_BUCKET
+      value: concepts
+    - name: TRANSFORMERS_CACHE
+      value: "/models/cache"
+    - name: HF_HOME
+      value: "/models/home"
+    - name: HF_DATASETS_CACHE
+      value: "/models/datasets"
+    - name: TRANSFORMERS_OFFLINE
+      value: "1"
+    - name: HF_HUB_OFFLINE
+      value: "1"
+    - name: GUNICORN_WORKERS
+      value: "1"
+    - name: GUNICORN_THREADS
+      value: "2"
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClass: ""
+    mountPath: "/models"
+  # Secrets are managed externally using kubectl
+  # See README.md for instructions
 
+# Weaviate Vector Database for GenAI Service
+genaisvcweaviate:
+  image:
+    repository: semitechnologies/weaviate
+    tag: "1.24.1"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    grpcPort: 50051
+    grpcTargetPort: 50051
+  replicaCount: 1
+  env:
+    - name: QUERY_DEFAULTS_LIMIT
+      value: "20"
+    - name: AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED
+      value: "true"
+    - name: PERSISTENCE_DATA_PATH
+      value: "/var/lib/weaviate"
+    - name: DEFAULT_VECTORIZER_MODULE
+      value: "none"
+    - name: ENABLE_MODULES
+      value: "text2vec-transformers"
+    - name: TRANSFORMERS_INFERENCE_API
+      value: "http://genai-svc-t2v-transformers:8080"
+    - name: MODULES_TRANSFORMERS_INFERENCE_API_TIMEOUT_SECONDS
+      value: "300"
+    - name: PROMETHEUS_MONITORING_ENABLED
+      value: "true"
+  persistence:
+    enabled: false
+    size: 1Gi
+    storageClass: ""
+
+# Text2Vec Transformers for Weaviate
+genaisvct2vtransformers:
+  image:
+    repository: semitechnologies/transformers-inference
+    tag: "sentence-transformers-all-MiniLM-L6-v2"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  replicaCount: 1
+  env:
+    - name: ENABLE_CUDA
+      value: "0"
+    - name: STARTUP_TIMEOUT_SECONDS
+      value: "300"
+    - name: TRANSFORMERS_CACHE
+      value: "/models/cache"
+    - name: HF_HOME
+      value: "/models/home"
+    - name: HF_DATASETS_CACHE
+      value: "/models/datasets"
+    - name: TRANSFORMERS_OFFLINE
+      value: "1"
+    - name: HF_HUB_OFFLINE
+      value: "1"
+    - name: GUNICORN_WORKERS
+      value: "1"
+    - name: GUNICORN_THREADS
+      value: "2"
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClass: ""
+    mountPath: "/models"
+
+# MinIO Object Storage for GenAI Service
+genaisvcminio:
+  image:
+    repository: minio/minio
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 9000
+    targetPort: 9000
+    consolePort: 9001
+    consoleTargetPort: 9001
+  replicaCount: 1
+  env:
+    - name: MINIO_ROOT_USER
+      value: "minioadmin"
+    - name: MINIO_ROOT_PASSWORD
+      value: "minioadmin"
+    - name: MINIO_PROMETHEUS_AUTH_TYPE
+      value: "public"
+  persistence:
+    enabled: false
+    size: 10Gi
+    storageClass: ""
+
+userdb:
+  image:
+    repository: postgres
+    tag: "15"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5432
+    targetPort: 5432
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+  env:
+    - name: POSTGRES_PASSWORD
+      value: postgres
+    - name: POSTGRES_USER
+      value: postgres
+    - name: POSTGRES_DB
+      value: eventdb
+
+conceptdb:
+  image:
+    repository: postgres
+    tag: "15"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5432
+    targetPort: 5432
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+  env:
+    - name: POSTGRES_PASSWORD
+      value: postgres
+    - name: POSTGRES_USER
+      value: postgres
+    - name: POSTGRES_DB
+      value: conceptdb
 ingress:
   enabled: true
   className: "nginx"
   tls: true
+  host: "dev-aieventconcepter.student.k8s.aet.cit.tum.de"
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"

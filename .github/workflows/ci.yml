@@ -1,0 +1,326 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  validate_api:
+    name: Validate API Specifications
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Redocly CLI
+        run: npm install -g @redocly/cli@latest
+
+      - name: Lint OpenAPI Specifications
+        run: |
+          redocly lint api/*.yaml --format summary
+
+  generate_api_code:
+    name: Generate Code from OpenAPI
+    runs-on: ubuntu-latest
+    needs: [validate_api]
+    if: ${{ always() && (needs.validate_api.result == 'success' || needs.validate_api.result == 'skipped') }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install OpenAPI Generator
+        run: |
+          npm install -g @openapitools/openapi-generator-cli
+          pip install openapi-python-client
+
+      - name: Generate Code
+        run: |
+          chmod +x api/scripts/gen-all.sh
+          ./api/scripts/gen-all.sh
+
+      # Upload separate artifacts for each service
+      - name: Upload client artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-code
+          path: ./client
+          if-no-files-found: error
+
+      - name: Set executable permissions for gradlew files
+        run: |
+          chmod +x gateway/gradlew
+          chmod +x user-svc/gradlew
+          chmod +x concept-svc/gradlew
+          ls -la gateway/gradlew
+          ls -la user-svc/gradlew
+          ls -la concept-svc/gradlew
+
+      - name: Upload gateway artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gateway-code
+          path: |
+            ./gateway
+            ./gateway/gradle/wrapper/
+          if-no-files-found: error
+
+      - name: Upload user-svc artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: user-svc-code
+          path: |
+            ./user-svc
+            ./user-svc/gradle/wrapper/
+          if-no-files-found: error
+
+      - name: Upload concept-svc artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: concept-svc-code
+          path: |
+            ./concept-svc
+            ./concept-svc/gradle/wrapper/
+          if-no-files-found: error
+
+      - name: Upload genai-svc artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: genai-svc-code
+          path: ./genai-svc
+          if-no-files-found: error
+
+  test_java:
+    name: Run Java Tests
+    needs: [generate_api_code]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [gateway, user-svc, concept-svc]
+    steps:
+      - name: Download service artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.service }}-code
+          path: ./${{ matrix.service }}
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set executable permissions for gradlew
+        run: |
+          echo "Setting executable permissions for ${{ matrix.service }}/gradlew"
+          ls -la ${{ matrix.service }}
+          chmod +x ${{ matrix.service }}/gradlew
+          ls -la ${{ matrix.service }}/gradlew
+
+      - name: Build and test with Gradle
+        run: |
+          cd ${{ matrix.service }}
+          pwd
+          ls -la
+          ./gradlew build test
+
+  test_python:
+    name: Run Python Tests
+    needs: [generate_api_code]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download genai-svc artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: genai-svc-code
+          path: ./genai-svc
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          cd genai-svc
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run Python tests
+        run: |
+          export SKIP_WEAVIATE=true
+          cd genai-svc
+          python -m pytest tests/ -v
+          
+  test_client:
+    name: Run Client Unit Tests
+    needs: [generate_api_code]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download client artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: client-code
+          path: ./client
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: './client/package-lock.json'
+
+      - name: Install dependencies
+        run: |
+          cd client
+          npm ci
+
+      - name: Run Angular tests
+        run: |
+          cd client
+          npm test -- --watch=false --browsers=ChromeHeadless
+
+  build_docs:
+    name: Build API Documentation
+    runs-on: ubuntu-latest
+    needs: [validate_api]
+    if: ${{ always() && (needs.validate_api.result == 'success' || needs.validate_api.result == 'skipped') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Redoc CLI
+        run: npm install -g redoc-cli
+
+      - name: Build Documentation
+        run: |
+          mkdir -p docs/api
+          for spec in api/*.yaml; do
+            filename=$(basename "$spec" .yaml)
+            redoc-cli bundle "$spec" -o "docs/api/$filename.html"
+          done
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs
+          branch: gh-pages
+
+  build_images:
+    name: Build Docker Images
+    needs: [test_java, test_python, test_client]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [client, gateway, user-svc, concept-svc, genai-svc]
+    steps:
+      - name: Download service artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.service }}-code
+          path: ./${{ matrix.service }}
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      - name: Install Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+
+      - name: Set build arguments for client
+        id: build-args
+        run: |
+          if [[ "${{ matrix.service }}" == "client" ]]; then
+            # Detect target branch for push or pull_request
+            TARGET_BRANCH="${{ github.ref }}"
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              TARGET_BRANCH="${{ github.base_ref }}"
+            fi
+            if [[ "$TARGET_BRANCH" == "refs/heads/main" || "$TARGET_BRANCH" == "main" ]]; then
+              echo "build_env=production" >> $GITHUB_OUTPUT
+            elif [[ "$TARGET_BRANCH" == "refs/heads/dev" || "$TARGET_BRANCH" == "dev" ]]; then
+              echo "build_env=staging" >> $GITHUB_OUTPUT
+            else
+              echo "build_env=development" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Build and push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          platforms: linux/amd64,linux/arm64
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ${{ matrix.service == 'client' && format('BUILD_ENV={0}', steps.build-args.outputs.build_env) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  complete_ci:
+    name: CI Pipeline Complete
+    needs: [build_images, build_docs]
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI Pipeline Complete
+        run: echo "CI Pipeline completed successfully"

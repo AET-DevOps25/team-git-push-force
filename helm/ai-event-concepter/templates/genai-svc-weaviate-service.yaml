@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: genai-svc-weaviate
+  labels:
+    app: genai-svc-weaviate
+    monitoring: "true"
+spec:
+  selector:
+    app: ai-event-concepter-genai-svc-weaviate-selector
+  ports:
+    - port: {{ .Values.genaisvcweaviate.service.port }}
+      targetPort: {{ .Values.genaisvcweaviate.service.targetPort }}
+      name: http
+    - port: {{ .Values.genaisvcweaviate.service.grpcPort }}
+      targetPort: {{ .Values.genaisvcweaviate.service.grpcTargetPort }}
+      name: grpc
+  type: {{ .Values.genaisvcweaviate.service.type }}

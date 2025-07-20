@@ -1,0 +1,17 @@
+pom.xml
+src/main/java/de/tum/aet/devops25/api/generated/controller/ApiUtil.java
+src/main/java/de/tum/aet/devops25/api/generated/controller/ConceptsApi.java
+src/main/java/de/tum/aet/devops25/api/generated/controller/HealthApi.java
+src/main/java/de/tum/aet/devops25/api/generated/model/AgendaItem.java
+src/main/java/de/tum/aet/devops25/api/generated/model/ApplyConceptSuggestionRequest.java
+src/main/java/de/tum/aet/devops25/api/generated/model/ApplyConceptSuggestionRequestSuggestion.java
+src/main/java/de/tum/aet/devops25/api/generated/model/Concept.java
+src/main/java/de/tum/aet/devops25/api/generated/model/CreateConceptRequest.java
+src/main/java/de/tum/aet/devops25/api/generated/model/CreateConceptRequestInitialRequirements.java
+src/main/java/de/tum/aet/devops25/api/generated/model/ErrorResponse.java
+src/main/java/de/tum/aet/devops25/api/generated/model/EventDetails.java
+src/main/java/de/tum/aet/devops25/api/generated/model/GetConceptServiceHealth200Response.java
+src/main/java/de/tum/aet/devops25/api/generated/model/GetUserConcepts200Response.java
+src/main/java/de/tum/aet/devops25/api/generated/model/Pricing.java
+src/main/java/de/tum/aet/devops25/api/generated/model/Speaker.java
+src/main/java/de/tum/aet/devops25/api/generated/model/UpdateConceptRequest.java

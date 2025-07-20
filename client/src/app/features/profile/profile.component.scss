@@ -1,0 +1,347 @@
+@import '../../styles/abstracts/variables';
+@import '../../styles/abstracts/effects';
+
+.profile-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow-x: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+}
+
+// Hero Section
+.hero-section {
+  position: relative;
+  padding: $spacing-md $spacing-lg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20vh;
+  
+  @media (max-width: $screen-lg) {
+    padding: $spacing-md;
+    min-height: 15vh;
+  }
+}
+
+.hero-content {
+  text-align: center;
+  z-index: 2;
+  
+  .welcome-text {
+    .hero-title {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700;
+      color: white;
+      line-height: 1.2;
+      margin: 0 0 $spacing-xs 0;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: $spacing-sm;
+      
+      @media (max-width: $screen-sm) {
+        gap: $spacing-xs;
+      }
+      
+      .title-icon {
+        font-size: 1.75rem !important;
+        width: 1.75rem !important;
+        height: 1.75rem !important;
+        color: #FFD700;
+      }
+    }
+    
+    .hero-subtitle {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.6;
+      margin: 0;
+    }
+  }
+}
+
+// Form Section
+.form-section {
+  position: relative;
+  padding: 0 $spacing-lg $spacing-lg;
+  
+  @media (max-width: $screen-md) {
+    padding: 0 $spacing-md $spacing-md;
+  }
+}
+
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.profile-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  
+  // Subtle top highlight
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  }
+  
+  @media (max-width: $screen-md) {
+    border-radius: 16px;
+  }
+}
+
+// Tabs Styling
+.profile-tabs {
+  ::ng-deep {
+    .mat-mdc-tab-group {
+      .mat-mdc-tab-header {
+        border-bottom: none;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 20px 20px 0 0;
+        
+        @media (max-width: $screen-md) {
+          border-radius: 16px 16px 0 0;
+        }
+      }
+      
+      .mat-mdc-tab-labels {
+        justify-content: center;
+      }
+      
+      .mat-mdc-tab {
+        flex: none;
+        min-width: 120px;
+        
+        .mdc-tab__text-label {
+          font-weight: 600;
+          color: var(--primary-color);
+          transition: all 0.3s ease;
+        }
+        
+        &.mat-mdc-tab-disabled {
+          opacity: 0.5;
+        }
+      }
+      
+      .mat-mdc-tab.mdc-tab--active {
+        .mdc-tab__text-label {
+          color: var(--primary-color);
+          font-weight: 700;
+        }
+      }
+      
+      .mat-ink-bar {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        height: 3px;
+        border-radius: 1.5px;
+      }
+    }
+  }
+}
+
+.tab-content {
+  padding: $spacing-xl;
+  
+  @media (max-width: $screen-md) {
+    padding: $spacing-lg;
+  }
+  
+  .card-header {
+    margin-bottom: $spacing-lg;
+    
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 $spacing-sm 0;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      
+      mat-icon {
+        color: #667eea;
+        font-size: 1.5rem !important;
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+      }
+    }
+    
+    .card-subtitle {
+      color: var(--text-muted);
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.5;
+      font-weight: 400;
+    }
+  }
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  
+  .full-width {
+    width: 100%;
+  }
+  
+  .form-row {
+    display: flex;
+    gap: $spacing-md;
+    
+    mat-form-field {
+      flex: 1;
+    }
+    
+    @media (max-width: $screen-sm) {
+      flex-direction: column;
+      gap: $spacing-sm;
+    }
+  }
+  
+  // Custom styling for form fields
+  mat-form-field {
+    .mdc-text-field--outlined {
+      background: white;
+      border-radius: 12px;
+    }
+    
+    .mdc-text-field--filled {
+      background: white;
+      border-radius: 12px 12px 0 0;
+    }
+    
+    .mat-mdc-form-field-hint-wrapper {
+      padding-top: $spacing-xs;
+    }
+  }
+  
+  // Format option styling
+  .format-option {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    
+    mat-icon {
+      color: var(--primary-color);
+      font-size: 1.125rem !important;
+      width: 1.125rem !important;
+      height: 1.125rem !important;
+    }
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: $spacing-lg;
+  
+  .save-btn {
+    @extend .transition-fast;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    border-radius: 50px;
+    padding: $spacing-sm $spacing-lg;
+    font-weight: 500;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    min-width: 140px;
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+      filter: brightness(1.1);
+    }
+    
+    &:disabled {
+      background: rgba(0, 0, 0, 0.1);
+      color: rgba(0, 0, 0, 0.3);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      filter: none;
+    }
+    
+    mat-icon {
+      margin: 0;
+      font-size: 1.125rem !important;
+      width: 1.125rem !important;
+      height: 1.125rem !important;
+    }
+    
+    span {
+      white-space: nowrap;
+    }
+  }
+  
+  @media (max-width: $screen-sm) {
+    justify-content: center;
+    
+    .save-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: $screen-sm) {
+  .profile-container {
+    .hero-section {
+      min-height: 15vh;
+      padding: $spacing-sm;
+    }
+    
+    .form-section {
+      padding: 0 $spacing-sm $spacing-sm;
+    }
+    
+    .profile-card {
+      border-radius: 16px;
+    }
+    
+    .tab-content {
+      padding: $spacing-md;
+      
+      .card-header {
+        .card-title {
+          font-size: 1.25rem;
+        }
+        
+        .card-subtitle {
+          font-size: 0.875rem;
+        }
+      }
+    }
+  }
+} 

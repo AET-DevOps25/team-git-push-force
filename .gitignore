@@ -380,10 +380,20 @@ sketch
 
 ## OpenAPI Generator ###
 /client/src/api/
-/server/src/main/java/generated/
-/concept-svc/src/main/java/generated/
-/user-svc/src/main/java/generated/
-/genai-svc/client/
+/gateway/src/main/java/de/tum/aet/devops25/api/generated/
+/concept-svc/src/main/java/de/tum/aet/devops25/api/generated/
+/user-svc/src/main/java/de/tum/aet/devops25/api/generated/
+/genai-svc/genai_models/
+
+# OpenAPI Generator metadata directories
+**/.openapi-generator/
+
+# OpenAPI Generator CLI configuration
+openapitools.json
+
+### Gradle Build Artifacts ###
+.gradle/
+*/.gradle/
 
 ### Infrastructure ###
 # Terraform

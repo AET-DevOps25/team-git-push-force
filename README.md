@@ -41,11 +41,11 @@ The system follows a modular microservice architecture with clearly separated co
 | Layer         | Technology              | Purpose                                           |
 |---------------|--------------------------|---------------------------------------------------|
 | API Gateway   | Spring Boot 3            | JWT authentication, routing, OpenAPI docs         |
-| User Service  | Spring Boot 3            | User management, roles, preferences               |
-| Concept Service| Spring Boot 3           | CRUD for concepts, PDF rendering                  |
+| User Service  | Spring Boot 3            | User management, authentication, JWT tokens       |
+| Concept Service| Spring Boot 3           | Event concept CRUD, PDF generation, AI integration|
 | GenAI Service | Python 3.12 + LangChain  | Document ingestion, RAG pipeline, content creation|
 | Web Client    | Angular 19               | Chat UI, adaptive flow, PDF viewer                |
-| Relational DB | PostgreSQL               | Stores users, projects, concept metadata          |
+| Relational DB | PostgreSQL               | Stores users, concepts, agenda items, speakers    |
 | Vector DB     | Weaviate                 | Embeddings for trends & document chunks           |
 | Object Store  | MinIO                    | Uploaded files and generated PDFs                 |
 | Observability | Prometheus + Grafana     | Metrics and dashboards                            |
@@ -84,11 +84,11 @@ This diagram provides a high-level overview of the system’s components and the
 The project is split into several main directories:
 
 - `/api`: OpenAPI specifications (single source of truth)
-- `/client`: Angular 19 frontend
-- `/server`: Spring Boot microservices (API Gateway)
-- `/user-svc`: User Service (Spring Boot)
-- `/concept-svc`: Concept Service (Spring Boot)
-- `/genai-svc`: GenAI Service (Python/Flask/LangChain)
+- `/client`: Angular 19 frontend  
+- `/gateway`: API Gateway (Spring Boot) - Routing, JWT validation, OpenAPI docs
+- `/user-svc`: User Service (Spring Boot) - Authentication, user management
+- `/concept-svc`: Concept Service (Spring Boot) - Event concept CRUD, PDF export
+- `/genai-svc`: GenAI Service (Python/Flask/LangChain) - Document processing, RAG pipeline
 
 ## 🔄 API-First Development
 
@@ -166,35 +166,108 @@ cd team-git-push-force
    npm install
    ```
 
-### Server Setup
+### Backend Services Setup
 
-1. Navigate to the `server` directory:
+1. Generate code from OpenAPI specifications:
    ```bash
-   cd server
+   ./api/scripts/gen-all.sh
    ```
-2. Build the project:
+
+2. Navigate to each service directory and build the project:
    ```bash
+   # For Gateway
+   cd gateway
    ./gradlew build
+
+   # For User Service
+   cd ../user-svc
+   ./gradlew build
+
+   # For Concept Service
+   cd ../concept-svc
+   ./gradlew build
+
+   # For GenAI Service
+   cd ../genai-svc
+   pip install -r requirements.txt
    ```
 
 ## Running the Application
 
 ### Option 1: Using Docker Compose (Recommended)
 
-The easiest way to run the entire application is using Docker Compose:
+Before running the application, you need to generate code from the OpenAPI specifications. You can use the provided start-dev script which handles this automatically:
 
 ```bash
+./start-dev.sh
+```
+
+This script will:
+1. Run code generation from OpenAPI specs
+2. Start all services using Docker Compose
+
+Alternatively, you can run these steps manually:
+
+```bash
+# First, generate code from OpenAPI specs
+./api/scripts/gen-all.sh
+
+# Then start Docker Compose
 docker-compose up
 ```
 
 This will start all services:
 - Client (Angular frontend) at [http://localhost:3000](http://localhost:3000)
-- Server (API Gateway) at [http://localhost:8080](http://localhost:8080)
+- API Gateway at [http://localhost:8080](http://localhost:8080)
 - User Service at [http://localhost:8081](http://localhost:8081)
 - Concept Service at [http://localhost:8082](http://localhost:8082)
-- GenAI Service at [http://localhost:8083](http://localhost:5000)
+- GenAI Service at [http://localhost:8083](http://localhost:8083)
+- Weaviate Vector Database at [http://localhost:8087](http://localhost:8087)
+- MinIO Object Storage at [http://localhost:9000](http://localhost:9000) (API) and [http://localhost:9001](http://localhost:9001) (Console)
 
-### Option 2: Manual Startup
+### 🚀 Development Environment (Default)
+
+The default docker-compose setup is optimized for development:
+
+```bash
+# Start development environment (default configuration)
+./start-dev.sh
+# OR manually:
+docker-compose up --build
+```
+
+This setup:
+- ✅ **Development Mode**: Uses development environment configuration by default
+- ✅ **Real Backend**: All backend services running for full-stack development  
+- ✅ **Easy Setup**: Single command to start the entire stack
+- ✅ **Environment Flexibility**: Can easily switch to staging or production builds
+
+**Services Available:**
+- Client (Angular frontend) at [http://localhost:3000](http://localhost:3000)
+- All backend services running and connected
+
+**Environment Options:**
+```bash
+# Development (default)
+docker-compose up --build
+
+# Staging environment
+CLIENT_BUILD_ENV=staging docker-compose up --build
+
+# Production environment  
+CLIENT_BUILD_ENV=production docker-compose up --build
+```
+
+
+### Manual Development Setup
+
+Before starting the services manually, you need to generate code from the OpenAPI specifications:
+
+```bash
+./api/scripts/gen-all.sh
+```
+
+This will generate the necessary code for all services based on the OpenAPI specifications in the `/api` directory.
 
 #### Start the Client
 
@@ -204,13 +277,29 @@ npm run dev
 ```
 The client will be available at [http://localhost:3000](http://localhost:3000).
 
-#### Start the Server
+#### Start the Gateway
 
 ```bash
-cd server
+cd gateway
 ./gradlew bootRun
 ```
-The server API will be available at [http://localhost:8080](http://localhost:8080).
+The API Gateway will be available at [http://localhost:8080](http://localhost:8080).
+
+#### Start the User Service
+
+```bash
+cd user-svc
+./gradlew bootRun
+```
+The User Service will be available at [http://localhost:8081](http://localhost:8081).
+
+#### Start the Concept Service
+
+```bash
+cd concept-svc
+./gradlew bootRun
+```
+The Concept Service will be available at [http://localhost:8082](http://localhost:8082).
 
 #### Start the GenAI Service
 

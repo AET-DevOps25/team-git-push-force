@@ -31,4 +31,4 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     FLASK_APP=app.py
 
 # Command to run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8083", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8083", "wsgi:application", "--worker-class", "uvicorn.workers.UvicornWorker"]

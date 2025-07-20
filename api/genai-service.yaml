@@ -31,6 +31,7 @@ paths:
       description: Check if the GenAI Service is running
       tags:
         - Health
+      x-openapi-router-controller: controllers.health_controller
       security: []
       responses:
         '200':
@@ -74,6 +75,7 @@ paths:
       description: Create the first welcome message when a user creates a new concept, personalized with user and concept details
       tags:
         - Chat Interface
+      x-openapi-router-controller: controllers.chat_controller
       security:
         - bearerAuth: []
       requestBody:
@@ -136,6 +138,7 @@ paths:
       description: Send a message to the AI assistant for concept development and receive intelligent responses with optional concept suggestions
       tags:
         - Chat Interface
+      x-openapi-router-controller: controllers.chat_controller
       security:
         - bearerAuth: []
       requestBody:
@@ -177,6 +180,7 @@ paths:
       description: Upload documents for AI analysis and RAG processing
       tags:
         - Document Processing
+      x-openapi-router-controller: controllers.document_controller
       security:
         - bearerAuth: []
       parameters:
@@ -234,6 +238,7 @@ paths:
       description: Retrieve all processed documents associated with a concept
       tags:
         - Document Processing
+      x-openapi-router-controller: controllers.document_controller
       security:
         - bearerAuth: []
       parameters:
@@ -278,6 +283,7 @@ paths:
       description: Delete a specific document from a concept and remove it from the knowledge base
       tags:
         - Document Processing
+      x-openapi-router-controller: controllers.document_controller
       security:
         - bearerAuth: []
       parameters:

@@ -1,0 +1,80 @@
+<div class="header-container">
+  <mat-toolbar class="modern-header">
+    <!-- Left Section -->
+    <div class="header-left">
+      <div class="brand-section" routerLink="/dashboard">
+        <div class="brand-icon">
+          <mat-icon>auto_awesome</mat-icon>
+        </div>
+        <span class="app-title">AI Event Concepter</span>
+      </div>
+    </div>
+    
+    <!-- Right Section -->
+    <div class="header-right">
+      <!-- Authenticated User Menu -->
+      <ng-container *ngIf="user$ | async; else guestNav">
+        <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-trigger">
+          <div class="user-avatar">
+            <mat-icon>account_circle</mat-icon>
+          </div>
+          <div class="user-info">
+            <span class="user-name">{{ (user$ | async)?.firstName }}</span>
+            <mat-icon class="dropdown-icon">keyboard_arrow_down</mat-icon>
+          </div>
+        </button>
+        
+        <mat-menu #userMenu="matMenu" class="modern-user-menu" xPosition="before">
+          <div class="user-menu-header">
+            <div class="user-avatar-small">
+              <mat-icon>account_circle</mat-icon>
+            </div>
+            <div class="user-details">
+              <div class="user-display-name">{{ (user$ | async)?.firstName }} {{ (user$ | async)?.lastName }}</div>
+              <div class="user-email">{{ (user$ | async)?.email }}</div>
+            </div>
+          </div>
+          
+          <mat-divider class="menu-divider"></mat-divider>
+          
+          <button mat-menu-item routerLink="/concepts" class="menu-item">
+            <mat-icon>lightbulb</mat-icon>
+            <span>Concepts</span>
+          </button>
+          
+          <button mat-menu-item routerLink="/dashboard" class="menu-item">
+            <mat-icon>dashboard</mat-icon>
+            <span>Dashboard</span>
+          </button>
+          
+          <button mat-menu-item routerLink="/profile" class="menu-item">
+            <mat-icon>person</mat-icon>
+            <span>Profile</span>
+          </button>
+          
+          <mat-divider class="menu-divider"></mat-divider>
+          
+          <button mat-menu-item (click)="logout()" class="menu-item logout-item">
+            <mat-icon>logout</mat-icon>
+            <span>Sign Out</span>
+          </button>
+        </mat-menu>
+      </ng-container>
+      
+      <!-- Guest Navigation -->
+      <ng-template #guestNav>
+        <div class="guest-nav">
+          <button mat-button routerLink="/auth/login" class="login-button">
+            Login
+          </button>
+          <button mat-raised-button 
+                  routerLink="/auth/register"
+                  class="signup-button">
+            <mat-icon>rocket_launch</mat-icon>
+            <span>Get Started</span>
+          </button>
+        </div>
+      </ng-template>
+    </div>
+  </mat-toolbar>
+</div> 
