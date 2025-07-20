@@ -127,9 +127,9 @@ postgresExporter:
     database:
       host: user-svc-db.team-git-push-force-dev.svc.cluster.local
       port: 5432
-      name: user-db
-      user: user
-      password: password
+      name: userdb
+      user: postgres
+      password: postgres
     resources:
       requests:
         memory: "64Mi"
@@ -145,9 +145,9 @@ postgresExporter:
     database:
       host: concept-svc-db.team-git-push-force-dev.svc.cluster.local
       port: 5432
-      name: concept-db
-      user: user
-      password: password
+      name: conceptdb
+      user: postgres
+      password: postgres
     resources:
       requests:
         memory: "64Mi"
