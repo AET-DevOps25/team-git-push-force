@@ -101,6 +101,8 @@ genaisvc:
   env:
     - name: FLASK_ENV
       value: production
+    - name: SKIP_WEAVIATE
+      value: "true"
     - name: WEAVIATE_URL
       value: http://genai-svc-weaviate:8080
     - name: WEAVIATE_API_KEY

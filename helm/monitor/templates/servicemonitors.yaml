@@ -17,7 +17,7 @@ spec:
     port: http
   namespaceSelector:
     matchNames:
-    - team-git-push-force-dev
+    - team-git-push-force
   selector:
     matchLabels:
       app: gateway
@@ -42,7 +42,7 @@ spec:
     port: http
   namespaceSelector:
     matchNames:
-    - team-git-push-force-dev
+    - team-git-push-force
   selector:
     matchLabels:
       app: user-svc
@@ -67,7 +67,7 @@ spec:
     port: http
   namespaceSelector:
     matchNames:
-    - team-git-push-force-dev
+    - team-git-push-force
   selector:
     matchLabels:
       app: concept-svc
@@ -87,7 +87,7 @@ spec:
     port: http
   namespaceSelector:
     matchNames:
-    - team-git-push-force-dev
+    - team-git-push-force
   selector:
     matchLabels:
       app: genai-svc
@@ -113,7 +113,7 @@ spec:
     port: api
   namespaceSelector:
     matchNames:
-    - team-git-push-force-dev
+    - team-git-push-force
   selector:
     matchLabels:
       app: genai-svc-minio
