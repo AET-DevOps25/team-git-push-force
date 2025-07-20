@@ -198,6 +198,17 @@ alertmanager:
       kubernetes.io/ingress.class: nginx
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  # Email notification configuration
+  email:
+    to: "teamgitpushforce@gmail.com"
+    from: "teamgitpushforce@gmail.com"
+    smarthost: "smtp.gmail.com:587"
+    auth_username: "teamgitpushforce@gmail.com"
+    auth_identity: "teamgitpushforce@gmail.com"
+    # The password below will be stored in a Kubernetes Secret
+    # This should be replaced with your actual password in a secure manner
+    auth_password: "prqouryspbzvtrao"
+    require_tls: true
 
 
 

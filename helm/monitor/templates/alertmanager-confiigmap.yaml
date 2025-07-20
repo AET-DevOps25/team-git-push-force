@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: alertmanager-config
-  namespace: team-git-push-force-monitor
+  namespace: {{ .Values.namespace.name }}
   labels:
     app: alertmanager
 data:
@@ -10,12 +10,12 @@ data:
     receivers:
       - name: 'email-notifications'
         email_configs:
-          - to: 'teamgitpushforce@gmail.com'
-            from: 'teamgitpushforce@gmail.com'
-            smarthost: 'smtp.gmail.com:587'
-            auth_username: 'teamgitpushforce@gmail.com'
-            auth_password: 'prqouryspbzvtrao'
-            auth_identity: 'teamgitpushforce@gmail.com'
-            require_tls: true
+          - to: '{{ .Values.alertmanager.email.to }}'
+            from: '{{ .Values.alertmanager.email.from }}'
+            smarthost: '{{ .Values.alertmanager.email.smarthost }}'
+            auth_username: '{{ .Values.alertmanager.email.auth_username }}'
+            auth_password_file: '/etc/alertmanager/secrets/auth_password'
+            auth_identity: '{{ .Values.alertmanager.email.auth_identity }}'
+            require_tls: {{ .Values.alertmanager.email.require_tls }}
     route:
       receiver: 'email-notifications'

@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: alertmanager
-  namespace: team-git-push-force-monitor
+  namespace: {{ .Values.namespace.name }}
   labels:
     app: alertmanager
 spec:
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: alertmanager
-          image: prom/alertmanager:v0.26.0
+          image: {{ .Values.alertmanager.image.repository }}:{{ .Values.alertmanager.image.tag }}
           args:
             - "--config.file=/etc/alertmanager/alertmanager.yml"
           ports:
@@ -25,7 +25,12 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /etc/alertmanager
+            - name: email-secret-volume
+              mountPath: /etc/alertmanager/secrets
       volumes:
         - name: config-volume
           configMap:
             name: alertmanager-config
+        - name: email-secret-volume
+          secret:
+            secretName: alertmanager-email-secret
