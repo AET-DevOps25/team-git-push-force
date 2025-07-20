@@ -4,21 +4,98 @@
     <mat-panel-title>
       <mat-icon class="section-icon">attach_money</mat-icon>
       <span>Pricing Strategy</span>
-      <mat-icon class="suggestion-indicator" 
+      <mat-icon class="suggestion-icon" 
                 *ngIf="hasSuggestions()"
-                title="Has pending AI suggestions">
+                [title]="'Has pending AI suggestions'">
         auto_awesome
-      </mat-icon>
-      <mat-icon class="completion-icon" 
-                [class.complete]="isComplete()"
-                [class.incomplete]="!isComplete()">
-        {{ isComplete() ? 'check_circle' : 'radio_button_unchecked' }}
       </mat-icon>
     </mat-panel-title>
   </mat-expansion-panel-header>
 
   <div class="panel-content">
-    <div class="pricing-grid" *ngIf="concept.pricing; else noPricing">
+    <!-- Pricing Suggestions -->
+    <div class="suggestion-section" *ngIf="getPricingSuggestion() as pricingSuggestion">
+      <div class="suggestion-header">
+        <mat-icon>auto_awesome</mat-icon>
+        <h4>AI Pricing Suggestion</h4>
+      </div>
+      
+      <div class="pricing-comparison">
+        <!-- Current Pricing -->
+        <div class="pricing-side current" *ngIf="concept.pricing; else noCurrent">
+          <h5>Current Pricing</h5>
+          <div class="pricing-grid-small">
+            <div class="pricing-card-small" *ngIf="concept.pricing.earlyBird">
+              <span class="label">Early Bird</span>
+              <span class="amount">{{ formatCurrency(concept.pricing.earlyBird, concept.pricing.currency) }}</span>
+            </div>
+            <div class="pricing-card-small" *ngIf="concept.pricing.regular">
+              <span class="label">Regular</span>
+              <span class="amount">{{ formatCurrency(concept.pricing.regular, concept.pricing.currency) }}</span>
+            </div>
+            <div class="pricing-card-small" *ngIf="concept.pricing.vip">
+              <span class="label">VIP</span>
+              <span class="amount">{{ formatCurrency(concept.pricing.vip, concept.pricing.currency) }}</span>
+            </div>
+            <div class="pricing-card-small" *ngIf="concept.pricing.student">
+              <span class="label">Student</span>
+              <span class="amount">{{ formatCurrency(concept.pricing.student, concept.pricing.currency) }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <ng-template #noCurrent>
+          <div class="pricing-side current">
+            <h5>Current Pricing</h5>
+            <p class="no-pricing">No pricing set</p>
+          </div>
+        </ng-template>
+
+        <!-- Arrow -->
+        <div class="pricing-arrow">
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+
+        <!-- Suggested Pricing -->
+        <div class="pricing-side suggested">
+          <h5>Suggested Pricing</h5>
+          <div class="pricing-grid-small">
+            <div class="pricing-card-small" *ngIf="pricingSuggestion.suggestedValue.earlyBird">
+              <span class="label">Early Bird</span>
+              <span class="amount">{{ formatCurrency(pricingSuggestion.suggestedValue.earlyBird, pricingSuggestion.suggestedValue.currency) }}</span>
+            </div>
+            <div class="pricing-card-small" *ngIf="pricingSuggestion.suggestedValue.regular">
+              <span class="label">Regular</span>
+              <span class="amount">{{ formatCurrency(pricingSuggestion.suggestedValue.regular, pricingSuggestion.suggestedValue.currency) }}</span>
+            </div>
+            <div class="pricing-card-small" *ngIf="pricingSuggestion.suggestedValue.vip">
+              <span class="label">VIP</span>
+              <span class="amount">{{ formatCurrency(pricingSuggestion.suggestedValue.vip, pricingSuggestion.suggestedValue.currency) }}</span>
+            </div>
+            <div class="pricing-card-small" *ngIf="pricingSuggestion.suggestedValue.student">
+              <span class="label">Student</span>
+              <span class="amount">{{ formatCurrency(pricingSuggestion.suggestedValue.student, pricingSuggestion.suggestedValue.currency) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="suggestion-reasoning" *ngIf="pricingSuggestion.reasoning">
+        <p>{{ pricingSuggestion.reasoning }}</p>
+      </div>
+
+      <div class="suggestion-actions">
+        <button mat-icon-button color="primary" (click)="acceptPricingSuggestion(pricingSuggestion)">
+          <mat-icon>check</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="rejectPricingSuggestion(pricingSuggestion)">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Current Pricing Display -->
+    <div class="pricing-grid" *ngIf="concept.pricing && !getPricingSuggestion(); else noPricing">
       <div class="pricing-card" *ngIf="concept.pricing.earlyBird">
         <div class="pricing-header">
           <mat-icon>schedule</mat-icon>
@@ -69,6 +146,7 @@
         </div>
       </div>
     </div>
+    
     <ng-template #noPricing>
       <div class="empty-state">
         <mat-icon>attach_money</mat-icon>

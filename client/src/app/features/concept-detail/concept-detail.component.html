@@ -1,5 +1,5 @@
 <div class="concept-detail-container">
-  <div *ngIf="concept$ | async as concept" class="concept-content">
+  <div *ngIf="concept && !isLoading" class="concept-content">
     <!-- Enhanced Header with Theme -->
     <div class="header-section">
       <div class="header-card">
@@ -10,10 +10,33 @@
           <div class="header-info">
             <div class="title-row">
               <h1 class="concept-title">{{ concept.title }}</h1>
-              <div class="status-badge" [ngClass]="getStatusClass(concept.status)">
+              <button 
+                mat-button 
+                [matMenuTriggerFor]="statusMenu"
+                class="status-badge" 
+                [ngClass]="getStatusClass(concept.status)"
+                [disabled]="isUpdatingStatus">
                 <mat-icon [color]="getStatusColor(concept.status)">{{ getStatusIcon(concept.status) }}</mat-icon>
                 <span>{{ getStatusDisplayName(concept.status) }}</span>
-              </div>
+                <mat-icon class="dropdown-icon" *ngIf="!isUpdatingStatus">expand_more</mat-icon>
+                <mat-icon class="loading-icon" *ngIf="isUpdatingStatus">refresh</mat-icon>
+              </button>
+              
+              <!-- Status Change Menu -->
+              <mat-menu #statusMenu="matMenu" class="status-menu">
+                <button 
+                  mat-menu-item 
+                  *ngFor="let status of getStatusOptions()" 
+                  (click)="changeStatus(status)"
+                  class="status-option"
+                  [ngClass]="'status-option-' + status.toLowerCase().replace('_', '-')">
+                  <mat-icon>{{ getStatusIcon(status) }}</mat-icon>
+                  <div class="status-option-content">
+                    <span class="status-name">{{ getStatusDisplayName(status) }}</span>
+                    <span class="status-description">{{ getStatusDescription(status) }}</span>
+                  </div>
+                </button>
+              </mat-menu>
             </div>
             <div class="theme-row" *ngIf="concept.eventDetails?.theme">
               <mat-icon class="theme-icon">auto_awesome</mat-icon>
@@ -22,6 +45,10 @@
           </div>
         </div>
         <div class="header-actions">
+          <button mat-button (click)="openDocumentsDialog()" class="action-button documents-btn">
+            <mat-icon>attachment</mat-icon>
+            <span>Documents</span>
+          </button>
           <button mat-raised-button color="primary" (click)="exportPDF()" class="action-button export-btn">
             <mat-icon>file_download</mat-icon>
             <span>Export PDF</span>
@@ -39,25 +66,25 @@
           <app-concept-foundation-section
             [concept]="concept"
             [suggestions]="currentSuggestions"
-            [expanded]="shouldExpandFoundation(concept)">
+            [expanded]="expandFoundation">
           </app-concept-foundation-section>
 
           <app-concept-timeline-section
             [concept]="concept"
             [suggestions]="currentSuggestions"
-            [expanded]="shouldExpandTimeline(concept)">
+            [expanded]="expandTimeline">
           </app-concept-timeline-section>
 
           <app-concept-speakers-section
             [concept]="concept"
             [suggestions]="currentSuggestions"
-            [expanded]="shouldExpandSpeakers(concept)">
+            [expanded]="expandSpeakers">
           </app-concept-speakers-section>
 
           <app-concept-pricing-section
             [concept]="concept"
             [suggestions]="currentSuggestions"
-            [expanded]="shouldExpandPricing(concept)">
+            [expanded]="expandPricing">
           </app-concept-pricing-section>
 
         </mat-accordion>
@@ -85,7 +112,7 @@
   </div>
 
   <!-- Enhanced Loading State -->
-  <div *ngIf="!(concept$ | async)" class="loading-state">
+  <div *ngIf="isLoading" class="loading-state">
     <div class="loading-card glass-card">
       <div class="loading-content">
         <div class="loading-icon">

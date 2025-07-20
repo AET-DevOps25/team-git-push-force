@@ -27,15 +27,22 @@ export class DocumentService {
     this.stateService.setLoading('uploadDocuments', true);
     
     const formData = new FormData();
-    files.forEach((file, index) => {
+    files.forEach((file) => {
       formData.append('files', file);
     });
 
     const endpoint = `/api/genai/documents?conceptId=${conceptId}`;
+    
     return this.apiService.upload<{processedDocuments: ProcessedDocument[]}>(endpoint, formData)
       .pipe(
         tap(result => {
           this.stateService.setLoading('uploadDocuments', false);
+        }),
+        tap({
+          error: (error) => {
+            console.error('DocumentService upload error:', error);
+            this.stateService.setLoading('uploadDocuments', false);
+          }
         })
       );
   }

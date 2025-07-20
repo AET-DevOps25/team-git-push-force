@@ -62,11 +62,6 @@ export class ConceptSpeakersSectionComponent implements OnDestroy {
     this.clearSuggestion('speaker', speaker);
   }
 
-  // Check if section is complete
-  isComplete(): boolean {
-    return !!(this.concept.speakers?.length);
-  }
-
   // Check if section has suggestions
   hasSuggestions(): boolean {
     return !!(this.suggestions?.conceptSuggestion?.speakers?.length);

@@ -225,7 +225,41 @@ This will start all services:
 - Weaviate Vector Database at [http://localhost:8087](http://localhost:8087)
 - MinIO Object Storage at [http://localhost:9000](http://localhost:9000) (API) and [http://localhost:9001](http://localhost:9001) (Console)
 
-### Option 2: Manual Startup
+### 🚀 Development Environment (Default)
+
+The default docker-compose setup is optimized for development:
+
+```bash
+# Start development environment (default configuration)
+./start-dev.sh
+# OR manually:
+docker-compose up --build
+```
+
+This setup:
+- ✅ **Development Mode**: Uses development environment configuration by default
+- ✅ **Real Backend**: All backend services running for full-stack development  
+- ✅ **Easy Setup**: Single command to start the entire stack
+- ✅ **Environment Flexibility**: Can easily switch to staging or production builds
+
+**Services Available:**
+- Client (Angular frontend) at [http://localhost:3000](http://localhost:3000)
+- All backend services running and connected
+
+**Environment Options:**
+```bash
+# Development (default)
+docker-compose up --build
+
+# Staging environment
+CLIENT_BUILD_ENV=staging docker-compose up --build
+
+# Production environment  
+CLIENT_BUILD_ENV=production docker-compose up --build
+```
+
+
+### Manual Development Setup
 
 Before starting the services manually, you need to generate code from the OpenAPI specifications:
 

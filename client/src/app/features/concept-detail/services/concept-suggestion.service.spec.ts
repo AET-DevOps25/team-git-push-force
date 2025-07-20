@@ -68,7 +68,7 @@ describe('ConceptSuggestionService', () => {
     });
 
     it('should handle nested field updates', () => {
-      const update = { field: 'details.capacity', suggestedValue: '100' };
+      const update = { field: 'eventDetails.capacity', suggestedValue: '100' };
       conceptService.updateConcept.and.returnValue(of(updatedMockConcept));
 
       service.acceptFieldUpdate(mockConcept, update).subscribe();
@@ -76,7 +76,7 @@ describe('ConceptSuggestionService', () => {
       expect(conceptService.updateConcept).toHaveBeenCalledWith(
         mockConcept.id,
         jasmine.objectContaining({
-          details: jasmine.objectContaining({ capacity: 100 })
+          eventDetails: jasmine.objectContaining({ capacity: 100 })
         })
       );
     });

@@ -49,6 +49,8 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
   
   messages: ChatMessage[] = [];
   isLoading: boolean = false;
+  isInitializing: boolean = true;
+  isAiThinking: boolean = false;
   latestChatResponse?: ChatResponse;
   
   messageControl = new FormControl('', [
@@ -78,12 +80,25 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
     this.stateService.getChatMessages(currentConversationId)
       .pipe(takeUntil(this.destroy$))
       .subscribe(messages => {
-        this.messages = messages;
+        // Get current temporary messages (user messages we added locally)
+        const tempMessages = this.messages.filter(m => m.id.startsWith('temp-'));
+        
+        // If service messages include our temp message content, the real message has arrived
+        const hasMatchingContent = (tempMsg: ChatMessage) => 
+          messages.some(msg => msg.content === tempMsg.content && msg.role === tempMsg.role);
+        
+        // Keep only temp messages that haven't been replaced by real ones
+        const relevantTempMessages = tempMessages.filter(tempMsg => !hasMatchingContent(tempMsg));
+        
+        // Combine service messages with remaining temp messages
+        // Service messages first, then temp messages (to maintain order)
+        this.messages = [...messages, ...relevantTempMessages];
+        
         this.shouldScrollToBottom = true;
         
-        // Add welcome message if this is the first time and no messages exist
-        if (messages.length === 0 && currentConversationId) {
-          this.addWelcomeMessage(currentConversationId);
+        // If we have real messages from service (not just temp ones), chat is initialized
+        if (this.isInitializing && messages.length > 0) {
+          this.isInitializing = false;
         }
       });
 
@@ -92,7 +107,14 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
       .pipe(takeUntil(this.destroy$))
       .subscribe(loading => {
         this.isLoading = loading;
+        this.isAiThinking = loading;
       });
+
+    // Check if chat is already initialized (has real messages, not temp ones)
+    const realMessages = this.messages.filter(m => !m.id.startsWith('temp-'));
+    if (realMessages.length > 0) {
+      this.isInitializing = false;
+    }
   }
 
   ngAfterViewChecked(): void {
@@ -112,17 +134,46 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
       const message = this.messageControl.value?.trim();
       if (message && this.concept) {
         const currentConversationId = this.conversationId || this.concept.id;
+        
+        // Immediately add user message to local state and clear input
+        const userMessage: ChatMessage = {
+          id: `temp-${currentConversationId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          role: 'user',
+          content: message,
+          timestamp: new Date()
+        };
+        
+        // Add user message immediately to the display
+        this.messages = [...this.messages, userMessage];
+        this.shouldScrollToBottom = true;
+        
+        // Clear input immediately
+        this.messageControl.reset();
+        this.inputRows = 1;
+        
+        // Set AI thinking state
+        this.isAiThinking = true;
+        
+        // Chat interaction has started, no longer initializing
+        if (this.isInitializing) {
+          this.isInitializing = false;
+        }
+        
+        // Send message to service
         this.chatService.sendMessage(message, this.concept, currentConversationId).subscribe({
           next: (response) => {
             this.latestChatResponse = response;
             this.suggestionsReceived.emit(response);
             this.messageSent.emit(message);
-            this.messageControl.reset();
-            this.inputRows = 1;
+            this.isAiThinking = false;
             this.shouldScrollToBottom = true;
           },
           error: (error) => {
             console.error('Error sending message:', error);
+            this.isAiThinking = false;
+            // Remove the temporary user message on error
+            this.messages = this.messages.filter(m => m.id !== userMessage.id);
+            this.shouldScrollToBottom = true;
             // TODO: Show user-friendly error message
           }
         });
@@ -137,8 +188,6 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
   exportChat(): void {
     this.chatExported.emit(this.messages);
   }
-
-
 
   onEnterKey(event: KeyboardEvent): void {
     if (event.key === 'Enter') {
@@ -164,7 +213,8 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
   }
 
   canSendMessage(): boolean {
-    return !this.isLoading && 
+    return !this.isAiThinking && 
+           !this.isInitializing &&
            this.messageControl.valid && 
            (this.messageControl.value?.trim().length || 0) > 0;
   }
@@ -181,16 +231,17 @@ export class ChatInterfaceComponent implements OnInit, OnDestroy, AfterViewCheck
     return message.id || `${message.role}-${index}`;
   }
 
-  private addWelcomeMessage(conversationId: string): void {
-    const welcomeMessage: ChatMessage = {
-      id: `welcome-${Date.now()}`,
-      role: 'assistant',
-      content: 'Hi! I\'m your AI assistant for event conceptualization. I can help you brainstorm event ideas, refine concepts, suggest speakers, and provide feedback on your event plans. What would you like to work on today?',
-      timestamp: new Date(),
-      conversationId: conversationId
-    };
-    
-    this.stateService.addChatMessage(welcomeMessage);
+  getButtonTooltip(): string {
+    if (this.isInitializing) {
+      return 'Please wait while AI assistant initializes';
+    }
+    if (this.isAiThinking) {
+      return 'AI is processing your message';
+    }
+    if (!this.messageControl.valid || (this.messageControl.value?.trim().length || 0) === 0) {
+      return 'Enter a message to send';
+    }
+    return 'Send message (Enter)';
   }
 
   private scrollToBottom(): void {

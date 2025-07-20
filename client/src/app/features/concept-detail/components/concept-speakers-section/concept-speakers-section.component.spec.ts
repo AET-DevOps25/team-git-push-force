@@ -194,28 +194,6 @@ describe('ConceptSpeakersSectionComponent', () => {
     });
   });
 
-  describe('isComplete', () => {
-    it('should return true when has speakers', () => {
-      expect(component.isComplete()).toBeTruthy();
-    });
-
-    it('should return false when no speakers', () => {
-      component.concept = {
-        ...mockConcept,
-        speakers: []
-      };
-      expect(component.isComplete()).toBeFalsy();
-    });
-
-    it('should return false when speakers array is undefined', () => {
-      component.concept = {
-        ...mockConcept,
-        speakers: undefined as any
-      };
-      expect(component.isComplete()).toBeFalsy();
-    });
-  });
-
   describe('hasSuggestions', () => {
     it('should return true when has speaker suggestions', () => {
       expect(component.hasSuggestions()).toBeTruthy();
