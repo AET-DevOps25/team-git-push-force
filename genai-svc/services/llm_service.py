@@ -84,9 +84,9 @@ class LLMService:
             1. A conversational answer to the user's question, referencing context and history.
             2. A JSON object for the event concept, with updates based on the user's message.
             
-            IMPORTANT: Only update the fields mentioned by the user in their message. Do not change other fields.
-            Use conceptUpdates to make partial changes to the concept. If the user doesn't mention a specific field,
-            keep its current value from the context.
+            # IMPORTANT: Only update the fields mentioned by the user in their message. Do not change other fields.
+            # Use conceptUpdates to make partial changes to the concept. If the user doesn't mention a specific field,
+            # keep its current value from the context.
             
             ```json
             {{
@@ -128,7 +128,7 @@ class LLMService:
             }}
             ```
             
-            If you do not know a value, use an empty string or null. Do not invent information. Do not include the 'id' field, it is provided by the system. Do not include the JSON in the conversational response.
+            # If you do not know a value, use an empty string or null. Do not invent information. Do not include the 'id' field, it is provided by the system. Do not include the JSON in the conversational response.
             
             Event Concept Context: {context}
             Previous Conversation: {chat_history}
