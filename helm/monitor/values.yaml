@@ -32,7 +32,7 @@ grafana:
       memory: "512Mi"
       cpu: "300m"
   persistence:
-    enabled: false # Temporarily disable persistence to troubleshoot
+    enabled: true # Temporarily disable persistence to troubleshoot
     size: 5Gi
     storageClassName: "csi-rbd-sc"
   # Simplified provisioning without sidecar
@@ -127,7 +127,7 @@ postgresExporter:
     database:
       host: user-svc-db.team-git-push-force-dev.svc.cluster.local
       port: 5432
-      name: userdb
+      name: eventdb
       user: postgres
       password: postgres
     resources:
@@ -158,7 +158,7 @@ postgresExporter:
 
 # Redis Exporter configuration
 redisExporter:
-  enabled: true
+  enabled: false
   image:
     repository: oliver006/redis_exporter
     tag: v1.59.0
@@ -198,3 +198,18 @@ alertmanager:
       kubernetes.io/ingress.class: nginx
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  # Email notification configuration
+  email:
+    to: "teamgitpushforce@gmail.com"
+    from: "teamgitpushforce@gmail.com"
+    smarthost: "smtp.gmail.com:587"
+    auth_username: "teamgitpushforce@gmail.com"
+    auth_identity: "teamgitpushforce@gmail.com"
+    # The password below will be stored in a Kubernetes Secret
+    # This should be replaced with your actual password in a secure manner
+    auth_password: "prqouryspbzvtrao"
+    require_tls: true
+
+
+
+

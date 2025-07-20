@@ -37,38 +37,41 @@ public class JwtAuthenticationFilter implements WebFilter {
             path.equals("/api/auth/refresh") ||
             path.equals("/auth/logout") ||
             path.equals("/api/auth/logout")) {
-            System.out.println("[AUTH_DEBUG] Skipping authentication for public endpoint: " + path);
+            // Removed debug logging for public endpoints
             return chain.filter(exchange);
         }
 
-        System.out.println("[AUTH_DEBUG] Request: " + method + " " + path);
-        System.out.println("[AUTH_DEBUG] Authorization header: " + (authHeader != null ? "Present" : "Missing"));
+        // Removed debug logging for request details
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            System.out.println("[AUTH_DEBUG] Bearer token found with length: " + token.length());
+            // Removed debug logging for token length
             try {
                 Claims claims = jwtUtil.validateToken(token);
                 if (claims != null) {
                     String userId = claims.getSubject();
-                    System.out.println("[AUTH_DEBUG] Token validated successfully for user: " + userId);
+                    // Keep logging for successful authentication but without DEBUG prefix
+                    System.out.println("Authentication successful for user: " + userId);
                     UsernamePasswordAuthenticationToken authentication = 
                         new UsernamePasswordAuthenticationToken(userId, null, null);
 
                     return chain.filter(exchange)
                         .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
                 } else {
-                    System.out.println("[AUTH_DEBUG] Token validation returned null claims");
+                    // Keep logging for null claims as it indicates a potential issue
+                    System.out.println("Token validation returned null claims");
                 }
             } catch (Exception e) {
-                System.out.println("[AUTH_DEBUG] Token validation failed: " + e.getMessage());
+                // Keep logging for authentication failures as they are important for security
+                System.out.println("Token validation failed: " + e.getMessage());
                 e.printStackTrace(); // Print stack trace for more detailed error information
                 // Token validation failed, continue without authentication
             }
         } else if (authHeader != null) {
-            System.out.println("[AUTH_DEBUG] Authorization header present but not in Bearer format: " + authHeader);
+            // Keep logging for malformed headers as they indicate potential security issues
+            System.out.println("Authorization header present but not in Bearer format");
         } else {
-            System.out.println("[AUTH_DEBUG] No Authorization header present for path: " + path);
+            // Removed detailed logging for missing auth headers as this is common for public resources
         }
 
         return chain.filter(exchange);

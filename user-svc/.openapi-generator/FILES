@@ -1,4 +1,3 @@
-README.md
 pom.xml
 src/main/java/de/tum/aet/devops25/api/generated/controller/ApiUtil.java
 src/main/java/de/tum/aet/devops25/api/generated/controller/HealthApi.java

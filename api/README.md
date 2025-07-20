@@ -35,7 +35,6 @@ npm install -g @redocly/cli@latest
 
 # Install OpenAPI Generator tools
 npm install -g @openapitools/openapi-generator-cli
-pip install openapi-python-client
 ```
 
 ### Linting OpenAPI Specs

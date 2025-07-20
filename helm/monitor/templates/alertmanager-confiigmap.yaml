@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app: alertmanager
+data:
+  alertmanager.yml: |-
+    receivers:
+      - name: 'email-notifications'
+        email_configs:
+          - to: '{{ .Values.alertmanager.email.to }}'
+            from: '{{ .Values.alertmanager.email.from }}'
+            smarthost: '{{ .Values.alertmanager.email.smarthost }}'
+            auth_username: '{{ .Values.alertmanager.email.auth_username }}'
+            auth_password_file: '/etc/alertmanager/secrets/auth_password'
+            auth_identity: '{{ .Values.alertmanager.email.auth_identity }}'
+            require_tls: {{ .Values.alertmanager.email.require_tls }}
+    route:
+      receiver: 'email-notifications'

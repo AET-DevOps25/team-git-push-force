@@ -27,13 +27,15 @@ curl http://localhost:8082/health
 ./gradlew build
 
 # Run with local PostgreSQL
-export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/conceptdb
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/conceptdb
 export SPRING_DATASOURCE_USERNAME=postgres
 export SPRING_DATASOURCE_PASSWORD=postgres
 ./gradlew bootRun
 ```
 
 ## 📋 API Documentation
+
+See [OpenAPI Specification](../api/concept-service.yaml) for complete API documentation.
 
 ### Authentication
 All `/api/concepts/**` endpoints require JWT authentication:
@@ -130,20 +132,6 @@ GET /api/concepts/{conceptId}/pdf
 - **Comprehensive Sections**: Event details, agenda, speakers, pricing
 - **Smart Formatting**: Tables, lists, and structured presentation
 
-#### Apply AI Suggestion (Mock)
-```http
-POST /api/concepts/{conceptId}/apply-suggestion
-Content-Type: application/json
-```
-**Request Body:**
-```json
-{
-  "suggestion": {
-    "title": "AI-Enhanced Event"
-  },
-  "applyMode": "MERGE"
-}
-```
 
 ### Status Codes
 - `200` - Success
@@ -294,6 +282,12 @@ docker-compose up concept-svc-db -d
 ./gradlew integrationTest
 ```
 
+### Test Coverage
+- **Unit Tests**: H2 in-memory database for fast, isolated testing
+- **Integration Tests**: PostgreSQL container-based testing
+- **PDF Generation**: Text extraction validation with real documents
+- **Security**: JWT authentication and authorization edge cases
+
 ### Manual API Testing
 ```bash
 # Get JWT token from user service
@@ -323,16 +317,9 @@ docker build -t concept-service .
 
 # Run container
 docker run -p 8082:8080 \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5433/conceptdb \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/conceptdb \
   concept-service
 ```
-
-### Production Considerations
-- Use external PostgreSQL database
-- Configure proper JWT secrets
-- Enable SSL/TLS
-- Set up monitoring and logging
-- Configure resource limits
 
 ## 📈 Monitoring
 

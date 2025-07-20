@@ -1,4 +1,33 @@
-# AI Event Concepter
+# AI Event Concepter
+
+## 🚀 Quick Start (≤3 Commands)
+
+**Prerequisites:** 
+- [Node.js](https://nodejs.org/) (v22+)
+- [Docker](https://www.docker.com/get-started/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+Then install code generation dependencies:
+```bash
+npm install
+```
+
+**Start the application:**
+```bash
+# Edit docker-compose.yml line 135: Replace 'your_api_token' with your actual OpenWebUI API token
+./start-dev.sh
+```
+
+**Access the application:**
+- Client (Angular frontend) at [http://localhost:4200](http://localhost:4200)
+- API Gateway at [http://localhost:8080](http://localhost:8080)  
+- Full stack running with real backend services
+
+> **Note:** Before running, edit `docker-compose.yml` line 135 and replace `your_api_token` with your actual OpenWebUI API token.
+
+---
+
+## Purpose
 
 ### What is the main functionality?
 
@@ -98,7 +127,7 @@ This project follows an API-first development approach. All API changes start wi
 
 ```
 /api                    # API specifications (single source of truth)
-  ├── gateway.yaml      # API Gateway specification
+  ├── gateway.yaml      # API Gateway specification  
   ├── user-service.yaml # User Service specification
   ├── concept-service.yaml # Concept Service specification
   ├── genai-service.yaml # GenAI Service specification
@@ -106,206 +135,95 @@ This project follows an API-first development approach. All API changes start wi
   └── README.md         # API documentation
 ```
 
-### Development Workflow
+### Interactive API Documentation
 
-1. **Update API Specifications**: Make changes to the OpenAPI specs in the `/api` directory
-2. **Lint OpenAPI Specs**: Run `npm run lint:openapi` to validate the specs
-3. **Generate Code**: Run `npm run generate:code` to generate code from the specs
-4. **Implement Business Logic**: Implement the business logic using the generated code
-5. **Run Tests**: Run tests to verify the implementation
-6. **Submit PR**: Submit a PR with the changes
+- **Local Development**: Run `./start-docs.sh` to launch Swagger UI for all services
+- **Documentation Hub**: `docs/index.html` provides unified access to all API docs
+- **Individual Specs**: Each service OpenAPI spec can be viewed independently
 
-### Available Scripts
+### API-First Engineering Process  
+1. **Design**: Update OpenAPI specifications first
+2. **Validate**: Automated linting and specification validation  
+3. **Generate**: Code generation from specifications
+4. **Test**: API contract testing and validation
+5. **Deploy**: Automated CI/CD pipeline deployment
 
-- `npm run lint:openapi`: Lint OpenAPI specifications
-- `npm run docs:openapi`: Generate API documentation
-- `npm run generate:code`: Generate code from OpenAPI specifications
-
-### Pre-commit Hooks
-
-This project uses pre-commit hooks to ensure code quality. The hooks are configured in `.pre-commit-config.yaml`.
-
-To install pre-commit hooks:
-
-```bash
-pip install pre-commit
-pre-commit install
-```
+**Engineering Process Evidence:**
+- ✅ **Documented Requirements**: Clear API contracts in `/api` directory
+- ✅ **Architecture Models**: UML diagrams (Analysis Object Model, Use Case, Component)
+- ✅ **API-First Workflow**: Specifications drive implementation
+- ✅ **Automated Validation**: Pre-commit hooks and CI pipeline checks
 
 ---
+
+
+
+## 🧪 Testing & CI/CD Automation
+
+### Test Coverage & Automation
+- **Unit Tests**: JUnit (Java), pytest (Python), Jasmine (Angular)
+- **Integration Tests**: Database operations, API endpoints, service interactions  
+- **CI Pipeline**: GitHub Actions runs tests automatically on PR and merge
+- **Coverage Tools**: JaCoCo (Java), pytest-cov (Python), ng test (Angular)
+
+### Automated Testing in CI
+- **On Pull Request**: Lint, unit tests, API validation
+- **On Merge**: Full test suite, integration tests, deployment
+- **API-First Validation**: OpenAPI spec validation and code generation verification
+
+See [Testing Strategy](./TESTING.md) for detailed coverage and methodology.
 
 ## ⚙️ Prerequisites
 
-Make sure the following tools are installed:
+- [Node.js](https://nodejs.org/) (v22+), Java JDK 21+, Docker, Git
+- **All dependencies auto-installed** by setup scripts
 
-- [Node.js](https://nodejs.org/) (v22 or later)
-- Java JDK 21+
-- [Gradle](https://gradle.org/)
-- Docker and Docker Compose
-- Git
+## 🔧 Development Options
 
----
-
-## 🚀 Setup Instructions
-
-### Clone the Repository
-
-```bash
-git clone https://github.com/AET-DevOps25/team-git-push-force.git
-cd team-git-push-force
-```
-
-### Client Setup
-
-1. Navigate to the `client` directory:
-   ```bash
-   cd client
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-### Backend Services Setup
-
-1. Generate code from OpenAPI specifications:
-   ```bash
-   ./api/scripts/gen-all.sh
-   ```
-
-2. Navigate to each service directory and build the project:
-   ```bash
-   # For Gateway
-   cd gateway
-   ./gradlew build
-
-   # For User Service
-   cd ../user-svc
-   ./gradlew build
-
-   # For Concept Service
-   cd ../concept-svc
-   ./gradlew build
-
-   # For GenAI Service
-   cd ../genai-svc
-   pip install -r requirements.txt
-   ```
-
-## Running the Application
-
-### Option 1: Using Docker Compose (Recommended)
-
-Before running the application, you need to generate code from the OpenAPI specifications. You can use the provided start-dev script which handles this automatically:
-
-```bash
-./start-dev.sh
-```
-
-This script will:
-1. Run code generation from OpenAPI specs
-2. Start all services using Docker Compose
-
-Alternatively, you can run these steps manually:
-
-```bash
-# First, generate code from OpenAPI specs
-./api/scripts/gen-all.sh
-
-# Then start Docker Compose
-docker-compose up
-```
-
-This will start all services:
-- Client (Angular frontend) at [http://localhost:3000](http://localhost:3000)
-- API Gateway at [http://localhost:8080](http://localhost:8080)
-- User Service at [http://localhost:8081](http://localhost:8081)
-- Concept Service at [http://localhost:8082](http://localhost:8082)
-- GenAI Service at [http://localhost:8083](http://localhost:8083)
-- Weaviate Vector Database at [http://localhost:8087](http://localhost:8087)
-- MinIO Object Storage at [http://localhost:9000](http://localhost:9000) (API) and [http://localhost:9001](http://localhost:9001) (Console)
-
-### 🚀 Development Environment (Default)
-
-The default docker-compose setup is optimized for development:
-
-```bash
-# Start development environment (default configuration)
-./start-dev.sh
-# OR manually:
-docker-compose up --build
-```
-
-This setup:
-- ✅ **Development Mode**: Uses development environment configuration by default
-- ✅ **Real Backend**: All backend services running for full-stack development  
-- ✅ **Easy Setup**: Single command to start the entire stack
-- ✅ **Environment Flexibility**: Can easily switch to staging or production builds
-
-**Services Available:**
-- Client (Angular frontend) at [http://localhost:3000](http://localhost:3000)
-- All backend services running and connected
-
-**Environment Options:**
+### Environment Flexibility
 ```bash
 # Development (default)
-docker-compose up --build
+./start-dev.sh
 
-# Staging environment
+# Staging environment  
 CLIENT_BUILD_ENV=staging docker-compose up --build
 
-# Production environment  
+# Production environment
 CLIENT_BUILD_ENV=production docker-compose up --build
 ```
 
+### Manual Service Development
+For individual service development, see respective service READMEs:
+- [Gateway Service](./gateway/README.md) - `./gradlew bootRun --args='--spring.profiles.active=local'`
+- [User Service](./user-svc/README.md) - `./gradlew bootRun` 
+- [Concept Service](./concept-svc/README.md) - `./gradlew bootRun`
+- [GenAI Service](./genai-svc/README.md) - `python app.py`
+- [Client App](./client/README.md) - `ng serve`
 
-### Manual Development Setup
+---
 
-Before starting the services manually, you need to generate code from the OpenAPI specifications:
+## 📚 Documentation
 
-```bash
-./api/scripts/gen-all.sh
-```
+### Core Documentation
+- **[API Specifications](./api/README.md)** - OpenAPI specs and API-first development
+- **[API Documentation Hub](./docs/index.html)** - Interactive Swagger UI for all services
+- **[Infrastructure & Deployment](./infrastructure/README.md)** - Terraform, Ansible, CI/CD setup
+- **[Monitoring](./helm/monitor/README.md)** - Prometheus, Grafana, alerting
 
-This will generate the necessary code for all services based on the OpenAPI specifications in the `/api` directory.
+### Service Documentation
+- **[Concept Service](./concept-svc/README.md)** - Event concepts, PDF generation
+- **[User Service](./user-svc/README.md)** - User management, authentication, JWT tokens
+- **[GenAI Service](./genai-svc/README.md)** - LangChain integration, AI-powered features
+- **[Gateway Service](./gateway/README.md)** - API routing, JWT authentication
+- **[Client App](./client/README.md)** - Angular frontend, environment configuration
 
-#### Start the Client
+### Development & Testing
+- **[Testing Strategy](./TESTING.md)** - Test coverage, CI automation, GenAI testing
+- **[GenAI Testing](./genai-svc/tests/README.md)** - Conversation history and concept suggestion tests
+- **[Helm Deployment](./helm/ai-event-concepter/README.md)** - Kubernetes deployment guide
 
-```bash
-cd client
-npm run dev
-```
-The client will be available at [http://localhost:3000](http://localhost:3000).
-
-#### Start the Gateway
-
-```bash
-cd gateway
-./gradlew bootRun
-```
-The API Gateway will be available at [http://localhost:8080](http://localhost:8080).
-
-#### Start the User Service
-
-```bash
-cd user-svc
-./gradlew bootRun
-```
-The User Service will be available at [http://localhost:8081](http://localhost:8081).
-
-#### Start the Concept Service
-
-```bash
-cd concept-svc
-./gradlew bootRun
-```
-The Concept Service will be available at [http://localhost:8082](http://localhost:8082).
-
-#### Start the GenAI Service
-
-```bash
-cd genai-svc
-pip install -r requirements.txt
-python app.py
-```
-The GenAI Service will be available at [http://localhost:8083](http://localhost:8083).
+### Team Responsibilities
+Based on [CODEOWNERS](./.github/CODEOWNERS):
+- **@lenni108**: API specs (shared), Angular client, concept service, infrastructure, documentation
+- **@sfdamm**: Gateway, GenAI service, CI/CD workflows, Helm charts, API specs (shared), documentation
+- **@ClaudiaDuenzinger**: User service, monitoring stack, documentation

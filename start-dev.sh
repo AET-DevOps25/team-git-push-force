@@ -5,4 +5,4 @@
 ./api/scripts/gen-all.sh
 
 # Start Docker Compose with development configuration (default)
-docker-compose up --build
+docker compose up --build

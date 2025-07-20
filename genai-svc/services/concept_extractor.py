@@ -13,10 +13,10 @@ class ConceptExtractor:
     """Extracts concept suggestions from LLM responses"""
 
     def extract_concept_suggestion(self, response_text: str) -> ChatResponseConceptSuggestion:
-        """Extract concept suggestions from the response text"""
+        """Extract concept suggestions from the response text. Assumes a complete JSON block is always present."""
         # Initialize with default values
         title = "Event Concept Suggestion"
-        description = response_text
+        description = ""
         event_details = None
         agenda = []
         speakers = []
@@ -25,71 +25,74 @@ class ConceptExtractor:
         reasoning = ""
         confidence = 0.9
 
-        # Try to extract JSON from the response
+        # Always extract JSON from the response
         json_data = self._extract_json_from_text(response_text)
+        if not json_data:
+            # If no JSON found, return a minimal suggestion
+            return ChatResponseConceptSuggestion(
+                title=title,
+                description=response_text,
+                event_details=None,
+                agenda=None,
+                speakers=None,
+                pricing=None,
+                notes=notes,
+                reasoning=reasoning,
+                confidence=confidence
+            )
 
-        if json_data:
-            # Extract data from JSON
-            if "title" in json_data:
-                title = json_data["title"]
+        # Extract all fields from JSON, using empty string or None for missing values
+        title = json_data.get("title", "")
+        description = json_data.get("description", "")
+        notes = json_data.get("notes", "")
+        reasoning = json_data.get("reasoning", "")
 
-            # Extract event details
-            if "eventDetails" in json_data:
-                event_details_data = json_data["eventDetails"]
-                event_details = ChatResponseConceptSuggestionEventDetails(
-                    theme=event_details_data.get("theme"),
-                    format=event_details_data.get("format", "").upper() if event_details_data.get("format") else None,
-                    capacity=event_details_data.get("capacity"),
-                    duration=event_details_data.get("duration"),
-                    target_audience=event_details_data.get("targetAudience"),
-                    location=event_details_data.get("location")
-                )
+        # Event details
+        event_details_data = json_data.get("eventDetails", {})
+        event_details = ChatResponseConceptSuggestionEventDetails(
+            theme=event_details_data.get("theme", ""),
+            format=event_details_data.get("format", "").upper() if event_details_data.get("format") else None,
+            capacity=event_details_data.get("capacity"),
+            duration=event_details_data.get("duration", ""),
+            target_audience=event_details_data.get("targetAudience", ""),
+            location=event_details_data.get("location", "")
+        ) if event_details_data else None
 
-            # Extract agenda
-            if "agenda" in json_data and json_data["agenda"]:
-                for agenda_item in json_data["agenda"]:
-                    agenda.append(ChatResponseConceptSuggestionAgendaInner(
-                        time=agenda_item.get("time", ""),
-                        title=agenda_item.get("title", ""),
-                        type=agenda_item.get("type", "KEYNOTE"),
-                        duration=agenda_item.get("duration", 60)
-                    ))
+        # Agenda
+        agenda = [
+            ChatResponseConceptSuggestionAgendaInner(
+                time=item.get("time", ""),
+                title=item.get("title", ""),
+                type=item.get("type", "KEYNOTE"),
+                duration=item.get("duration", 60)
+            ) for item in json_data.get("agenda", [])
+        ] or None
 
-            # Extract speakers
-            if "speakers" in json_data and json_data["speakers"]:
-                for speaker in json_data["speakers"]:
-                    speakers.append(ChatResponseConceptSuggestionSpeakersInner(
-                        name=speaker.get("name", ""),
-                        expertise=speaker.get("expertise", ""),
-                        suggested_topic=speaker.get("suggestedTopic", "")
-                    ))
+        # Speakers
+        speakers = [
+            ChatResponseConceptSuggestionSpeakersInner(
+                name=speaker.get("name", ""),
+                expertise=speaker.get("expertise", ""),
+                suggested_topic=speaker.get("suggestedTopic", "")
+            ) for speaker in json_data.get("speakers", [])
+        ] or None
 
-            # Extract pricing
-            if "pricing" in json_data:
-                pricing_data = json_data["pricing"]
-                pricing = ChatResponseConceptSuggestionPricing(
-                    currency=pricing_data.get("currency", "USD"),
-                    regular=pricing_data.get("regular"),
-                    early_bird=pricing_data.get("earlyBird"),
-                    vip=pricing_data.get("vip"),
-                    student=pricing_data.get("student")
-                )
+        # Pricing
+        pricing_data = json_data.get("pricing", {})
+        pricing = ChatResponseConceptSuggestionPricing(
+            currency=pricing_data.get("currency", "USD"),
+            regular=pricing_data.get("regular"),
+            early_bird=pricing_data.get("earlyBird"),
+            vip=pricing_data.get("vip"),
+            student=pricing_data.get("student")
+        ) if pricing_data else None
 
-            # Extract notes and reasoning
-            if "notes" in json_data:
-                notes = json_data["notes"]
-
-            if "reasoning" in json_data:
-                reasoning = json_data["reasoning"]
-        # No fallback to legacy method - we expect the LLM to always include a JSON object
-
-        # Create and return the concept suggestion object
         return ChatResponseConceptSuggestion(
             title=title,
             description=description,
             event_details=event_details,
-            agenda=agenda if agenda else None,
-            speakers=speakers if speakers else None,
+            agenda=agenda,
+            speakers=speakers,
             pricing=pricing,
             notes=notes,
             reasoning=reasoning,

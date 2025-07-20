@@ -2,8 +2,11 @@ import os
 import uuid
 import boto3
 import requests
+import pytest
 from io import BytesIO
 
+@pytest.mark.skipif(os.getenv("SKIP_MINIO", "false").lower() == "true",
+                   reason="Skipping MinIO integration test when SKIP_MINIO is true")
 def test_minio_integration():
     """
     Test the integration between GenAI service and MinIO.
@@ -11,6 +14,8 @@ def test_minio_integration():
     1. Upload a PDF directly to MinIO
     2. List documents in MinIO
     3. Delete a document from MinIO
+    
+    This test is skipped when SKIP_MINIO environment variable is set to true.
     """
     print("Testing MinIO integration with GenAI service...")
     
