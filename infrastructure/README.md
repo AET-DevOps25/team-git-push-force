@@ -2,6 +2,8 @@
 
 This directory contains the infrastructure as code (IaC) for the Concepter application using Terraform and Ansible.
 
+This is currently deactivated! We are using Helm Charts for K8s deployments.
+
 ## Overview
 
 The infrastructure consists of:
@@ -101,7 +103,7 @@ mkdir -p backend-setup
 
 ### Automated Deployment
 
-The infrastructure deployment is automated via GitHub Actions in `.github/workflows/deploy_infrastructure.yml`.
+The infrastructure deployment is automated via GitHub Actions in `.github/workflows/infrastructure.yml`.
 
 **Triggers:**
 - Manual dispatch via GitHub UI
