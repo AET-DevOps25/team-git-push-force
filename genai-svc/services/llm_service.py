@@ -75,39 +75,24 @@ class LLMService:
             )
 
         # Initialize prompt templates
-        # Use raw string to avoid issues with escape characters and indentation
+        # Main prompt template for both direct LLM calls and retrieval chain
         self.chat_prompt = PromptTemplate(
             input_variables=["context", "question", "chat_history"],
-            template=r"""You are an AI assistant for event planning and concept development. 
-            You have access to previous conversation history and context about the event concept being developed.
-
-            Use the following context to answer the question. If you don't know the answer, 
-            just say that you don't know, don't try to make up an answer.
-
-            For EVERY response, please provide your answer in two parts:
-
-            1. A conversational response to the user's question that acknowledges previous conversation context.
-
-            2. A structured JSON object containing the concept details with the following format.
-               HERE IS AN EXAMPLE OF A VALID RESPONSE FORMAT YOU MUST FOLLOW:
-
-            "I understand you're looking for a tech conference with workshops on AI. That sounds like a great idea! I've developed an initial concept based on your requirements.
-
-            ```json
-            {{
-              "title": "AI Innovation Summit",
-              "eventDetails": {{
-                "theme": "Future of AI in Business",
-                "format": "HYBRID"
-              }},
-              "notes": "This is a concept for an AI-focused event with hands-on workshops"
-            }}
-            ```"
-
-            Now, here is the JSON structure you should include:
+            template=r"""You are an AI assistant for event planning and concept development.
+            
+            Use the provided context and chat history to answer the user's question. For EVERY response, always provide your answer in two parts:
+            1. A conversational answer to the user's question, referencing context and history.
+            2. A JSON object for the event concept, with updates based on the user's message.
+            
+            IMPORTANT: Only update the fields mentioned by the user in their message. Do not change other fields.
+            Use conceptUpdates to make partial changes to the concept. If the user doesn't mention a specific field,
+            keep its current value from the context.
+            
             ```json
             {{
               "title": "Event Title",
+              "description": "Description of the event concept.",
+              "status": "DRAFT|IN_PROGRESS|COMPLETED|ARCHIVED",
               "eventDetails": {{
                 "theme": "Theme or Focus",
                 "format": "PHYSICAL|VIRTUAL|HYBRID",
@@ -122,12 +107,6 @@ class LLMService:
                   "title": "Opening Keynote",
                   "type": "KEYNOTE|WORKSHOP|PANEL|NETWORKING|BREAK|LUNCH",
                   "duration": 60
-                }},
-                {{
-                  "time": "10:30 AM",
-                  "title": "Coffee Break",
-                  "type": "BREAK",
-                  "duration": 30
                 }}
               ],
               "speakers": [
@@ -148,20 +127,35 @@ class LLMService:
               "reasoning": "Why this concept would work well"
             }}
             ```
-
-            IMPORTANT: YOU MUST INCLUDE THE JSON OBJECT IN EVERY RESPONSE, EXACTLY AS SHOWN ABOVE.
-            The JSON object is REQUIRED for the application to work correctly.
-            For simple questions or responses, include at least the title and notes fields in the JSON.
-            Make sure the JSON is properly formatted and valid.
-
+            
+            If you do not know a value, use an empty string or null. Do not invent information. Do not include the 'id' field, it is provided by the system. Do not include the JSON in the conversational response.
+            
             Event Concept Context: {context}
+            Previous Conversation: {chat_history}
+            Current Question: {question}
+            Answer:"""
+        )
 
-            Previous Conversation:
+        # Question generator prompt for retrieval chain
+        self.question_generator_prompt = PromptTemplate(
+            input_variables=["chat_history", "question"],
+            template=r"""You are an AI assistant specializing in event planning and concept development.
+
+            Given the following conversation history about event planning and a follow-up question, 
+            rephrase the follow-up question to be a standalone question that captures all relevant 
+            context about the event concept being discussed.
+
+            Make sure your standalone question:
+            1. Incorporates key details about the event concept from the conversation history
+            2. Maintains the original intent of the follow-up question
+            3. Is phrased in a way that will help generate a comprehensive response about event planning
+
+            Chat History:
             {chat_history}
 
-            Current Question: {question}
+            Follow Up Input: {question}
 
-            Answer:"""
+            Standalone question:"""
         )
 
         # Initialize the other services with this LLM
@@ -247,19 +241,18 @@ class LLMService:
                 concept_details.append(f"Title: {concept.title}")
             if hasattr(concept, 'description') and concept.description:
                 concept_details.append(f"Description: {concept.description}")
-            if hasattr(concept, 'eventDetails') and concept.eventDetails:
-                if hasattr(concept.eventDetails, 'format') and concept.eventDetails.format:
-                    concept_details.append(f"Format: {concept.eventDetails.format}")
-                if hasattr(concept.eventDetails, 'targetAudience') and concept.eventDetails.targetAudience:
-                    concept_details.append(f"Target Audience: {concept.eventDetails.targetAudience}")
-                if hasattr(concept.eventDetails, 'theme') and concept.eventDetails.theme:
-                    concept_details.append(f"Theme: {concept.eventDetails.theme}")
-                if hasattr(concept.eventDetails, 'capacity') and concept.eventDetails.capacity:
-                    concept_details.append(f"Capacity: {concept.eventDetails.capacity}")
-                if hasattr(concept.eventDetails, 'duration') and concept.eventDetails.duration:
-                    concept_details.append(f"Duration: {concept.eventDetails.duration}")
-                if hasattr(concept.eventDetails, 'location') and concept.eventDetails.location:
-                    concept_details.append(f"Location: {concept.eventDetails.location}")
+            if hasattr(concept.event_details, 'format') and concept.event_details.format:
+                concept_details.append(f"Format: {concept.event_details.format}")
+            if hasattr(concept.event_details, 'targetAudience') and concept.event_details.targetAudience:
+                concept_details.append(f"Target Audience: {concept.event_details.targetAudience}")
+            if hasattr(concept.event_details, 'theme') and concept.event_details.theme:
+                concept_details.append(f"Theme: {concept.event_details.theme}")
+            if hasattr(concept.event_details, 'capacity') and concept.event_details.capacity:
+                concept_details.append(f"Capacity: {concept.event_details.capacity}")
+            if hasattr(concept.event_details, 'duration') and concept.event_details.duration:
+                concept_details.append(f"Duration: {concept.event_details.duration}")
+            if hasattr(concept.event_details, 'location') and concept.event_details.location:
+                concept_details.append(f"Location: {concept.event_details.location}")
 
             concept_context = "\n".join(concept_details)
 
@@ -286,20 +279,8 @@ class LLMService:
                             "question": message,
                             "chat_history": chat_history_str
                         })
-                        # Extract concept suggestion from response text
-                        concept_suggestion = concept_extractor.extract_concept_suggestion(response_text)
-                        # Generate dynamic follow-up suggestions and questions
-                        suggestions = response_generator._generate_dynamic_suggestions(concept_suggestion)
-                        follow_up_questions = response_generator._generate_dynamic_follow_up_questions(concept_suggestion)
-                        return ChatResponse(
-                            response=response_text,
-                            suggestions=suggestions,
-                            follow_up_questions=follow_up_questions,
-                            sources=[],
-                            confidence=0.9,
-                            concept_suggestion=concept_suggestion,
-                            tokens={"prompt": 100, "response": 150, "total": 250}
-                        )
+                        # Always use response_generator to clean and extract
+                        return response_generator.create_response(response_text, [])
                 except Exception as retriever_error:
                     print(f"Error creating retriever: {retriever_error}")
                     # Fallback to simple LLM response without retrieval
@@ -312,146 +293,18 @@ class LLMService:
                     return response_generator.create_response(response_text, [])
 
                 if retriever:
-                    # Create custom prompts that don't require a "title" variable
-                    from langchain.prompts import PromptTemplate
-
-                    # Create a custom prompt template for the question generator
-                    # Use raw string to avoid issues with escape characters and indentation
-                    custom_question_prompt = PromptTemplate(
-                        input_variables=["chat_history", "question"],
-                        template=r"""You are an AI assistant specializing in event planning and concept development.
-
-                        Given the following conversation history about event planning and a follow-up question, 
-                        rephrase the follow-up question to be a standalone question that captures all relevant 
-                        context about the event concept being discussed.
-
-                        Make sure your standalone question:
-                        1. Incorporates key details about the event concept from the conversation history
-                        2. Maintains the original intent of the follow-up question
-                        3. Is phrased in a way that will help generate a comprehensive response about event planning
-
-                        Chat History:
-                        {chat_history}
-
-                        Follow Up Input: {question}
-
-                        Standalone question:"""
-                    )
-
-                    # Create a custom prompt template for the QA chain
-                    # Use raw string to avoid issues with escape characters and indentation
-                    qa_prompt = PromptTemplate(
-                        input_variables=["context", "question", "chat_history"],
-                        template=r"""You are an AI assistant for event planning and concept development. 
-                        Use the following pieces of context to answer the question at the end. If you don't know the answer, 
-                        just say that you don't know, don't try to make up an answer.
-
-                        For EVERY response, please provide your answer in two parts:
-
-                        1. A conversational response to the user's question that acknowledges previous conversation context.
-
-                        2. A structured JSON object containing the concept details as follows.
-                           Here is an example of a properly formatted response:
-
-                        "I understand you're looking for a tech conference. Based on your requirements, I've developed an initial concept.
-
-                        ```json
-                        {{
-                          "title": "Tech Innovation Summit",
-                          "eventDetails": {{
-                            "theme": "Future of Technology",
-                            "format": "HYBRID"
-                          }},
-                          "notes": "This is a concept for a technology event"
-                        }}
-                        ```"
-
-                        Now, here is the JSON structure you should include:
-                        ```json
-                        {{
-                          "title": "Event Title",
-                          "eventDetails": {{
-                            "theme": "Theme or Focus",
-                            "format": "PHYSICAL|VIRTUAL|HYBRID",
-                            "capacity": 500,
-                            "duration": "2 days",
-                            "targetAudience": "Description of target audience",
-                            "location": "Location if applicable"
-                          }},
-                          "agenda": [
-                            {{
-                              "time": "9:00 AM",
-                              "title": "Opening Keynote",
-                              "type": "KEYNOTE|WORKSHOP|PANEL|NETWORKING|BREAK|LUNCH",
-                              "duration": 60
-                            }},
-                            {{
-                              "time": "10:30 AM",
-                              "title": "Coffee Break",
-                              "type": "BREAK",
-                              "duration": 30
-                            }}
-                          ],
-                          "speakers": [
-                            {{
-                              "name": "Speaker Name",
-                              "expertise": "Speaker's expertise or role",
-                              "suggestedTopic": "Suggested presentation topic"
-                            }}
-                          ],
-                          "pricing": {{
-                            "currency": "USD",
-                            "earlyBird": 299,
-                            "regular": 399,
-                            "vip": 599,
-                            "student": 99
-                          }},
-                          "notes": "Any additional information",
-                          "reasoning": "Why this concept would work well"
-                        }}
-                        ```
-
-                        Always include the JSON object in EVERY response, even if it's a partial suggestion or if you're just answering a question.
-                        For simple questions or responses, include at least the title and notes fields in the JSON.
-                        Make sure the JSON is properly formatted and valid.
-
-                        Context:
-                        {context}
-
-                        Chat History:
-                        {chat_history}
-
-                        Question: {question}
-
-                        Answer:"""
-                    )
-
-                    # Create ConversationalRetrievalChain with custom prompts
+                    # Create ConversationalRetrievalChain with our predefined prompts
                     from langchain.chains import LLMChain
-                    from langchain.chains.question_answering import load_qa_chain
-
-                    # Create the question generator chain
-                    # Use LLMChain but add a note that it's deprecated
-                    # Note: This is still using LLMChain as the currently installed version of LangChain 
-                    # doesn't support the newer pipe syntax yet
-                    # Use the original LLMChain which is known to work with our codebase
-                    from langchain.chains import LLMChain
-
-                    # Suppress deprecation warnings
-                    with warnings.catch_warnings():
-                        warnings.filterwarnings("ignore", category=DeprecationWarning)
-                        question_generator = LLMChain(llm=self.llm, prompt=custom_question_prompt)
-
-                    # Create the QA chain for combining documents
-                    # Note: Still using load_qa_chain as the installed version doesn't support create_stuff_documents_chain
-                    # Will be updated in a future version
-                    # Use the original load_qa_chain function which we know works
                     from langchain.chains.question_answering import load_qa_chain
 
                     # Suppress deprecation warnings
                     with warnings.catch_warnings():
                         warnings.filterwarnings("ignore", category=DeprecationWarning)
-                        doc_chain = load_qa_chain(llm=self.llm, chain_type="stuff", prompt=qa_prompt)
+                        # Create the question generator chain using our predefined prompt
+                        question_generator = LLMChain(llm=self.llm, prompt=self.question_generator_prompt)
+                        
+                        # Create the QA chain for combining documents using our main chat prompt
+                        doc_chain = load_qa_chain(llm=self.llm, chain_type="stuff", prompt=self.chat_prompt)
 
                     # Create the conversational chain with our custom components
                     conversation_chain = ConversationalRetrievalChain(
@@ -461,13 +314,11 @@ class LLMService:
                         return_source_documents=True
                     )
 
-                    # Use the chat history tuples directly
                     print(f"Using {len(chat_history_tuples)} conversation pairs for retrieval chain")
 
                     # Check if we have any conversation pairs
-                    # When there are 0 conversation pairs, the ConversationalRetrievalChain can fail with
-                    # "Missing some input keys" error related to "title" fields with unusual formatting.
-                    # To avoid this issue, we use a direct LLM chain instead when there are no conversation pairs.
+                    # When there are 0 conversation pairs, the ConversationalRetrievalChain can fail
+                    # To avoid this issue, use a direct LLM chain instead when there are no conversation pairs
                     if len(chat_history_tuples) == 0:
                         print("No conversation pairs available, using direct LLM chain instead of retrieval chain")
                         # Use direct LLM chain with the chat_prompt template
@@ -477,25 +328,14 @@ class LLMService:
                             "question": enhanced_message,
                             "chat_history": chat_history_str
                         })
-                        # Extract concept suggestion from response text
-                        concept_suggestion = concept_extractor.extract_concept_suggestion(response_text)
-                        # Generate dynamic follow-up suggestions and questions
-                        suggestions = response_generator._generate_dynamic_suggestions(concept_suggestion)
-                        follow_up_questions = response_generator._generate_dynamic_follow_up_questions(concept_suggestion)
-                        return ChatResponse(
-                            response=response_text,
-                            suggestions=suggestions,
-                            follow_up_questions=follow_up_questions,
-                            sources=[],
-                            confidence=0.9,
-                            concept_suggestion=concept_suggestion,
-                            tokens={"prompt": 100, "response": 150, "total": 250}
-                        )
+                        # Use response_generator to create the response
+                        return response_generator.create_response(response_text, [])
                     
                     # Run the chain with the modern invoke method
                     result = conversation_chain.invoke({
                         "question": enhanced_message,  # Use enhanced message with concept context
-                        "chat_history": chat_history_tuples
+                        "chat_history": chat_history_tuples,
+                        "context": concept_context or "No specific context available."
                     })
                     response_text = result["answer"]
 
@@ -507,14 +347,18 @@ class LLMService:
                                 "filename": doc.metadata.get("filename"),
                                 "confidence": 0.9  # Placeholder
                             })
+                    # Always use response_generator to clean and extract
+                    return response_generator.create_response(response_text, sources)
                 else:
-                    # Fallback to simple LLM using RunnableSequence
+                    # Fallback to simple LLM using our main chat prompt
+                    print("No retriever available, using direct LLM chain")
                     chain = self.chat_prompt | self.llm
                     response_text = chain.invoke({
-                        "context": "No specific documents available for this concept.",
-                        "question": message,
+                        "context": concept_context or "No specific context available.",
+                        "question": enhanced_message,
                         "chat_history": chat_history_str
                     })
+                    return response_generator.create_response(response_text, [])
             else:
                 # Use simple LLM chain with proper context
                 print("Using direct LLM chain with structured JSON template")
@@ -522,69 +366,14 @@ class LLMService:
                 response_text = chain.invoke({
                     "context": concept_context or "No specific context available.",
                     "question": enhanced_message,
-                    "chat_history": chat_history_str  # Use formatted string
+                    "chat_history": chat_history_str
                 })
-
-                # Log the response for debugging
-                print(f"\n======= DIRECT LLM RESPONSE =======\n{response_text[:500]}...\n=================================")
-
-                # Check if the response has a JSON structure
-                import re
-                json_match = re.search(r'```json\s*(.*?)\s*```', response_text, re.DOTALL)
-                if not json_match:
-                    print("WARNING: No JSON structure found in response! Adding a default JSON structure.")
-                    # Append a default JSON if none is found
-                    default_json = '''
-                ```json
-                {
-                  "title": "Event Concept",
-                  "notes": "Generated from conversation"
-                }
-                ```'''
-                    response_text = f"{response_text}\n\nHere's a summary of the concept:\n{default_json}"
-                    print(f"Added default JSON structure to response")
-                else:
-                    print(f"JSON structure found in response")
+                # Always use response_generator to clean and extract
+                return response_generator.create_response(response_text, [])
         except Exception as e:
             print(f"Error generating response: {e}")
             response_text = "I'm sorry, I encountered an error while processing your request. Please try again."
-
-        # Debug: print the response text before creating the response
-        print(f"\n======= FINAL RESPONSE TEXT BEFORE PROCESSING =======\n{response_text[:500]}...\n=================================\n")
-
-        # Check if response has the expected JSON format
-        import re
-        has_json_block = bool(re.search(r'```json\s*\{', response_text, re.DOTALL))
-        if not has_json_block:
-            print("WARNING: Response text does not contain properly formatted JSON block")
-            # Add a fallback JSON block if necessary
-            json_block = '''
-        ```json
-        {
-          "title": "Event Concept",
-          "eventDetails": {
-            "theme": "Based on conversation",
-            "format": "HYBRID"
-          },
-          "notes": "Generated from conversation context"
-        }
-        ```'''
-            # Append JSON block to the response if not already present
-            response_text = f"{response_text}\n\nHere's a summary of the concept:\n{json_block}"
-            print("Added fallback JSON block to response")
-
-        # Extract concept suggestion before passing to response generator
-        concept_suggestion = concept_extractor.extract_concept_suggestion(response_text)
-
-        # Create the response with all components
-        generated_response = response_generator.create_response(response_text, sources)
-
-        # Ensure the response has the concept suggestion
-        if generated_response and not generated_response.concept_suggestion and concept_suggestion:
-            generated_response.concept_suggestion = concept_suggestion
-            print(f"Added missing concept_suggestion to response: {concept_suggestion.title}")
-
-        return generated_response
+            return response_generator.create_response(response_text, [])
 
     def generate_welcome_message(self, init_request: InitializeChatForConceptRequest) -> str:
         """Generate a welcome message for a new concept"""

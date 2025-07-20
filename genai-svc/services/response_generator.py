@@ -42,24 +42,18 @@ class ResponseGenerator:
         )
         
     def _remove_json_blocks(self, text: str) -> str:
-        """Remove JSON code blocks from the response text"""
-        # Remove ```json ... ``` blocks
-        text = re.sub(r'```json\s*\{.*?\}\s*```', '', text, flags=re.DOTALL)
-        
-        # Remove regular ``` ... ``` blocks that contain JSON
-        text = re.sub(r'```\s*\{.*?\}\s*```', '', text, flags=re.DOTALL)
-        
-        # Remove any standalone JSON objects
+        """Remove JSON code blocks from the response text (robust to formatting)."""
+        # Remove all code blocks containing JSON (with or without 'json' tag)
+        text = re.sub(r'```json[\s\S]*?```', '', text, flags=re.MULTILINE)
+        text = re.sub(r'```[\s\S]*?```', '', text, flags=re.MULTILINE)
+        # Remove any standalone JSON objects (not in code blocks)
         text = re.sub(r'\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\}))*\}))*\}', '', text, flags=re.DOTALL)
-        
-        # Clean up any "Here's a summary of the concept:" or similar text that might be left
-        text = re.sub(r'Here\'s a summary of the concept:\s*', '', text)
-        text = re.sub(r'Here\'s the concept in JSON format:\s*', '', text)
-        text = re.sub(r'Here is the JSON structure for your event:\s*', '', text)
-        
-        # Clean up any double newlines that might be left
-        text = re.sub(r'\n\s*\n\s*\n', '\n\n', text)
-        
+        # Remove any lines that start with 'Example:' or similar prompt instructions
+        text = re.sub(r'Example:\s*', '', text)
+        # Clean up any summary or format instructions
+        text = re.sub(r"Here(?:'s| is) (?:a|the) (?:summary|concept|JSON structure)[^:]*:\s*", '', text)
+        # Remove excessive whitespace and newlines
+        text = re.sub(r'\n{2,}', '\n', text)
         return text.strip()
 
     def _generate_dynamic_suggestions(self, concept_suggestion: ChatResponseConceptSuggestion) -> List[str]:

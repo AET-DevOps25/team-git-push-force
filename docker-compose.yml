@@ -133,6 +133,7 @@ services:
       - CONCEPT_SERVICE_URL=http://concept-svc:8080
       - OPENWEBUI_MODEL=llama3.3:latest
       - OPENWEBUI_API_TOKEN=your_api_token # REPLACE WITH YOUR TOKEN!!
+      - OPENWEBUI_API_URL=https://gpu.aet.cit.tum.de/api
     depends_on:
       - genai-svc-weaviate
       - genai-svc-minio
