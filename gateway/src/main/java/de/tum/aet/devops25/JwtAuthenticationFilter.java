@@ -25,9 +25,15 @@ public class JwtAuthenticationFilter implements WebFilter {
         String path = exchange.getRequest().getURI().getPath();
         String method = exchange.getRequest().getMethod().toString();
 
-        // Skip authentication for actuator endpoints
-        if (path.startsWith("/actuator/")) {
-            //System.out.println("[AUTH_DEBUG] Skipping authentication for actuator endpoint: " + path);
+        // Skip authentication for endpoints that don't require it
+        if (path.startsWith("/actuator/") ||
+            path.equals("/health") ||
+            path.equals("/api/health") ||
+            path.equals("/auth/register") ||
+            path.equals("/api/auth/register") ||
+            path.equals("/auth/login") ||
+            path.equals("/api/auth/login")) {
+            System.out.println("[AUTH_DEBUG] Skipping authentication for public endpoint: " + path);
             return chain.filter(exchange);
         }
 

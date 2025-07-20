@@ -1,7 +1,7 @@
 # Namespace configuration
 # NOTE: The namespace must already exist. This chart will NOT create it.
 namespace:
-  name: "team-git-push-force-monitoring"
+  name: "team-git-push-force-monitor"
 
 ingress:
   enabled: true
@@ -55,8 +55,8 @@ prometheus:
     repository: prom/prometheus
     tag: v2.52.0 # Use the latest stable version as needed
   serviceAccount:
-    create: false
-    name: default
+    create: true
+    name: prometheus
   resources:
     requests:
       memory: "256Mi"
@@ -75,9 +75,9 @@ prometheus:
     service:
       port: 9090
     rbac:
-      create: false
+      create: true
     serviceAccount:
-      create: false
+      create: true
   ingress:
     enabled: true
     className: "nginx"
@@ -119,23 +119,57 @@ cadvisor:
 
 # PostgreSQL Exporter configuration
 postgresExporter:
+  userDb:
+    enabled: true
+    image:
+      repository: prometheuscommunity/postgres-exporter
+      tag: v0.15.0
+    database:
+      host: user-svc-db.team-git-push-force-dev.svc.cluster.local
+      port: 5432
+      name: userdb
+      user: postgres
+      password: postgres
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "50m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+  conceptDb:
+    enabled: true
+    image:
+      repository: prometheuscommunity/postgres-exporter
+      tag: v0.15.0
+    database:
+      host: concept-svc-db.team-git-push-force-dev.svc.cluster.local
+      port: 5432
+      name: conceptdb
+      user: postgres
+      password: postgres
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "50m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+
+# Redis Exporter configuration
+redisExporter:
   enabled: true
   image:
-    repository: prometheuscommunity/postgres-exporter
-    tag: v0.15.0
-  database:
-    host: postgres
-    port: 5432
-    name: postgres
-    user: postgres
-    password: password
+    repository: oliver006/redis_exporter
+    tag: v1.59.0
+  redisAddress: "redis://redis-master.team-git-push-force-dev.svc.cluster.local:6379"
   resources:
     requests:
       memory: "64Mi"
       cpu: "50m"
     limits:
-      memory: "256Mi"
-      cpu: "200m"
+      memory: "128Mi"
+      cpu: "100m"
 
 # Alertmanager configuration
 alertmanager:

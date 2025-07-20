@@ -165,6 +165,8 @@ genaisvcweaviate:
       value: "http://genai-svc-t2v-transformers:8080"
     - name: MODULES_TRANSFORMERS_INFERENCE_API_TIMEOUT_SECONDS
       value: "300"
+    - name: PROMETHEUS_MONITORING_ENABLED
+      value: "true"
   persistence:
     enabled: false
     size: 1Gi
@@ -224,6 +226,8 @@ genaisvcminio:
       value: "minioadmin"
     - name: MINIO_ROOT_PASSWORD
       value: "minioadmin"
+    - name: MINIO_PROMETHEUS_AUTH_TYPE
+      value: "public"
   persistence:
     enabled: false
     size: 10Gi

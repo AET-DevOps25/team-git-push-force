@@ -1,0 +1,139 @@
+# ServiceMonitor for Gateway
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: gateway-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /actuator/prometheus
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+    port: http
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: gateway
+      monitoring: "true"
+---
+# ServiceMonitor for User Service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: user-svc-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /actuator/prometheus
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+    port: http
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: user-svc
+      monitoring: "true"
+---
+# ServiceMonitor for Concept Service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: concept-svc-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /actuator/prometheus
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+    port: http
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: concept-svc
+      monitoring: "true"
+---
+# ServiceMonitor for GenAI Service (Python Flask/FastAPI)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: genai-svc-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /metrics
+    port: http
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: genai-svc
+      monitoring: "true"
+---
+
+# ServiceMonitor for MinIO Object Storage - Metrics endpoint
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: genai-svc-minio-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    path: /minio/v2/metrics/cluster
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_service_label_app]
+      targetLabel: service_name
+    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
+      targetLabel: managed_by
+    port: api
+  namespaceSelector:
+    matchNames:
+    - team-git-push-force-dev
+  selector:
+    matchLabels:
+      app: genai-svc-minio
+
+# ServiceMonitor for Node Exporter
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: node-exporter-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+    - interval: 30s
+      path: /metrics
+      port: metrics
+  namespaceSelector:
+    matchNames:
+      - team-git-push-force-monitor
+  selector:
+    matchLabels:
+      app: node-exporter
+      monitoring: "true"

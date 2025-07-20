@@ -12,4 +12,5 @@ spec:
     - port: {{ .Values.usersvc.service.port }}
       targetPort: {{ .Values.usersvc.service.targetPort }}
       protocol: TCP
+      name: http
   type: {{ .Values.usersvc.service.type }}

@@ -9,21 +9,31 @@ spec:
     matchLabels:
       app: ai-event-concepter-client-selector
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - from: []  # Allow ingress traffic from anywhere (for user access)
+    - from: []  # Allow ingress traffic from anywhere (for user access)
+    - from:  # Allow Prometheus monitoring
+        - namespaceSelector:
+            matchLabels:
+              name: team-git-push-force-monitor
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
   egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-gateway-selector
-  # Allow DNS resolution
-  - ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-gateway-selector
+      ports:
+        - port: {{ .Values.gateway.service.targetPort }}
+          protocol: TCP
+    # Allow DNS resolution
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
 ---
 # Network policy for gateway
 apiVersion: networking.k8s.io/v1
@@ -35,30 +45,52 @@ spec:
     matchLabels:
       app: ai-event-concepter-gateway-selector
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-client-selector
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-client-selector
+    - from: []  # Allow access from ingress controller/external sources
+    - from:  # Allow Prometheus monitoring
+        - namespaceSelector:
+            matchLabels:
+              name: team-git-push-force-monitor
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
   egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-user-svc-selector
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-concept-svc-selector
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-genai-svc-selector
-  # Allow DNS resolution
-  - ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
+    # Allow communication with user-svc
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-user-svc-selector
+      ports:
+        - port: {{ .Values.usersvc.service.targetPort }}
+          protocol: TCP
+    # Allow communication with concept-svc
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-concept-svc-selector
+      ports:
+        - port: {{ .Values.conceptsvc.service.targetPort }}
+          protocol: TCP
+    # Allow communication with genai-svc
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-genai-svc-selector
+      ports:
+        - port: {{ .Values.genaisvc.service.targetPort }}
+          protocol: TCP
+    # Allow DNS resolution
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
 ---
 # Network policy for genai-svc
 apiVersion: networking.k8s.io/v1
@@ -70,37 +102,52 @@ spec:
     matchLabels:
       app: ai-event-concepter-genai-svc-selector
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-gateway-selector
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-gateway-selector
+    - from:  # Allow Prometheus monitoring
+        - namespaceSelector:
+            matchLabels:
+              name: team-git-push-force-monitor
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
   egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-genai-svc-weaviate-selector
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-genai-svc-minio-selector
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-concept-svc-selector
-  # Allow DNS resolution
-  - ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
-  # Allow outbound internet access for Hugging Face models
-  - to: []
-    ports:
-    - port: 443
-      protocol: TCP
-    - port: 80
-      protocol: TCP
+    # Allow communication with weaviate
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-genai-svc-weaviate-selector
+      ports:
+        - port: {{ .Values.genaisvcweaviate.service.targetPort }}
+          protocol: TCP
+        - port: {{ .Values.genaisvcweaviate.service.grpcTargetPort }}
+          protocol: TCP
+    # Allow communication with minio
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-genai-svc-minio-selector
+      ports:
+        - port: {{ .Values.genaisvcminio.service.targetPort }}
+          protocol: TCP
+    # Allow DNS resolution
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    # Allow outbound internet access for Hugging Face models
+    - to: []
+      ports:
+        - port: 443
+          protocol: TCP
+        - port: 80
+          protocol: TCP
 ---
 # Network policy for weaviate
 apiVersion: networking.k8s.io/v1
@@ -112,41 +159,35 @@ spec:
     matchLabels:
       app: ai-event-concepter-genai-svc-weaviate-selector
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-genai-svc-selector
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-genai-svc-selector
+    - from:  # Allow Prometheus monitoring
+        - namespaceSelector:
+            matchLabels:
+              name: team-git-push-force-monitor
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
   egress:
-  # Allow DNS resolution
-  - ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
-    ports:
-    - port: 8080
-      protocol: TCP
-    - port: 50051
-      protocol: TCP
-    ports:
-    - port: 8080
-      protocol: TCP
-    - port: 50051
-      protocol: TCP
-  egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-genai-svc-t2v-transformers-selector
-  # Allow DNS resolution
-  - ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
+    # Allow communication with t2v-transformers
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-genai-svc-t2v-transformers-selector
+      ports:
+        - port: {{ .Values.genaisvct2vtransformers.service.targetPort }}
+          protocol: TCP
+    # Allow DNS resolution
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
 ---
 # Network policy for t2v-transformers
 apiVersion: networking.k8s.io/v1
@@ -158,27 +199,27 @@ spec:
     matchLabels:
       app: ai-event-concepter-genai-svc-t2v-transformers-selector
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-genai-svc-weaviate-selector
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-genai-svc-weaviate-selector
+    - from:  # Allow Prometheus monitoring
+        - namespaceSelector:
+            matchLabels:
+              name: team-git-push-force-monitor
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
   egress:
-  # Allow DNS resolution
-  - ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
-  # Allow outbound internet access for Hugging Face models
-  - to: []
-    ports:
-    - port: 443
-      protocol: TCP
-    - port: 80
-      protocol: TCP
+    # Allow DNS resolution
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
 ---
 # Network policy for minio
 apiVersion: networking.k8s.io/v1
@@ -190,73 +231,27 @@ spec:
     matchLabels:
       app: ai-event-concepter-genai-svc-minio-selector
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-genai-svc-selector
----
-# Network policy for concept-svc
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: concept-svc-network-policy
-spec:
-  podSelector:
-    matchLabels:
-      app: ai-event-concepter-concept-svc-selector
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-gateway-selector
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-genai-svc-selector
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-genai-svc-selector
+    - from:  # Allow Prometheus monitoring
+        - namespaceSelector:
+            matchLabels:
+              name: team-git-push-force-monitor
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
   egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-concept-svc-db-selector
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-user-svc-db-selector
-  # Allow DNS resolution
-  - ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
----
-# Network policy for concept-svc-db
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: concept-svc-db-network-policy
-spec:
-  podSelector:
-    matchLabels:
-      app: ai-event-concepter-concept-svc-db-selector
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-concept-svc-selector
-  egress:
-  # Allow DNS resolution
-  - ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
+    # Allow DNS resolution
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
 ---
 # Network policy for user-svc
 apiVersion: networking.k8s.io/v1
@@ -268,24 +263,73 @@ spec:
     matchLabels:
       app: ai-event-concepter-user-svc-selector
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-gateway-selector
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-gateway-selector
+    - from:  # Allow Prometheus monitoring
+        - namespaceSelector:
+            matchLabels:
+              name: team-git-push-force-monitor
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
   egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-user-svc-db-selector
-  # Allow DNS resolution
-  - ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-user-svc-db-selector
+      ports:
+        - port: {{ .Values.userdb.service.targetPort }}
+          protocol: TCP
+    # Allow DNS resolution
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+---
+# Network policy for concept-svc
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: concept-svc-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-event-concepter-concept-svc-selector
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-gateway-selector
+    - from:  # Allow Prometheus monitoring
+        - namespaceSelector:
+            matchLabels:
+              name: team-git-push-force-monitor
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-concept-svc-db-selector
+      ports:
+        - port: {{ .Values.conceptdb.service.targetPort }}
+          protocol: TCP
+    # Allow DNS resolution
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
 ---
 # Network policy for user-svc-db
 apiVersion: networking.k8s.io/v1
@@ -297,21 +341,41 @@ spec:
     matchLabels:
       app: ai-event-concepter-user-svc-db-selector
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-user-svc-selector
-    - podSelector:
-        matchLabels:
-          app: ai-event-concepter-concept-svc-selector
-  egress:
-  # Allow DNS resolution
-  - ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-user-svc-selector
+    - from:  # Allow Prometheus monitoring
+        - namespaceSelector:
+            matchLabels:
+              name: team-git-push-force-monitor
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+---
+# Network policy for concept-svc-db
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: concept-svc-db-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-event-concepter-concept-svc-db-selector
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ai-event-concepter-concept-svc-selector
+    - from:  # Allow Prometheus monitoring
+        - namespaceSelector:
+            matchLabels:
+              name: team-git-push-force-monitor
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
 {{- end }}
