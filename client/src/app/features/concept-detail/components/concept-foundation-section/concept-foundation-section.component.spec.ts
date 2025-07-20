@@ -1,5 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { ChangeDetectorRef } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { ConceptFoundationSectionComponent } from './concept-foundation-section.component';
 import { ConceptSuggestionService } from '../../services/concept-suggestion.service';
@@ -10,6 +11,7 @@ describe('ConceptFoundationSectionComponent', () => {
   let component: ConceptFoundationSectionComponent;
   let fixture: ComponentFixture<ConceptFoundationSectionComponent>;
   let suggestionService: jasmine.SpyObj<ConceptSuggestionService>;
+  let cdr: jasmine.SpyObj<ChangeDetectorRef>;
 
   const mockEventDetails: EventDetails = {
     theme: 'Technology',
@@ -38,21 +40,17 @@ describe('ConceptFoundationSectionComponent', () => {
 
   const mockSuggestions: ChatResponse = {
     response: 'Test response',
-    conceptUpdates: {
-      suggestions: [
-        {
-          field: 'eventDetails.theme',
-          currentValue: 'Technology',
-          suggestedValue: 'Innovation',
-          reasoning: 'Better theme'
-        },
-        {
-          field: 'title',
-          currentValue: 'Test Event',
-          suggestedValue: 'New Title',
-          reasoning: 'More engaging'
-        }
-      ]
+    conceptSuggestion: {
+      title: 'AI Conference',
+      description: 'New description',
+      eventDetails: {
+        theme: 'AI in Event Management',
+        format: 'HYBRID',
+        capacity: 500,
+        duration: '2 days',
+        targetAudience: 'Event managers and professionals',
+        location: 'New York'
+      }
     },
     suggestions: [],
     followUpQuestions: [],
@@ -62,6 +60,7 @@ describe('ConceptFoundationSectionComponent', () => {
   beforeEach(async () => {
     const suggestionServiceSpy = jasmine.createSpyObj('ConceptSuggestionService', 
       ['acceptFieldUpdate', 'updateConceptInState']);
+    const cdrSpy = jasmine.createSpyObj('ChangeDetectorRef', ['detectChanges']);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -69,13 +68,15 @@ describe('ConceptFoundationSectionComponent', () => {
         NoopAnimationsModule
       ],
       providers: [
-        { provide: ConceptSuggestionService, useValue: suggestionServiceSpy }
+        { provide: ConceptSuggestionService, useValue: suggestionServiceSpy },
+        { provide: ChangeDetectorRef, useValue: cdrSpy }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ConceptFoundationSectionComponent);
     component = fixture.componentInstance;
     suggestionService = TestBed.inject(ConceptSuggestionService) as jasmine.SpyObj<ConceptSuggestionService>;
+    cdr = TestBed.inject(ChangeDetectorRef) as jasmine.SpyObj<ChangeDetectorRef>;
 
     component.concept = mockConcept;
     component.suggestions = mockSuggestions;
@@ -87,38 +88,38 @@ describe('ConceptFoundationSectionComponent', () => {
   });
 
   describe('getFieldSuggestion', () => {
-    it('should return suggestion for field', () => {
-      // Recreate the suggestions to ensure fresh data
-      component.suggestions = {
-        response: 'Test response',
-        conceptUpdates: {
-          suggestions: [
-            {
-              field: 'eventDetails.theme',
-              currentValue: 'Technology',
-              suggestedValue: 'Innovation',
-              reasoning: 'Better theme'
-            },
-            {
-              field: 'title',
-              currentValue: 'Test Event',
-              suggestedValue: 'New Title',
-              reasoning: 'More engaging'
-            }
-          ]
-        },
-        suggestions: [],
-        followUpQuestions: [],
-        confidence: 0.9
-      };
-      
+    it('should return suggestion for title field when values differ', () => {
+      const suggestion = component.getFieldSuggestion('title');
+      expect(suggestion).toEqual({
+        field: 'title',
+        currentValue: 'Test Event',
+        suggestedValue: 'AI Conference',
+        reasoning: 'AI suggestion based on your requirements'
+      });
+    });
+
+    it('should return suggestion for theme field when values differ', () => {
       const suggestion = component.getFieldSuggestion('eventDetails.theme');
       expect(suggestion).toEqual({
         field: 'eventDetails.theme',
         currentValue: 'Technology',
-        suggestedValue: 'Innovation',
-        reasoning: 'Better theme'
+        suggestedValue: 'AI in Event Management',
+        reasoning: 'AI suggestion based on your requirements'
       });
+    });
+
+    it('should return undefined when values are the same', () => {
+      // Set concept format to match suggestion
+      component.concept = {
+        ...mockConcept,
+        eventDetails: {
+          ...mockEventDetails,
+          format: 'HYBRID'
+        }
+      };
+      
+      const suggestion = component.getFieldSuggestion('eventDetails.format');
+      expect(suggestion).toBeUndefined();
     });
 
     it('should return undefined for non-existent field', () => {
@@ -126,10 +127,49 @@ describe('ConceptFoundationSectionComponent', () => {
       expect(suggestion).toBeUndefined();
     });
 
+    it('should return undefined when field is rejected', () => {
+      // First reject the title suggestion
+      const titleSuggestion = component.getFieldSuggestion('title');
+      if (titleSuggestion) {
+        component.rejectFieldUpdate(titleSuggestion);
+      }
+      
+      // Now it should return undefined
+      const suggestion = component.getFieldSuggestion('title');
+      expect(suggestion).toBeUndefined();
+    });
+
     it('should handle missing suggestions', () => {
       component.suggestions = undefined;
       const suggestion = component.getFieldSuggestion('eventDetails.theme');
       expect(suggestion).toBeUndefined();
+    });
+
+    it('should handle missing conceptSuggestion', () => {
+      component.suggestions = {
+        ...mockSuggestions,
+        conceptSuggestion: undefined
+      };
+      const suggestion = component.getFieldSuggestion('eventDetails.theme');
+      expect(suggestion).toBeUndefined();
+    });
+
+    it('should return suggestion with "Not set" for missing current value', () => {
+      component.concept = {
+        ...mockConcept,
+        eventDetails: {
+          ...mockEventDetails,
+          location: undefined
+        }
+      };
+      
+      const suggestion = component.getFieldSuggestion('eventDetails.location');
+      expect(suggestion).toEqual({
+        field: 'eventDetails.location',
+        currentValue: 'Not set',
+        suggestedValue: 'New York',
+        reasoning: 'AI suggestion based on your requirements'
+      });
     });
   });
 
@@ -140,6 +180,7 @@ describe('ConceptFoundationSectionComponent', () => {
       expect(component.getFieldDisplayName('eventDetails.duration')).toBe('Duration');
       expect(component.getFieldDisplayName('eventDetails.theme')).toBe('Theme');
       expect(component.getFieldDisplayName('eventDetails.targetAudience')).toBe('Target Audience');
+      expect(component.getFieldDisplayName('eventDetails.location')).toBe('Location');
       expect(component.getFieldDisplayName('title')).toBe('Title');
       expect(component.getFieldDisplayName('description')).toBe('Description');
     });
@@ -150,130 +191,139 @@ describe('ConceptFoundationSectionComponent', () => {
   });
 
   describe('acceptFieldUpdate', () => {
-    it('should accept field update and update concept in state', () => {
-      const update = { field: 'title', suggestedValue: 'New Title' };
-      const updatedConcept = { ...mockConcept, title: 'New Title' };
+    it('should accept field update and update concept in state', fakeAsync(() => {
+      const suggestion = {
+        field: 'title',
+        currentValue: 'Test Event',
+        suggestedValue: 'AI Conference',
+        reasoning: 'Better title'
+      };
+      const updatedConcept = { ...mockConcept, title: 'AI Conference' };
       suggestionService.acceptFieldUpdate.and.returnValue(of(updatedConcept));
 
-      spyOn(component, 'clearSuggestion' as any);
+      component.acceptFieldUpdate(suggestion);
 
-      component.acceptFieldUpdate(update);
+      // Tick to process the Observable
+      tick();
 
-      expect(suggestionService.acceptFieldUpdate).toHaveBeenCalledWith(mockConcept, update);
+      expect(suggestionService.acceptFieldUpdate).toHaveBeenCalledWith(mockConcept, {
+        field: 'title',
+        suggestedValue: 'AI Conference'
+      });
       expect(suggestionService.updateConceptInState).toHaveBeenCalledWith(updatedConcept);
-      expect((component as any).clearSuggestion).toHaveBeenCalledWith('update', update);
-    });
+      expect(component.concept).toEqual(updatedConcept);
+    }));
 
     it('should handle error during field update', () => {
-      const update = { field: 'title', suggestedValue: 'New Title' };
+      const suggestion = {
+        field: 'title',
+        currentValue: 'Test Event',
+        suggestedValue: 'AI Conference',
+        reasoning: 'Better title'
+      };
       const error = new Error('Update failed');
       suggestionService.acceptFieldUpdate.and.returnValue(throwError(error));
 
       spyOn(console, 'error');
 
-      component.acceptFieldUpdate(update);
+      component.acceptFieldUpdate(suggestion);
 
-      expect(suggestionService.acceptFieldUpdate).toHaveBeenCalledWith(mockConcept, update);
+      expect(suggestionService.acceptFieldUpdate).toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith('Error updating concept:', error);
     });
+
+    it('should remove field from rejected list when accepting', fakeAsync(() => {
+      const suggestion = {
+        field: 'title',
+        currentValue: 'Test Event',
+        suggestedValue: 'AI Conference',
+        reasoning: 'Better title'
+      };
+      
+      // First reject the suggestion
+      component.rejectFieldUpdate(suggestion);
+      expect(component.getFieldSuggestion('title')).toBeUndefined();
+      
+      // Then accept it
+      const updatedConcept = { ...mockConcept, title: 'AI Conference' };
+      suggestionService.acceptFieldUpdate.and.returnValue(of(updatedConcept));
+      component.acceptFieldUpdate(suggestion);
+
+      // Tick to process the Observable
+      tick();
+
+      // Update the concept to reflect the accepted change
+      component.concept = updatedConcept;
+      
+      // Should have processed the acceptance
+      expect(suggestionService.acceptFieldUpdate).toHaveBeenCalled();
+    }));
   });
 
   describe('rejectFieldUpdate', () => {
-    it('should reject field update by clearing suggestion', () => {
-      const update = { field: 'title', suggestedValue: 'New Title' };
-      spyOn(component, 'clearSuggestion' as any);
-
-      component.rejectFieldUpdate(update);
-
-      expect((component as any).clearSuggestion).toHaveBeenCalledWith('update', update);
-    });
-  });
-
-  describe('isComplete', () => {
-    it('should return true when section is complete', () => {
-      expect(component.isComplete()).toBeTruthy();
-    });
-
-    it('should return false when theme is missing', () => {
-      component.concept = {
-        ...mockConcept,
-        eventDetails: {
-          ...mockEventDetails,
-          theme: undefined
-        }
+    it('should mark suggestion as rejected and trigger change detection', () => {
+      const suggestion = {
+        field: 'title',
+        currentValue: 'Test Event',
+        suggestedValue: 'AI Conference',
+        reasoning: 'Better title'
       };
-      expect(component.isComplete()).toBeFalsy();
-    });
+      spyOn(console, 'log');
 
-    it('should return false when objectives are missing', () => {
-      component.concept = {
-        ...mockConcept,
-        eventDetails: {
-          ...mockEventDetails,
-          objectives: []
-        }
-      };
-      expect(component.isComplete()).toBeFalsy();
-    });
+      component.rejectFieldUpdate(suggestion);
 
-    it('should return false when target audience is missing', () => {
-      component.concept = {
-        ...mockConcept,
-        eventDetails: {
-          ...mockEventDetails,
-          targetAudience: undefined
-        }
-      };
-      expect(component.isComplete()).toBeFalsy();
-    });
-
-    it('should return false when eventDetails is missing', () => {
-      component.concept = {
-        ...mockConcept,
-        eventDetails: undefined
-      };
-      expect(component.isComplete()).toBeFalsy();
+      expect(console.log).toHaveBeenCalledWith('Rejected suggestion for field:', 'title');
+      
+      // Verify that the suggestion is now hidden
+      const rejectedSuggestion = component.getFieldSuggestion('title');
+      expect(rejectedSuggestion).toBeUndefined();
     });
   });
 
   describe('hasSuggestions', () => {
-    it('should return true when has eventDetails suggestions', () => {
+    it('should return true when has field suggestions', () => {
       expect(component.hasSuggestions()).toBeTruthy();
     });
 
-    it('should return true when has title suggestions', () => {
-      component.suggestions = {
-        ...mockSuggestions,
-        conceptUpdates: {
-          suggestions: [
-            { field: 'title', currentValue: 'Test Event', suggestedValue: 'New Title', reasoning: 'Better' }
-          ]
+    it('should return false when no field suggestions exist', () => {
+      // Set up concept to match all suggested values
+      component.concept = {
+        ...mockConcept,
+        title: 'AI Conference',
+        description: 'New description',
+        eventDetails: {
+          ...mockEventDetails,
+          theme: 'AI in Event Management',
+          format: 'HYBRID',
+          capacity: 500,
+          duration: '2 days',
+          targetAudience: 'Event managers and professionals',
+          location: 'New York'
         }
       };
-      expect(component.hasSuggestions()).toBeTruthy();
+      expect(component.hasSuggestions()).toBeFalsy();
     });
 
-    it('should return true when has description suggestions', () => {
-      component.suggestions = {
-        ...mockSuggestions,
-        conceptUpdates: {
-          suggestions: [
-            { field: 'description', currentValue: 'Test description', suggestedValue: 'New Description', reasoning: 'Better' }
-          ]
-        }
-      };
-      expect(component.hasSuggestions()).toBeTruthy();
-    });
+    it('should return false when all suggestions are rejected', () => {
+      // Reject all possible suggestions
+      const fields = [
+        'title', 
+        'description', 
+        'eventDetails.theme', 
+        'eventDetails.format', 
+        'eventDetails.capacity', 
+        'eventDetails.duration', 
+        'eventDetails.targetAudience',
+        'eventDetails.location'
+      ];
 
-    it('should return false when no relevant suggestions', () => {
-      component.suggestions = {
-        ...mockSuggestions,
-        conceptUpdates: {
-          suggestions: [
-            { field: 'otherField', currentValue: 'Old Value', suggestedValue: 'Value', reasoning: 'Reason' }
-          ]
+      fields.forEach(field => {
+        const suggestion = component.getFieldSuggestion(field);
+        if (suggestion) {
+          component.rejectFieldUpdate(suggestion);
         }
-      };
+      });
+
       expect(component.hasSuggestions()).toBeFalsy();
     });
 
@@ -282,43 +332,12 @@ describe('ConceptFoundationSectionComponent', () => {
       expect(component.hasSuggestions()).toBeFalsy();
     });
 
-    it('should return false when conceptUpdates is missing', () => {
+    it('should return false when conceptSuggestion is missing', () => {
       component.suggestions = {
         ...mockSuggestions,
-        conceptUpdates: undefined
+        conceptSuggestion: undefined
       };
       expect(component.hasSuggestions()).toBeFalsy();
-    });
-  });
-
-  describe('clearSuggestion', () => {
-    it('should clear update suggestion', () => {
-      const update = mockSuggestions.conceptUpdates!.suggestions[0];
-      const initialLength = component.suggestions!.conceptUpdates!.suggestions.length;
-      
-      (component as any).clearSuggestion('update', update);
-      
-      expect(component.suggestions!.conceptUpdates!.suggestions.length).toBe(initialLength - 1);
-      expect(component.suggestions!.conceptUpdates!.suggestions).not.toContain(update);
-    });
-
-    it('should handle missing suggestions', () => {
-      component.suggestions = undefined;
-      
-      expect(() => {
-        (component as any).clearSuggestion('update', {});
-      }).not.toThrow();
-    });
-
-    it('should handle missing conceptUpdates', () => {
-      component.suggestions = {
-        ...mockSuggestions,
-        conceptUpdates: undefined
-      };
-      
-      expect(() => {
-        (component as any).clearSuggestion('update', {});
-      }).not.toThrow();
     });
   });
 

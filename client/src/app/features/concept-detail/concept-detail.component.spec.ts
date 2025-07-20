@@ -3,10 +3,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ChangeDetectorRef } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { ConceptDetailComponent } from './concept-detail.component';
 import { StateService } from '../../core/services/state.service';
 import { ConceptService } from '../../core/services/concept.service';
+import { ChatService } from '../../core/services/chat.service';
+import { DocumentService } from '../../core/services/document.service';
 import { Concept } from '../../core/models/concept.model';
 
 describe('ConceptDetailComponent', () => {
@@ -14,6 +18,10 @@ describe('ConceptDetailComponent', () => {
   let fixture: ComponentFixture<ConceptDetailComponent>;
   let stateService: jasmine.SpyObj<StateService>;
   let conceptService: jasmine.SpyObj<ConceptService>;
+  let chatService: jasmine.SpyObj<ChatService>;
+  let documentService: jasmine.SpyObj<DocumentService>;
+  let dialog: jasmine.SpyObj<MatDialog>;
+  let cdr: jasmine.SpyObj<ChangeDetectorRef>;
   let router: Router;
   let activatedRoute: ActivatedRoute;
 
@@ -51,8 +59,21 @@ describe('ConceptDetailComponent', () => {
   ];
 
   beforeEach(async () => {
-    const stateServiceSpy = jasmine.createSpyObj('StateService', ['getCurrentConcept', 'getConcepts', 'setCurrentConcept', 'areConceptsLoaded']);
+    const stateServiceSpy = jasmine.createSpyObj('StateService', [
+      'getCurrentConcept', 
+      'getConcepts', 
+      'setCurrentConcept', 
+      'areConceptsLoaded',
+      'getChatMessages',
+      'getUser',
+      'isLoading',
+      'getError'
+    ]);
     const conceptServiceSpy = jasmine.createSpyObj('ConceptService', ['getConceptById', 'updateConcept', 'downloadConceptPdf']);
+    const chatServiceSpy = jasmine.createSpyObj('ChatService', ['sendMessage', 'initializeChat']);
+    const documentServiceSpy = jasmine.createSpyObj('DocumentService', ['getConceptDocuments', 'uploadDocument', 'deleteDocument']);
+    const dialogSpy = jasmine.createSpyObj('MatDialog', ['open']);
+    const cdrSpy = jasmine.createSpyObj('ChangeDetectorRef', ['markForCheck', 'detectChanges']);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -64,6 +85,10 @@ describe('ConceptDetailComponent', () => {
       providers: [
         { provide: StateService, useValue: stateServiceSpy },
         { provide: ConceptService, useValue: conceptServiceSpy },
+        { provide: ChatService, useValue: chatServiceSpy },
+        { provide: DocumentService, useValue: documentServiceSpy },
+        { provide: MatDialog, useValue: dialogSpy },
+        { provide: ChangeDetectorRef, useValue: cdrSpy },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -77,6 +102,10 @@ describe('ConceptDetailComponent', () => {
     component = fixture.componentInstance;
     stateService = TestBed.inject(StateService) as jasmine.SpyObj<StateService>;
     conceptService = TestBed.inject(ConceptService) as jasmine.SpyObj<ConceptService>;
+    chatService = TestBed.inject(ChatService) as jasmine.SpyObj<ChatService>;
+    documentService = TestBed.inject(DocumentService) as jasmine.SpyObj<DocumentService>;
+    dialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
+    cdr = TestBed.inject(ChangeDetectorRef) as jasmine.SpyObj<ChangeDetectorRef>;
     router = TestBed.inject(Router);
     activatedRoute = TestBed.inject(ActivatedRoute);
     spyOn(router, 'navigate');
@@ -88,6 +117,24 @@ describe('ConceptDetailComponent', () => {
     stateService.getCurrentConcept.and.returnValue(of(null));
     stateService.getConcepts.and.returnValue(of([]));
     stateService.areConceptsLoaded.and.returnValue(false);
+    stateService.getChatMessages.and.returnValue(of([]));
+    stateService.getUser.and.returnValue(of(null));
+    stateService.isLoading.and.returnValue(of(false));
+    stateService.getError.and.returnValue(of(null));
+
+    // Configure chatService mock return values
+    const mockChatResponse = {
+      response: 'test response',
+      suggestions: ['suggestion 1', 'suggestion 2'],
+      followUpQuestions: ['question 1', 'question 2'],
+      confidence: 0.8
+    };
+    chatService.sendMessage.and.returnValue(of(mockChatResponse));
+    chatService.initializeChat.and.returnValue(of({ 
+      message: 'Welcome to chat', 
+      suggestions: ['suggestion 1'], 
+      conversationId: 'test-conversation-id' 
+    }));
   });
 
   it('should create', () => {
@@ -105,40 +152,24 @@ describe('ConceptDetailComponent', () => {
     expect(component.conceptId).toBe('test-concept-id');
   });
 
-     it('should get current concept observable', () => {
-     stateService.getCurrentConcept.and.returnValue(of(mockConcept));
-     stateService.getConcepts.and.returnValue(of(mockConcepts));
-     
-     // Create a new component instance to test observable initialization
-     const newComponent = new ConceptDetailComponent(activatedRoute, router, stateService, conceptService);
-     
-     expect(stateService.getCurrentConcept).toHaveBeenCalled();
-     expect(newComponent.concept$).toBeDefined();
-   });
+  it('should have concept property', () => {
+    stateService.getCurrentConcept.and.returnValue(of(mockConcept));
+    stateService.getConcepts.and.returnValue(of(mockConcepts));
+    
+    expect(component.concept).toBeDefined();
+  });
 
   describe('Concept Loading', () => {
     it('should load and set concept when found', async () => {
       stateService.getCurrentConcept.and.returnValue(of(null));
       stateService.getConcepts.and.returnValue(of(mockConcepts));
       
-      // Create a new component instance to trigger the constructor logic
-      const testComponent = new ConceptDetailComponent(
-        activatedRoute,
-        router,
-        stateService,
-        conceptService
-      );
+      component.ngOnInit();
       
       // Wait for the observable chain to complete
-      await new Promise(resolve => {
-        testComponent.concept$.subscribe(concept => {
-          if (concept) {
-            resolve(concept);
-          }
-        });
-      });
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      expect(stateService.setCurrentConcept).toHaveBeenCalledWith(mockConcept);
+      expect(component.concept).toEqual(mockConcept);
     });
 
     it('should redirect when concept not found', async () => {
@@ -146,17 +177,7 @@ describe('ConceptDetailComponent', () => {
       stateService.getConcepts.and.returnValue(of([])); // Empty array - no concepts
       stateService.areConceptsLoaded.and.returnValue(true);
       
-      // Set up component with non-existent concept ID
-      const component2 = new ConceptDetailComponent(
-        {
-          snapshot: { params: { id: 'non-existent-id' } }
-        } as any,
-        router,
-        stateService,
-        conceptService
-      );
-
-      component2.ngOnInit();
+      component.ngOnInit();
       
       // Wait for the observable chain and redirect logic
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -169,16 +190,7 @@ describe('ConceptDetailComponent', () => {
       stateService.getConcepts.and.returnValue(of([])); // Empty concepts
       stateService.areConceptsLoaded.and.returnValue(true);
       
-      const component3 = new ConceptDetailComponent(
-        {
-          snapshot: { params: { id: 'any-id' } }
-        } as any,
-        router,
-        stateService,
-        conceptService
-      );
-
-      component3.ngOnInit();
+      component.ngOnInit();
       
       // Wait for the observable chain and redirect logic
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -225,6 +237,31 @@ describe('ConceptDetailComponent', () => {
       expect(conceptService.downloadConceptPdf).toHaveBeenCalledWith(component.conceptId);
       expect(window.URL.createObjectURL).toHaveBeenCalled();
     });
+
+    it('should open documents dialog when openDocumentsDialog is called', () => {
+      component.openDocumentsDialog();
+
+      expect(dialog.open).toHaveBeenCalledWith(jasmine.any(Function), {
+        width: '600px',
+        maxWidth: '90vw',
+        maxHeight: '80vh',
+        disableClose: false,
+        data: {
+          conceptId: 'test-concept-id',
+          conceptTitle: 'Test Conference'
+        },
+        panelClass: 'documents-dialog-panel'
+      });
+    });
+
+    it('should not open documents dialog when concept is null', () => {
+      stateService.getCurrentConcept.and.returnValue(of(null));
+      component.concept = null;
+
+      component.openDocumentsDialog();
+
+      expect(dialog.open).not.toHaveBeenCalled();
+    });
   });
 
   describe('Helper Methods', () => {
@@ -261,29 +298,41 @@ describe('ConceptDetailComponent', () => {
 
   describe('Route Parameter Edge Cases', () => {
     it('should handle missing route parameter', () => {
-      const component4 = new ConceptDetailComponent(
-        {
-          snapshot: { params: {} }
-        } as any,
+      // Test using the existing component instance
+      const testRoute = {
+        snapshot: { params: {} }
+      } as any;
+      
+      // Create a new component with missing parameter
+      const testComponent = new ConceptDetailComponent(
+        testRoute,
         router,
         stateService,
-        conceptService
+        conceptService,
+        chatService,
+        cdr,
+        dialog
       );
 
-      expect(component4.conceptId).toBeUndefined();
+      expect(testComponent.conceptId).toBeUndefined();
     });
 
     it('should handle null route parameter', () => {
-      const component5 = new ConceptDetailComponent(
-        {
-          snapshot: { params: { id: null } }
-        } as any,
+      const testRoute = {
+        snapshot: { params: { id: null } }
+      } as any;
+      
+      const testComponent = new ConceptDetailComponent(
+        testRoute,
         router,
         stateService,
-        conceptService
+        conceptService,
+        chatService,
+        cdr,
+        dialog
       );
 
-      expect(component5.conceptId).toBeNull();
+      expect(testComponent.conceptId).toBeNull();
     });
   });
 }); 
