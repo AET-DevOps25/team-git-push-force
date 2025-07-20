@@ -1,9 +1,12 @@
 import os
+import pytest
 from dotenv import load_dotenv
 
 # Import the OpenWebUILLM class
 from openwebui_llm import OpenWebUILLM
 
+@pytest.mark.skipif(os.getenv("SKIP_OPENWEBUI", "false").lower() == "true",
+                   reason="Skipping OpenWebUI connection test when SKIP_OPENWEBUI is true")
 def test_openwebui_connection():
     # Load environment variables from .env
     load_dotenv()

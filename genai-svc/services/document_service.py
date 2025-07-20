@@ -15,19 +15,106 @@ class DocumentService:
 
     def __init__(self):
         """Initialize the document service"""
-        # Initialize S3/MinIO client
-        self.s3_client = boto3.client(
-            's3',
-            endpoint_url=os.getenv('MINIO_URL', 'http://localhost:9000'),
-            aws_access_key_id=os.getenv('MINIO_ACCESS_KEY', 'minioadmin'),
-            aws_secret_access_key=os.getenv('MINIO_SECRET_KEY', 'minioadmin'),
-            region_name='us-east-1',
-            config=boto3.session.Config(signature_version='s3v4')
-        )
+        # Skip MinIO connection if SKIP_MINIO env var is set
+        if os.getenv("SKIP_MINIO", "false").lower() == "true":
+            print("SKIP_MINIO is set. Mocking MinIO client for tests.")
+            self.s3_client = self._create_mock_s3_client()
+        else:
+            # Initialize S3/MinIO client
+            self.s3_client = boto3.client(
+                's3',
+                endpoint_url=os.getenv('MINIO_URL', 'http://localhost:9000'),
+                aws_access_key_id=os.getenv('MINIO_ACCESS_KEY', 'minioadmin'),
+                aws_secret_access_key=os.getenv('MINIO_SECRET_KEY', 'minioadmin'),
+                region_name='us-east-1',
+                config=boto3.session.Config(signature_version='s3v4')
+            )
+        
         self.bucket_name = os.getenv('MINIO_BUCKET', 'concepts')
 
-        # Ensure bucket exists
-        self._ensure_bucket_exists()
+        # Ensure bucket exists if not skipping MinIO
+        if os.getenv("SKIP_MINIO", "false").lower() != "true":
+            self._ensure_bucket_exists()
+            
+    def _create_mock_s3_client(self):
+        """Create a mock S3 client for testing"""
+        class MockS3Client:
+            def __init__(self):
+                self.mock_objects = {}
+                self.meta = type('meta', (), {'session': type('session', (), {'close': lambda: None})()})
+                
+            def create_bucket(self, **kwargs):
+                return {}
+                
+            def head_bucket(self, **kwargs):
+                return {}
+                
+            def upload_fileobj(self, file_obj, bucket, key):
+                if bucket not in self.mock_objects:
+                    self.mock_objects[bucket] = {}
+                self.mock_objects[bucket][key] = {
+                    'content': 'mock_content',
+                    'size': 100,
+                    'last_modified': datetime.datetime.now()
+                }
+                return {}
+                
+            def list_objects_v2(self, **kwargs):
+                bucket = kwargs.get('Bucket')
+                prefix = kwargs.get('Prefix', '')
+                
+                if bucket not in self.mock_objects or not self.mock_objects[bucket]:
+                    return {}
+                    
+                contents = []
+                for key, obj in self.mock_objects[bucket].items():
+                    if key.startswith(prefix):
+                        contents.append({
+                            'Key': key,
+                            'Size': obj['size'],
+                            'LastModified': obj['last_modified']
+                        })
+                
+                if contents:
+                    return {'Contents': contents}
+                return {}
+                
+            def delete_objects(self, **kwargs):
+                bucket = kwargs.get('Bucket')
+                objects = kwargs.get('Delete', {}).get('Objects', [])
+                
+                if bucket in self.mock_objects:
+                    for obj in objects:
+                        key = obj.get('Key')
+                        if key in self.mock_objects[bucket]:
+                            del self.mock_objects[bucket][key]
+                
+                return {'Deleted': [{'Key': obj.get('Key')} for obj in objects]}
+                
+            def delete_object(self, **kwargs):
+                bucket = kwargs.get('Bucket')
+                key = kwargs.get('Key')
+                
+                if bucket in self.mock_objects and key in self.mock_objects[bucket]:
+                    del self.mock_objects[bucket][key]
+                
+                return {}
+                
+            def get_paginator(self, operation_name):
+                class MockPaginator:
+                    def __init__(self, client, operation):
+                        self.client = client
+                        self.operation = operation
+                        
+                    def paginate(self, **kwargs):
+                        # For list_objects_v2, return a single page with all objects
+                        if self.operation == 'list_objects_v2':
+                            result = self.client.list_objects_v2(**kwargs)
+                            yield result
+                
+                return MockPaginator(self, operation_name)
+                
+        return MockS3Client()
 
     def _ensure_bucket_exists(self):
         """Ensure the S3/MinIO bucket exists"""
@@ -62,15 +149,18 @@ class DocumentService:
         # Split text into chunks
         chunks = self._split_text(text)
 
-        # Store chunks in vector database
-        if chunks:
-            metadatas = [{
-                "document_id": document_id,
-                "concept_id": concept_id,
-                "filename": filename
-            } for _ in chunks]
+        # Ensure we have at least one chunk even if text extraction failed
+        if not chunks:
+            chunks = [f"Failed to extract meaningful text from {filename}"]
 
-            vector_store_service.add_texts(texts=chunks, metadatas=metadatas)
+        # Store chunks in vector database
+        metadatas = [{
+            "document_id": document_id,
+            "concept_id": concept_id,
+            "filename": filename
+        } for _ in chunks]
+
+        vector_store_service.add_texts(texts=chunks, metadatas=metadatas)
 
         # Create and return processed document info
         # Determine document type based on file extension

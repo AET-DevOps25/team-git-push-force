@@ -9,10 +9,10 @@ class WelcomeGenerator:
         """Initialize the welcome generator with an LLM"""
         self.llm = llm
         self.welcome_prompt = PromptTemplate(
-            input_variables=["user_name", "concept_name", "concept_description"],
+            input_variables=["concept_name", "concept_description"],
             template=r"""You are an AI assistant for event planning and concept development.
 
-        Generate a friendly welcome message for {user_name} who is creating a new event concept called \"{concept_name}\".
+        Generate a friendly welcome message for the person who is creating a new event concept called \"{concept_name}\".
         The concept is described as: {concept_description}
         
         Your welcome message should be enthusiastic, mention the concept name and briefly comment on the concept description. Also offer to help with developing the concept further.
@@ -82,7 +82,6 @@ class WelcomeGenerator:
             # Use the welcome prompt template with RunnableSequence
             chain = self.welcome_prompt | self.llm
             welcome_message = chain.invoke({
-                "user_name": user_name,
                 "concept_name": concept_name,
                 "concept_description": concept_description
             })

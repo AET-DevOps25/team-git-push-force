@@ -22,13 +22,13 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        System.out.println("[SECURITY_DEBUG] Configuring security filter chain");
+        // Removed debug logging for security filter chain configuration
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .authorizeExchange(authorizeExchange -> {
-                    System.out.println("[SECURITY_DEBUG] Configuring authorization rules");
+                    // Removed debug logging for authorization rules configuration
 
                     authorizeExchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow preflight requests
@@ -37,20 +37,21 @@ public class SecurityConfig {
                                      "/actuator/prometheus").permitAll()
                         .anyExchange().authenticated();
 
-                    System.out.println("[SECURITY_DEBUG] Authorization rules configured");
+                    // Removed debug logging for authorization rules completion
                 })
                 .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .exceptionHandling(exceptionHandling -> {
-                    System.out.println("[SECURITY_DEBUG] Configuring exception handling");
+                    // Removed debug logging for exception handling configuration
 
                     exceptionHandling
                         .authenticationEntryPoint((exchange, ex) -> {
-                            System.out.println("[SECURITY_DEBUG] Authentication failed: " + ex.getMessage());
+                            // Keep logging for authentication failures but without DEBUG prefix
+                            System.out.println("Authentication failed: " + ex.getMessage());
                             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                             return exchange.getResponse().setComplete();
                         });
 
-                    System.out.println("[SECURITY_DEBUG] Exception handling configured");
+                    // Removed debug logging for exception handling completion
                 })
                 .build();
     }

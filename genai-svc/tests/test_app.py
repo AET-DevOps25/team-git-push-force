@@ -6,8 +6,27 @@ from datetime import datetime
 # Import the Flask app (already imported in conftest.py)
 import app
 from controllers import health_controller
-from services.llm_service import llm_service, process_chat_request
+from services.llm_service import llm_service, process_chat_request, generate_welcome_message
 from genai_models.models.chat_request import ChatRequest
+from genai_models.models.initialize_chat_for_concept_request import InitializeChatForConceptRequest
+import os
+
+# Mock classes to replace missing imports
+class EventDetails:
+    def __init__(self, theme=None, format=None, capacity=None, duration=None, targetAudience=None, location=None):
+        self.theme = theme
+        self.format = format
+        self.capacity = capacity
+        self.duration = duration
+        self.targetAudience = targetAudience
+        self.location = location
+
+class Concept:
+    def __init__(self, id=None, title=None, description=None, event_details=None):
+        self.id = id
+        self.title = title
+        self.description = description
+        self.event_details = event_details
 
 class TestAppEndpoints:
     """Test suite for the Flask app endpoints."""
@@ -114,3 +133,136 @@ class TestControllerFunctions:
         assert hasattr(response, 'sources')
         assert hasattr(response, 'confidence')
         assert hasattr(response, 'tokens')
+
+class TestLLMService:
+    """Test suite for the LLM service."""
+
+    def setup_method(self):
+        """Set up test environment before each test method."""
+        # Ensure environment variables are set for testing
+        os.environ["SKIP_WEAVIATE"] = "true"
+        os.environ["SKIP_MINIO"] = "true"
+        os.environ["SKIP_OPENWEBUI"] = "true"
+        
+        # Create a mock concept for testing
+        self.mock_concept = Concept(
+            id="test-concept-123",
+            title="Test Concept",
+            description="A test concept for unit testing",
+            event_details=EventDetails(
+                theme="Test Theme",
+                format="HYBRID",
+                capacity=100,
+                duration="1 day",
+                targetAudience="Test audience",
+                location="Test location"
+            )
+        )
+
+    @pytest.mark.skipif(
+        os.environ.get("SKIP_WEAVIATE") == "true" and 
+        os.environ.get("SKIP_MINIO") == "true" and 
+        os.environ.get("SKIP_OPENWEBUI") == "true",
+        reason="Skipping test when external services are skipped"
+    )
+    @patch('services.llm_service.welcome_generator')
+    def test_generate_welcome_message(self, mock_welcome_generator):
+        """Test the generate_welcome_message function."""
+        # Mock the welcome generator
+        mock_welcome_generator.generate_welcome_message.return_value = "Welcome to the test concept!"
+        
+        # Create an initialization request
+        init_request = InitializeChatForConceptRequest(
+            concept_id="test-concept-123",
+            concept=self.mock_concept
+        )
+        
+        # Generate a welcome message
+        welcome_message = generate_welcome_message(init_request)
+        
+        # Verify the welcome message
+        assert welcome_message == "Welcome to the test concept!"
+        
+        # Verify that the welcome generator was called
+        mock_welcome_generator.generate_welcome_message.assert_called_once_with(init_request)
+
+    @patch('services.llm_service.response_generator')
+    @patch('services.llm_service.llm_service.llm')
+    def test_process_chat_request_with_concept(self, mock_llm, mock_response_generator):
+        """Test chat request processing with a concept."""
+        # Mock the LLM response
+        mock_llm.return_value = "This is a test response with concept context."
+        
+        # Mock the response generator
+        mock_response = MagicMock()
+        mock_response.response = "This is a test response with concept context."
+        mock_response.suggestions = ["Suggestion 1", "Suggestion 2"]
+        mock_response.follow_up_questions = ["Question 1?", "Question 2?"]
+        mock_response.sources = []
+        mock_response.confidence = 0.9
+        mock_response.tokens = {"prompt": 100, "response": 150, "total": 250}
+        mock_response_generator.create_response.return_value = mock_response
+        
+        # Create a chat request with a concept
+        chat_request = ChatRequest(
+            message="Tell me about this concept.",
+            conversation_id="test-conversation-id",
+            concept=self.mock_concept
+        )
+        
+        # Process the chat request
+        response = process_chat_request(chat_request)
+        
+        # Verify the response
+        assert response is not None
+        assert response.response == "This is a test response with concept context."
+        assert len(response.suggestions) == 2
+        assert len(response.follow_up_questions) == 2
+        
+        # Verify that the response generator was called
+        mock_response_generator.create_response.assert_called_once()
+
+    @patch('services.llm_service.conversation_history_service')
+    @patch('services.llm_service.response_generator')
+    @patch('services.llm_service.llm_service.llm')
+    def test_process_chat_request_with_history(self, mock_llm, mock_response_generator, mock_history_service):
+        """Test chat request processing with conversation history."""
+        # Mock the LLM response
+        mock_llm.return_value = "This is a test response with history."
+        
+        # Mock the response generator
+        mock_response = MagicMock()
+        mock_response.response = "This is a test response with history."
+        mock_response.suggestions = ["Suggestion 1", "Suggestion 2"]
+        mock_response.follow_up_questions = ["Question 1?", "Question 2?"]
+        mock_response.sources = []
+        mock_response.confidence = 0.9
+        mock_response.tokens = {"prompt": 100, "response": 150, "total": 250}
+        mock_response_generator.create_response.return_value = mock_response
+        
+        # Mock the conversation history service
+        mock_history_service.get_formatted_history.return_value = (
+            "User: Previous message\nAssistant: Previous response",
+            [("Previous message", "Previous response")]
+        )
+        
+        # Create a chat request with conversation ID
+        chat_request = ChatRequest(
+            message="Tell me more.",
+            conversation_id="test-conversation-id"
+        )
+        
+        # Process the chat request
+        response = process_chat_request(chat_request)
+        
+        # Verify the response
+        assert response is not None
+        assert response.response == "This is a test response with history."
+        assert len(response.suggestions) == 2
+        assert len(response.follow_up_questions) == 2
+        
+        # Verify that the conversation history service was called
+        mock_history_service.get_formatted_history.assert_called_once_with("test-conversation-id")
+        
+        # Verify that the response generator was called
+        mock_response_generator.create_response.assert_called_once()
