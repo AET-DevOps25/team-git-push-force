@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable, catchError, throwError } from 'rxjs';
+import { Observable, catchError, of, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { MockApiService } from '../../mocks/services/mock-api.service';
 
@@ -39,6 +39,31 @@ export class ApiService {
       .pipe(
         catchError(this.handleError)
       );
+  }
+
+  // New method for downloading binary files (PDFs, images, etc.)
+  downloadBlob(endpoint: string, params?: any): Observable<Blob> {
+    if (environment.useMockApi) {
+      // Return a mock PDF blob for development
+      return of(new Blob(['Mock PDF content'], { type: 'application/pdf' })) as Observable<Blob>;
+    }
+
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined) {
+          httpParams = httpParams.set(key, params[key].toString());
+        }
+      });
+    }
+
+    return this.http.get(`${this.baseUrl}${endpoint}`, { 
+      params: httpParams,
+      responseType: 'blob' // This is crucial for binary data
+    })
+    .pipe(
+      catchError(this.handleError)
+    );
   }
 
   post<T>(endpoint: string, data: any): Observable<T> {

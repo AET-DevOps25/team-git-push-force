@@ -1,0 +1,94 @@
+<div class="dialog-header">
+  <div class="header-content">
+    <mat-icon class="header-icon">folder</mat-icon>
+    <div class="header-text">
+      <h2 mat-dialog-title>Documents</h2>
+      <p>{{ data.conceptTitle }}</p>
+    </div>
+  </div>
+  <button mat-icon-button mat-dialog-close class="close-button">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="dialog-content">
+  
+  <!-- Upload Section -->
+  <div class="upload-section">
+    <input type="file" 
+           #fileInput
+           multiple
+           accept=".pdf,.doc,.docx,.txt"
+           (change)="onFileSelected($event)"
+           style="display: none">
+    
+    <button mat-raised-button 
+            color="primary"
+            (click)="fileInput.click()"
+            [disabled]="isUploading"
+            class="upload-button">
+      <mat-icon>cloud_upload</mat-icon>
+      <span *ngIf="!isUploading">Choose Files</span>
+      <span *ngIf="isUploading">Uploading...</span>
+    </button>
+    
+    <p class="upload-hint">PDF, DOC, DOCX, TXT files supported</p>
+  </div>
+
+  <mat-divider class="section-divider"></mat-divider>
+
+  <!-- Documents List -->
+  <div class="documents-section">
+    <div class="section-header">
+      <h3>Documents ({{ documents.length }})</h3>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-state">
+      <mat-spinner diameter="32"></mat-spinner>
+      <p>Loading documents...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && documents.length === 0" class="empty-state">
+      <mat-icon>description</mat-icon>
+      <p>No documents uploaded yet</p>
+      <span class="empty-hint">Upload documents to help AI understand your event better</span>
+    </div>
+
+    <!-- Documents List -->
+    <div *ngIf="!isLoading && documents.length > 0" class="documents-list">
+      <div *ngFor="let document of documents; trackBy: trackByDocumentId" class="document-item">
+        <div class="document-icon">
+          <mat-icon [color]="getStatusColor(document.status)">{{ getTypeIcon(document.type) }}</mat-icon>
+        </div>
+        
+        <div class="document-info">
+          <div class="document-name">{{ document.filename }}</div>
+          <div class="document-details">
+            <span class="document-date">{{ formatDate(document.uploadedAt) }}</span>
+            <span class="document-status" [class]="'status-' + document.status.toLowerCase()">
+              <mat-icon [color]="getStatusColor(document.status)">{{ getStatusIcon(document.status) }}</mat-icon>
+              {{ document.status | titlecase }}
+            </span>
+          </div>
+        </div>
+
+        <div class="document-actions">
+          <button mat-icon-button 
+                  color="warn"
+                  (click)="deleteDocument(document)"
+                  matTooltip="Delete document"
+                  class="delete-button">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-button (click)="onClose()">Close</button>
+</mat-dialog-actions> 

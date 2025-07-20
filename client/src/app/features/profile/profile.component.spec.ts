@@ -1,15 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ProfileComponent } from './profile.component';
-import { StateService } from '../../core/services/state.service';
-import { User } from '../../core/models/user.model';
+import { StateService, UserService } from '../../core/services';
+import { User, UpdateUserRequest } from '../../core/models/user.model';
 
 describe('ProfileComponent', () => {
   let component: ProfileComponent;
   let fixture: ComponentFixture<ProfileComponent>;
   let stateService: jasmine.SpyObj<StateService>;
+  let userService: jasmine.SpyObj<UserService>;
 
   const mockUser: User = {
     id: '1',
@@ -28,7 +29,9 @@ describe('ProfileComponent', () => {
   };
 
   beforeEach(async () => {
-    const stateServiceSpy = jasmine.createSpyObj('StateService', ['getUser']);
+    const stateServiceSpy = jasmine.createSpyObj('StateService', ['getUser', 'setUser']);
+    const userServiceSpy = jasmine.createSpyObj('UserService', ['updateUserProfile']);
+    
     stateServiceSpy.getUser.and.returnValue(of(null)); // Default return value
 
     await TestBed.configureTestingModule({
@@ -38,13 +41,15 @@ describe('ProfileComponent', () => {
         NoopAnimationsModule
       ],
       providers: [
-        { provide: StateService, useValue: stateServiceSpy }
+        { provide: StateService, useValue: stateServiceSpy },
+        { provide: UserService, useValue: userServiceSpy }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProfileComponent);
     component = fixture.componentInstance;
     stateService = TestBed.inject(StateService) as jasmine.SpyObj<StateService>;
+    userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
   });
 
   it('should create', () => {
@@ -82,23 +87,23 @@ describe('ProfileComponent', () => {
     expect(component.timezones).toContain('UTC');
   });
 
-        describe('User Data Loading', () => {
-     it('should load user data when user exists', () => {
-       // Reset the service spy to return the mock user for this specific test
-       stateService.getUser.and.returnValue(of(mockUser));
-       
-       // Re-initialize the component to pick up the new observable
-       component = new ProfileComponent(TestBed.inject(FormBuilder), stateService);
-       component.ngOnInit();
+  describe('User Data Loading', () => {
+    it('should load user data when user exists', () => {
+      // Reset the service spy to return the mock user for this specific test
+      stateService.getUser.and.returnValue(of(mockUser));
+      
+      // Re-initialize the component to pick up the new observable
+      component = new ProfileComponent(TestBed.inject(FormBuilder), stateService, userService);
+      component.ngOnInit();
 
-       expect(component.profileForm.get('firstName')?.value).toBe('John');
-       expect(component.profileForm.get('lastName')?.value).toBe('Doe');
-       expect(component.profileForm.get('email')?.value).toBe('test@example.com');
-       expect(component.preferencesForm.get('preferredEventFormat')?.value).toBe('VIRTUAL');
-       expect(component.preferencesForm.get('industry')?.value).toBe('Technology');
-       expect(component.preferencesForm.get('language')?.value).toBe('en');
-       expect(component.preferencesForm.get('timezone')?.value).toBe('UTC');
-     });
+      expect(component.profileForm.get('firstName')?.value).toBe('John');
+      expect(component.profileForm.get('lastName')?.value).toBe('Doe');
+      expect(component.profileForm.get('email')?.value).toBe('test@example.com');
+      expect(component.preferencesForm.get('preferredEventFormat')?.value).toBe('VIRTUAL');
+      expect(component.preferencesForm.get('industry')?.value).toBe('Technology');
+      expect(component.preferencesForm.get('language')?.value).toBe('en');
+      expect(component.preferencesForm.get('timezone')?.value).toBe('UTC');
+    });
 
     it('should not load data when user is null', () => {
       stateService.getUser.and.returnValue(of(null));
@@ -119,6 +124,9 @@ describe('ProfileComponent', () => {
     it('should validate required fields', () => {
       expect(component.profileForm.get('firstName')?.hasError('required')).toBeTruthy();
       expect(component.profileForm.get('lastName')?.hasError('required')).toBeTruthy();
+      
+      // Enable email field to test validation since it's disabled by default
+      component.profileForm.get('email')?.enable();
       expect(component.profileForm.get('email')?.hasError('required')).toBeTruthy();
 
       component.profileForm.patchValue({
@@ -147,11 +155,34 @@ describe('ProfileComponent', () => {
     });
 
     it('should validate email format', () => {
+      // Enable email field to test validation since it's disabled by default
+      component.profileForm.get('email')?.enable();
       component.profileForm.get('email')?.setValue('invalid-email');
       expect(component.profileForm.get('email')?.hasError('email')).toBeTruthy();
 
       component.profileForm.get('email')?.setValue('test@example.com');
       expect(component.profileForm.get('email')?.hasError('email')).toBeFalsy();
+    });
+  });
+
+  describe('Helper Methods', () => {
+    beforeEach(() => {
+      stateService.getUser.and.returnValue(of(null));
+      fixture.detectChanges();
+    });
+
+    it('should return correct format icons', () => {
+      expect(component.getFormatIcon('PHYSICAL')).toBe('place');
+      expect(component.getFormatIcon('VIRTUAL')).toBe('videocam');
+      expect(component.getFormatIcon('HYBRID')).toBe('hub');
+      expect(component.getFormatIcon('UNKNOWN')).toBe('event');
+    });
+
+    it('should return correct format labels', () => {
+      expect(component.getFormatLabel('PHYSICAL')).toBe('Physical Events');
+      expect(component.getFormatLabel('VIRTUAL')).toBe('Virtual Events');
+      expect(component.getFormatLabel('HYBRID')).toBe('Hybrid Events');
+      expect(component.getFormatLabel('UNKNOWN')).toBe('UNKNOWN');
     });
   });
 
@@ -166,7 +197,10 @@ describe('ProfileComponent', () => {
     });
 
     it('should return email error message', () => {
+      // Enable the email field first since it's disabled by default
+      component.profileForm.get('email')?.enable();
       component.profileForm.get('email')?.setValue('invalid');
+      component.profileForm.get('email')?.markAsTouched(); // Trigger validation
       expect(component.getFieldErrorMessage(component.profileForm, 'email')).toBe('Please enter a valid email');
     });
 
@@ -195,52 +229,135 @@ describe('ProfileComponent', () => {
     beforeEach(() => {
       stateService.getUser.and.returnValue(of(null));
       fixture.detectChanges();
-      spyOn(window, 'alert');
+      spyOn(console, 'log');
+      spyOn(console, 'error');
     });
 
-    it('should save profile when form is valid', () => {
-      component.profileForm.patchValue({
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'test@example.com'
+    describe('Profile Update', () => {
+      it('should update profile when form is valid', () => {
+        const updatedUser = { ...mockUser, firstName: 'Jane', lastName: 'Smith' };
+        userService.updateUserProfile.and.returnValue(of(updatedUser));
+
+        component.profileForm.patchValue({
+          firstName: 'Jane',
+          lastName: 'Smith',
+          email: 'test@example.com'
+        });
+
+        component.onSaveProfile();
+
+        const expectedRequest: UpdateUserRequest = {
+          firstName: 'Jane',
+          lastName: 'Smith'
+        };
+
+        expect(userService.updateUserProfile).toHaveBeenCalledWith(expectedRequest);
+        expect(stateService.setUser).toHaveBeenCalledWith(updatedUser);
+        expect(console.log).toHaveBeenCalledWith('Profile updated successfully:', updatedUser);
+        expect(component.isLoading).toBeFalsy();
       });
 
-      component.onSaveProfile();
+      it('should not update profile when form is invalid', () => {
+        component.profileForm.patchValue({
+          firstName: '',
+          lastName: 'Doe',
+          email: 'invalid-email'
+        });
 
-      expect(window.alert).toHaveBeenCalledWith('Profile updated successfully!');
-    });
+        component.onSaveProfile();
 
-    it('should not save profile when form is invalid', () => {
-      component.profileForm.patchValue({
-        firstName: '',
-        lastName: 'Doe',
-        email: 'invalid-email'
+        expect(userService.updateUserProfile).not.toHaveBeenCalled();
+        expect(console.log).not.toHaveBeenCalled();
       });
 
-      component.onSaveProfile();
+      it('should handle profile update error', () => {
+        const error = new Error('Update failed');
+        userService.updateUserProfile.and.returnValue(throwError(() => error));
 
-      expect(window.alert).not.toHaveBeenCalled();
-    });
+        component.profileForm.patchValue({
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'test@example.com'
+        });
 
-    it('should save preferences when form is valid', () => {
-      component.preferencesForm.patchValue({
-        preferredEventFormat: 'PHYSICAL',
-        industry: 'Healthcare',
-        language: 'de',
-        timezone: 'Europe/Berlin'
+        component.onSaveProfile();
+
+        expect(userService.updateUserProfile).toHaveBeenCalled();
+        expect(console.error).toHaveBeenCalledWith('Error updating profile:', error);
+        expect(component.isLoading).toBeFalsy();
       });
 
-      component.onSavePreferences();
+      it('should set loading state during profile update', () => {
+        userService.updateUserProfile.and.returnValue(of(mockUser));
 
-      expect(window.alert).toHaveBeenCalledWith('Preferences updated successfully!');
+        component.profileForm.patchValue({
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'test@example.com'
+        });
+
+        expect(component.isLoading).toBeFalsy();
+        component.onSaveProfile();
+        expect(component.isLoading).toBeFalsy(); // Observable completes synchronously in test
+      });
     });
 
-    it('should handle invalid preferences form', () => {
-      // Since preferences form has no required validators, it should always be valid
-      // But let's test the validation check anyway
-      component.onSavePreferences();
+    describe('Preferences Update', () => {
+      it('should update preferences when form is valid', () => {
+        const updatedUser: User = { 
+          ...mockUser, 
+          preferences: { 
+            preferredEventFormat: 'PHYSICAL' as const, 
+            industry: 'Healthcare',
+            language: 'de',
+            timezone: 'Europe/Berlin'
+          } 
+        };
+        userService.updateUserProfile.and.returnValue(of(updatedUser));
 
-      expect(window.alert).toHaveBeenCalledWith('Preferences updated successfully!');
+        component.preferencesForm.patchValue({
+          preferredEventFormat: 'PHYSICAL',
+          industry: 'Healthcare',
+          language: 'de',
+          timezone: 'Europe/Berlin'
+        });
+
+        component.onSavePreferences();
+
+        const expectedRequest: UpdateUserRequest = {
+          preferences: {
+            preferredEventFormat: 'PHYSICAL',
+            industry: 'Healthcare',
+            language: 'de',
+            timezone: 'Europe/Berlin'
+          }
+        };
+
+        expect(userService.updateUserProfile).toHaveBeenCalledWith(expectedRequest);
+        expect(stateService.setUser).toHaveBeenCalledWith(updatedUser);
+        expect(console.log).toHaveBeenCalledWith('Preferences updated successfully:', updatedUser);
+        expect(component.isLoading).toBeFalsy();
+      });
+
+      it('should handle preferences update error', () => {
+        const error = new Error('Update failed');
+        userService.updateUserProfile.and.returnValue(throwError(() => error));
+
+        component.onSavePreferences();
+
+        expect(userService.updateUserProfile).toHaveBeenCalled();
+        expect(console.error).toHaveBeenCalledWith('Error updating preferences:', error);
+        expect(component.isLoading).toBeFalsy();
+      });
+
+      it('should not update when already loading', () => {
+        component.isLoading = true;
+        
+        component.onSaveProfile();
+        component.onSavePreferences();
+
+        expect(userService.updateUserProfile).not.toHaveBeenCalled();
+      });
     });
   });
 }); 

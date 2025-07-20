@@ -7,8 +7,8 @@ export const MOCK_DOCUMENTS: ProcessedDocument[] = [
     type: 'GUIDELINES',
     status: 'COMPLETED',
     s3Location: 's3://concepter-docs/user-1/concept-1/AI_Conference_Best_Practices.pdf',
-    uploadedAt: new Date('2024-01-10T09:30:00Z'),
-    processedAt: new Date('2024-01-10T09:35:00Z')
+    uploadedAt: '2024-01-10T09:30:00Z',
+    processedAt: '2024-01-10T09:35:00Z'
   },
   {
     id: 'doc-2',
@@ -16,8 +16,8 @@ export const MOCK_DOCUMENTS: ProcessedDocument[] = [
     type: 'INDUSTRY_REPORT',
     status: 'COMPLETED',
     s3Location: 's3://concepter-docs/user-2/concept-2/Sustainability_Framework_2024.docx',
-    uploadedAt: new Date('2024-01-12T11:15:00Z'),
-    processedAt: new Date('2024-01-12T11:22:00Z')
+    uploadedAt: '2024-01-12T11:15:00Z',
+    processedAt: '2024-01-12T11:22:00Z'
   },
   {
     id: 'doc-3',
@@ -25,7 +25,7 @@ export const MOCK_DOCUMENTS: ProcessedDocument[] = [
     type: 'INDUSTRY_REPORT',
     status: 'PROCESSING',
     s3Location: 's3://concepter-docs/user-3/concept-3/Digital_Marketing_Trends_2024.pdf',
-    uploadedAt: new Date('2024-01-08T16:45:00Z')
+    uploadedAt: '2024-01-08T16:45:00Z'
   },
   {
     id: 'doc-4',
@@ -33,7 +33,7 @@ export const MOCK_DOCUMENTS: ProcessedDocument[] = [
     type: 'GUIDELINES',
     status: 'FAILED',
     s3Location: 's3://concepter-docs/user-1/concept-1/Event_Planning_Checklist.txt',
-    uploadedAt: new Date('2024-01-14T13:20:00Z')
+    uploadedAt: '2024-01-14T13:20:00Z'
   },
   {
     id: 'doc-5',
@@ -41,8 +41,8 @@ export const MOCK_DOCUMENTS: ProcessedDocument[] = [
     type: 'PAST_EVENT_DEBRIEF',
     status: 'COMPLETED',
     s3Location: 's3://concepter-docs/user-1/concept-1/Past_Conference_Report.pdf',
-    uploadedAt: new Date('2024-01-11T10:00:00Z'),
-    processedAt: new Date('2024-01-11T10:08:00Z')
+    uploadedAt: '2024-01-11T10:00:00Z',
+    processedAt: '2024-01-11T10:08:00Z'
   },
   {
     id: 'doc-6',
@@ -50,8 +50,8 @@ export const MOCK_DOCUMENTS: ProcessedDocument[] = [
     type: 'BRAND_DECK',
     status: 'COMPLETED',
     s3Location: 's3://concepter-docs/user-2/concept-2/Brand_Guidelines.pdf',
-    uploadedAt: new Date('2024-01-13T14:30:00Z'),
-    processedAt: new Date('2024-01-13T14:35:00Z')
+    uploadedAt: '2024-01-13T14:30:00Z',
+    processedAt: '2024-01-13T14:35:00Z'
   }
 ];
 
@@ -73,7 +73,7 @@ export const generateMockUploadResult = (file: File): DocumentUploadResult => {
     filename: file.name,
     size: file.size,
     mimeType: file.type,
-    uploadedAt: new Date(),
+    uploadedAt: new Date().toISOString(),
     status: 'QUEUED'
   };
 };

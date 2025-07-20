@@ -192,6 +192,7 @@
 .step-form {
   display: flex;
   flex-direction: column;
+  gap: $spacing-sm;
   
   .full-width {
     width: 100%;
@@ -199,6 +200,7 @@
   
   .form-row {
     display: flex;
+    gap: $spacing-md;
     
     mat-form-field {
       flex: 1;

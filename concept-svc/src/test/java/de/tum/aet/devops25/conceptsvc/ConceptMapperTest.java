@@ -518,4 +518,124 @@ class ConceptMapperTest {
         // Then - speakers should remain unchanged
         assertThat(testEntity.getTitle()).isEqualTo(originalTitle);
     }
+
+    @Test
+    void testUpdateEntityFromRequest_WithNewAgendaItemsWithoutIds() {
+        // Given - Frontend sends agenda items without IDs (new behavior)
+        testEntity.setAgenda(new ArrayList<>());
+        
+        AgendaItem newAgendaItem1 = new AgendaItem();
+        // No ID set - frontend doesn't generate IDs anymore
+        newAgendaItem1.setTime("09:00");
+        newAgendaItem1.setTitle("Opening Session");
+        newAgendaItem1.setType(AgendaItem.TypeEnum.KEYNOTE);
+        newAgendaItem1.setDuration(60);
+        
+        AgendaItem newAgendaItem2 = new AgendaItem();
+        // No ID set here either
+        newAgendaItem2.setTime("10:30");
+        newAgendaItem2.setTitle("Workshop 1");
+        newAgendaItem2.setType(AgendaItem.TypeEnum.WORKSHOP);
+        newAgendaItem2.setDuration(90);
+        
+        UpdateConceptRequest request = new UpdateConceptRequest();
+        request.setAgenda(List.of(newAgendaItem1, newAgendaItem2));
+
+        // When
+        ConceptMapper.updateEntityFromRequest(testEntity, request);
+
+        // Then
+        assertThat(testEntity.getAgenda()).hasSize(2);
+        
+        // First agenda item
+        assertThat(testEntity.getAgenda().get(0).getId()).isNull(); // No ID - JPA will generate
+        assertThat(testEntity.getAgenda().get(0).getTime()).isEqualTo("09:00");
+        assertThat(testEntity.getAgenda().get(0).getTitle()).isEqualTo("Opening Session");
+        assertThat(testEntity.getAgenda().get(0).getConcept()).isEqualTo(testEntity);
+        
+        // Second agenda item
+        assertThat(testEntity.getAgenda().get(1).getId()).isNull(); // No ID - JPA will generate
+        assertThat(testEntity.getAgenda().get(1).getTime()).isEqualTo("10:30");
+        assertThat(testEntity.getAgenda().get(1).getTitle()).isEqualTo("Workshop 1");
+        assertThat(testEntity.getAgenda().get(1).getConcept()).isEqualTo(testEntity);
+    }
+
+    @Test
+    void testUpdateEntityFromRequest_WithNewSpeakersWithoutIds() {
+        // Given - Frontend sends speakers without IDs (new behavior)
+        testEntity.setSpeakers(new ArrayList<>());
+        
+        Speaker newSpeaker1 = new Speaker();
+        // No ID set - frontend doesn't generate IDs anymore
+        newSpeaker1.setName("Dr. Alice Johnson");
+        newSpeaker1.setExpertise("Artificial Intelligence");
+        newSpeaker1.setSuggestedTopic("Future of AI");
+        newSpeaker1.setConfirmed(false);
+        
+        Speaker newSpeaker2 = new Speaker();
+        // No ID set here either
+        newSpeaker2.setName("Bob Smith");
+        newSpeaker2.setExpertise("Data Science");
+        newSpeaker2.setSuggestedTopic("Big Data Analytics");
+        newSpeaker2.setConfirmed(true);
+        
+        UpdateConceptRequest request = new UpdateConceptRequest();
+        request.setSpeakers(List.of(newSpeaker1, newSpeaker2));
+
+        // When
+        ConceptMapper.updateEntityFromRequest(testEntity, request);
+
+        // Then
+        assertThat(testEntity.getSpeakers()).hasSize(2);
+        
+        // First speaker
+        assertThat(testEntity.getSpeakers().get(0).getId()).isNull(); // No ID - JPA will generate
+        assertThat(testEntity.getSpeakers().get(0).getName()).isEqualTo("Dr. Alice Johnson");
+        assertThat(testEntity.getSpeakers().get(0).getExpertise()).isEqualTo("Artificial Intelligence");
+        assertThat(testEntity.getSpeakers().get(0).getConcept()).isEqualTo(testEntity);
+        
+        // Second speaker
+        assertThat(testEntity.getSpeakers().get(1).getId()).isNull(); // No ID - JPA will generate
+        assertThat(testEntity.getSpeakers().get(1).getName()).isEqualTo("Bob Smith");
+        assertThat(testEntity.getSpeakers().get(1).getExpertise()).isEqualTo("Data Science");
+        assertThat(testEntity.getSpeakers().get(1).getConcept()).isEqualTo(testEntity);
+    }
+
+    @Test
+    void testUpdateEntityFromRequest_WithMixedAgendaItems() {
+        // Given - Mix of existing items (with IDs) and new items (without IDs)
+        testEntity.setAgenda(new ArrayList<>());
+        
+        UUID existingId = UUID.randomUUID();
+        AgendaItem existingItem = new AgendaItem();
+        existingItem.setId(existingId); // Has ID - existing item
+        existingItem.setTime("14:00");
+        existingItem.setTitle("Existing Panel");
+        existingItem.setType(AgendaItem.TypeEnum.PANEL);
+        existingItem.setDuration(75);
+        
+        AgendaItem newItem = new AgendaItem();
+        // No ID - new item
+        newItem.setTime("15:30");
+        newItem.setTitle("New Workshop");
+        newItem.setType(AgendaItem.TypeEnum.WORKSHOP);
+        newItem.setDuration(120);
+        
+        UpdateConceptRequest request = new UpdateConceptRequest();
+        request.setAgenda(List.of(existingItem, newItem));
+
+        // When
+        ConceptMapper.updateEntityFromRequest(testEntity, request);
+
+        // Then
+        assertThat(testEntity.getAgenda()).hasSize(2);
+        
+        // Existing item keeps its ID
+        assertThat(testEntity.getAgenda().get(0).getId()).isEqualTo(existingId);
+        assertThat(testEntity.getAgenda().get(0).getTitle()).isEqualTo("Existing Panel");
+        
+        // New item has no ID (JPA will generate)
+        assertThat(testEntity.getAgenda().get(1).getId()).isNull();
+        assertThat(testEntity.getAgenda().get(1).getTitle()).isEqualTo("New Workshop");
+    }
 } 

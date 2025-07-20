@@ -1,102 +1,141 @@
 <div class="profile-container">
-  <div class="header">
-    <h1>
-      <mat-icon>person</mat-icon>
-      Profile Settings
-    </h1>
-  </div>
+  <!-- Hero Header Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="welcome-text">
+        <h1 class="hero-title">
+          <mat-icon class="title-icon">person</mat-icon>
+          Profile Settings
+        </h1>
+        <p class="hero-subtitle">Manage your personal information and preferences</p>
+      </div>
+    </div>
+  </section>
 
-  <mat-card class="profile-card">
-    <mat-tab-group>
-      <!-- Profile Tab -->
-      <mat-tab label="Profile">
-        <div class="tab-content">
-          <form [formGroup]="profileForm" (ngSubmit)="onSaveProfile()">
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>First Name</mat-label>
-                <input matInput formControlName="firstName">
-                <mat-error *ngIf="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched">
-                  {{ getFieldErrorMessage(profileForm, 'firstName') }}
-                </mat-error>
-              </mat-form-field>
+  <!-- Profile Form Section -->
+  <section class="form-section">
+    <div class="form-container">
+      <div class="profile-card">
+        <mat-tab-group class="profile-tabs">
+          <!-- Profile Tab -->
+          <mat-tab label="Profile">
+            <div class="tab-content">
+              <div class="card-header">
+                <h2 class="card-title">
+                  <mat-icon>account_circle</mat-icon>
+                  Personal Information
+                </h2>
+                <p class="card-subtitle">Update your basic profile details</p>
+              </div>
+              
+              <form [formGroup]="profileForm" (ngSubmit)="onSaveProfile()" class="profile-form">
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>First Name</mat-label>
+                    <input matInput formControlName="firstName">
+                    <mat-error *ngIf="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched">
+                      {{ getFieldErrorMessage(profileForm, 'firstName') }}
+                    </mat-error>
+                  </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Last Name</mat-label>
-                <input matInput formControlName="lastName">
-                <mat-error *ngIf="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched">
-                  {{ getFieldErrorMessage(profileForm, 'lastName') }}
-                </mat-error>
-              </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Last Name</mat-label>
+                    <input matInput formControlName="lastName">
+                    <mat-error *ngIf="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched">
+                      {{ getFieldErrorMessage(profileForm, 'lastName') }}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Email</mat-label>
+                  <input matInput type="email" formControlName="email">
+                  <mat-hint>Email updates require verification and are currently disabled</mat-hint>
+                  <mat-error *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
+                    {{ getFieldErrorMessage(profileForm, 'email') }}
+                  </mat-error>
+                </mat-form-field>
+
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" type="submit" [disabled]="isProfileFormDisabled" class="save-btn">
+                    <mat-icon>{{ isLoading ? 'hourglass_empty' : 'save' }}</mat-icon>
+                    <span>{{ isLoading ? 'Saving...' : 'Save Profile' }}</span>
+                  </button>
+                </div>
+              </form>
             </div>
+          </mat-tab>
 
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Email</mat-label>
-              <input matInput type="email" formControlName="email">
-              <mat-error *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
-                {{ getFieldErrorMessage(profileForm, 'email') }}
-              </mat-error>
-            </mat-form-field>
+          <!-- Preferences Tab -->
+          <mat-tab label="Preferences">
+            <div class="tab-content">
+              <div class="card-header">
+                <h2 class="card-title">
+                  <mat-icon>tune</mat-icon>
+                  Your Preferences
+                </h2>
+                <p class="card-subtitle">Customize your event experience</p>
+              </div>
+              
+              <form [formGroup]="preferencesForm" (ngSubmit)="onSavePreferences()" class="profile-form">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Preferred Event Format</mat-label>
+                  <mat-select formControlName="preferredEventFormat">
+                    <mat-select-trigger>
+                      <div class="format-option" *ngIf="preferencesForm.get('preferredEventFormat')?.value">
+                        <mat-icon>{{ getFormatIcon(preferencesForm.get('preferredEventFormat')?.value) }}</mat-icon>
+                        <span>{{ getFormatLabel(preferencesForm.get('preferredEventFormat')?.value) }}</span>
+                      </div>
+                    </mat-select-trigger>
+                    <mat-option *ngFor="let format of eventFormats" [value]="format.value">
+                      <div class="format-option">
+                        <mat-icon>{{ getFormatIcon(format.value) }}</mat-icon>
+                        <span>{{ format.label }}</span>
+                      </div>
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
 
-            <div class="form-actions">
-              <button mat-raised-button color="primary" type="submit" [disabled]="profileForm.invalid">
-                Save Profile
-              </button>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Industry</mat-label>
+                  <mat-select formControlName="industry">
+                    <mat-option *ngFor="let industry of industries" [value]="industry">
+                      {{ industry }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Language</mat-label>
+                    <mat-select formControlName="language">
+                      <mat-option *ngFor="let lang of languages" [value]="lang.value">
+                        {{ lang.label }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Timezone</mat-label>
+                    <mat-select formControlName="timezone">
+                      <mat-option *ngFor="let tz of timezones" [value]="tz">
+                        {{ tz }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" type="submit" [disabled]="isPreferencesFormDisabled" class="save-btn">
+                    <mat-icon>{{ isLoading ? 'hourglass_empty' : 'save' }}</mat-icon>
+                    <span>{{ isLoading ? 'Saving...' : 'Save Preferences' }}</span>
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
-        </div>
-      </mat-tab>
-
-      <!-- Preferences Tab -->
-      <mat-tab label="Preferences">
-        <div class="tab-content">
-          <form [formGroup]="preferencesForm" (ngSubmit)="onSavePreferences()">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Preferred Event Format</mat-label>
-              <mat-select formControlName="preferredEventFormat">
-                <mat-option *ngFor="let format of eventFormats" [value]="format.value">
-                  {{ format.label }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Industry</mat-label>
-              <mat-select formControlName="industry">
-                <mat-option *ngFor="let industry of industries" [value]="industry">
-                  {{ industry }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Language</mat-label>
-                <mat-select formControlName="language">
-                  <mat-option *ngFor="let lang of languages" [value]="lang.value">
-                    {{ lang.label }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Timezone</mat-label>
-                <mat-select formControlName="timezone">
-                  <mat-option *ngFor="let tz of timezones" [value]="tz">
-                    {{ tz }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-
-            <div class="form-actions">
-              <button mat-raised-button color="primary" type="submit" [disabled]="preferencesForm.invalid">
-                Save Preferences
-              </button>
-            </div>
-          </form>
-        </div>
-      </mat-tab>
-    </mat-tab-group>
-  </mat-card>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+    </div>
+  </section>
 </div> 

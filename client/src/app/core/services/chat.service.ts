@@ -44,7 +44,7 @@ export class ChatService {
             role: 'assistant',
             content: response.message,
             timestamp: new Date(),
-            conversationId: response.conversationId
+            conversationId: conceptId // Use conceptId instead of response.conversationId for consistency
           };
           this.stateService.addChatMessage(welcomeMessage);
           this.stateService.setLoading('initializeChat', false);

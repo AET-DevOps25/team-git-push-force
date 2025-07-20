@@ -57,15 +57,7 @@ export class ConceptService {
 
   // Download concept as PDF
   downloadConceptPdf(id: string): Observable<Blob> {
-    return this.apiService.get<Blob>(`/api/concepts/${id}/pdf`);
-  }
-
-  // Apply AI concept suggestion
-  applyConceptSuggestion(id: string, suggestion: any, applyMode: 'REPLACE' | 'MERGE' = 'MERGE'): Observable<Concept> {
-    return this.apiService.post<Concept>(`/api/concepts/${id}/apply-suggestion`, {
-      suggestion,
-      applyMode
-    });
+    return this.apiService.downloadBlob(`/api/concepts/${id}/pdf`);
   }
 
   // Update concept status

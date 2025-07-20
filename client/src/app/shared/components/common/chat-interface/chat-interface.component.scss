@@ -155,6 +155,60 @@
   }
 }
 
+// Special loading message styles
+.initialization-message {
+  .message-content {
+    background: rgba(255, 193, 7, 0.1) !important;
+    border: 1px solid rgba(255, 193, 7, 0.2) !important;
+    
+    .message-text.typing {
+      color: #FF8F00;
+      
+      span {
+        font-weight: 500;
+      }
+    }
+  }
+  
+  .message-avatar {
+    background: rgba(255, 193, 7, 0.15) !important;
+    
+    mat-icon {
+      color: #FF8F00 !important;
+      animation: pulse-slow 2s ease-in-out infinite;
+    }
+  }
+}
+
+.thinking-message {
+  .message-content {
+    background: rgba(102, 126, 234, 0.08) !important;
+    border: 1px solid rgba(102, 126, 234, 0.15) !important;
+    
+    .message-text.typing {
+      color: #667eea;
+      
+      span {
+        font-weight: 500;
+      }
+      
+      mat-spinner {
+        ::ng-deep .mat-mdc-progress-spinner-circle {
+          stroke: #667eea;
+        }
+      }
+    }
+  }
+  
+  .message-avatar {
+    background: rgba(102, 126, 234, 0.12) !important;
+    
+    mat-icon {
+      color: #667eea !important;
+      animation: pulse-glow 1.5s ease-in-out infinite;
+    }
+  }
+}
 
 
 // Chat Input
@@ -186,6 +240,12 @@
         border-color: #667eea;
         box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
       }
+      
+      &.mdc-text-field--disabled {
+        background: rgba(0, 0, 0, 0.02);
+        border-color: rgba(0, 0, 0, 0.1);
+        opacity: 0.6;
+      }
     }
     
     .mat-mdc-form-field-subscript-wrapper {
@@ -208,6 +268,11 @@
     font-family: inherit;
     font-size: 0.875rem;
     line-height: 1.5;
+    
+    &:disabled {
+      cursor: not-allowed;
+      color: rgba(0, 0, 0, 0.5);
+    }
   }
 }
 
@@ -230,10 +295,17 @@
   }
   
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
     filter: none;
+    background: linear-gradient(45deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+  }
+  
+  &[disabled] {
+    mat-icon {
+      animation: pulse-slow 2s ease-in-out infinite;
+    }
   }
   
   mat-icon {
@@ -252,6 +324,28 @@
   50% {
     opacity: 0.7;
     transform: scale(1.05);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.8;
+    filter: brightness(1.2);
   }
 }
 
