@@ -4,6 +4,7 @@
 
 ```bash
 git clone https://github.com/AET-DevOps25/team-git-push-force.git && cd team-git-push-force
+# Edit docker-compose.yml line 135: Replace 'your_api_token' with your actual OpenWebUI API token
 ./start-dev.sh
 ```
 
@@ -11,6 +12,8 @@ git clone https://github.com/AET-DevOps25/team-git-push-force.git && cd team-git
 - Client (Angular frontend) at [http://localhost:4200](http://localhost:4200)
 - API Gateway at [http://localhost:8080](http://localhost:8080)  
 - Full stack running with real backend services
+
+> **Note:** Before running, edit `docker-compose.yml` line 135 and replace `your_api_token` with your actual OpenWebUI API token.
 
 ---
 
