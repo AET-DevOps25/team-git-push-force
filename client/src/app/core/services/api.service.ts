@@ -57,7 +57,7 @@ export class ApiService {
       });
     }
 
-    return this.http.get(`${this.baseUrl}${endpoint}`, { 
+    return this.http.get(`${this.baseUrl}${endpoint}`, {
       params: httpParams,
       responseType: 'blob' // This is crucial for binary data
     })
@@ -114,21 +114,30 @@ export class ApiService {
 
   private handleMockRequest<T>(method: string, endpoint: string, data?: any, params?: any): Observable<T> {
     // Auth endpoints
-    if (endpoint === '/auth/login' && method === 'POST') {
+    if ((endpoint === '/auth/login' || endpoint === '/api/auth/login') && method === 'POST') {
       return this.mockApiService.login(data.email, data.password) as Observable<T>;
     }
-    if (endpoint === '/auth/register' && method === 'POST') {
+    if ((endpoint === '/auth/register' || endpoint === '/api/auth/register') && method === 'POST') {
       return this.mockApiService.register(data) as Observable<T>;
     }
-    if (endpoint === '/auth/logout' && method === 'POST') {
+    if ((endpoint === '/auth/logout' || endpoint === '/api/auth/logout') && method === 'POST') {
       return this.mockApiService.logout() as Observable<T>;
     }
-    
+    // Note: Mock API doesn't support refresh token yet
+    if ((endpoint === '/auth/refresh' || endpoint === '/api/auth/refresh') && method === 'POST') {
+      // Return a mock response with a new token
+      return of({
+        accessToken: 'mock-token-' + Date.now(),
+        refreshToken: 'mock-refresh-token-' + Date.now(),
+        user: this.mockApiService.getCurrentUser()
+      }) as Observable<T>;
+    }
+
     // User endpoints
     if ((endpoint === '/api/users/profile' || endpoint === '/users/profile' || endpoint === '/users/me') && method === 'GET') {
       return this.mockApiService.getCurrentUser() as Observable<T>;
     }
-    
+
     // Concept endpoints
     if ((endpoint === '/api/concepts' || endpoint === '/concepts') && method === 'GET') {
       return this.mockApiService.getConcepts(params) as Observable<T>;
@@ -148,7 +157,7 @@ export class ApiService {
         return this.mockApiService.deleteConcept(conceptId) as Observable<T>;
       }
     }
-    
+
     // Chat endpoints
     if ((endpoint === '/api/chat/send' || endpoint === '/chat/send') && method === 'POST') {
       return this.mockApiService.sendChatMessage(data) as Observable<T>;
@@ -160,8 +169,8 @@ export class ApiService {
       const conversationId = endpoint.split('/').pop()!;
       return this.mockApiService.getChatHistory(conversationId) as Observable<T>;
     }
-    
-    // Document endpoints  
+
+    // Document endpoints
     if ((endpoint === '/api/documents' || endpoint === '/documents') && method === 'GET') {
       return this.mockApiService.getDocuments(params) as Observable<T>;
     }
@@ -186,4 +195,4 @@ export class ApiService {
     console.error('API Error:', error);
     return throwError(() => error);
   }
-} 
+}

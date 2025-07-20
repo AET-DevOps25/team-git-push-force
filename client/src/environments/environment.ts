@@ -4,4 +4,4 @@ export const environment = {
   apiUrl: 'http://localhost:8080',
   mockDelay: 800,
   enableLogging: true
-}; 
+};

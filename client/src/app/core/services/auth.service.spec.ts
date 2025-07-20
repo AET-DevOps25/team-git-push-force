@@ -128,7 +128,7 @@ describe('AuthService', () => {
         done();
       });
 
-      expect(apiServiceSpy.post).toHaveBeenCalledWith('/auth/login', loginCredentials);
+      expect(apiServiceSpy.post).toHaveBeenCalledWith('/api/auth/login', loginCredentials);
     });
 
     it('should handle login error', (done) => {
@@ -176,7 +176,7 @@ describe('AuthService', () => {
         done();
       });
 
-      expect(apiServiceSpy.post).toHaveBeenCalledWith('/auth/register', registerData);
+      expect(apiServiceSpy.post).toHaveBeenCalledWith('/api/auth/register', registerData);
     });
 
     it('should handle registration error', (done) => {
@@ -200,7 +200,7 @@ describe('AuthService', () => {
 
       service.logout();
 
-      expect(apiServiceSpy.post).toHaveBeenCalledWith('/auth/logout', {});
+      expect(apiServiceSpy.post).toHaveBeenCalledWith('/api/auth/logout', {});
       expect(storageServiceSpy.removeItem).toHaveBeenCalledWith('access_token');
       expect(storageServiceSpy.removeItem).toHaveBeenCalledWith('refresh_token');
       expect(storageServiceSpy.removeItem).toHaveBeenCalledWith('current_user');
@@ -310,7 +310,7 @@ describe('AuthService', () => {
 
       service.refreshToken().subscribe(response => {
         expect(response).toEqual(mockAuthResponse);
-        expect(apiServiceSpy.post).toHaveBeenCalledWith('/auth/refresh', { refreshToken: 'refresh-token-12345' });
+        expect(apiServiceSpy.post).toHaveBeenCalledWith('/api/auth/refresh', { refreshToken: 'refresh-token-12345' });
         expect(storageServiceSpy.setItem).toHaveBeenCalledWith('access_token', mockAuthResponse.accessToken);
         done();
       });
@@ -333,7 +333,7 @@ describe('AuthService', () => {
         if (key === 'refresh_token') return 'refresh-token-12345' as any;
         return null;
       });
-      
+
       // First call for refresh will fail, second call for logout will succeed
       apiServiceSpy.post.and.returnValues(
         throwError(() => ({ status: 401 })),
@@ -355,7 +355,7 @@ describe('AuthService', () => {
 
       service.isAuthenticated$.subscribe(isAuth => {
         emittedValues.push(isAuth);
-        
+
         if (emittedValues.length === 2) {
           expect(emittedValues).toEqual([false, true]);
           done();
@@ -395,4 +395,4 @@ describe('AuthService', () => {
       });
     });
   });
-}); 
+});

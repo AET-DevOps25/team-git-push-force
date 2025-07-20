@@ -32,7 +32,11 @@ public class JwtAuthenticationFilter implements WebFilter {
             path.equals("/auth/register") ||
             path.equals("/api/auth/register") ||
             path.equals("/auth/login") ||
-            path.equals("/api/auth/login")) {
+            path.equals("/api/auth/login") ||
+            path.equals("/auth/refresh") ||
+            path.equals("/api/auth/refresh") ||
+            path.equals("/auth/logout") ||
+            path.equals("/api/auth/logout")) {
             System.out.println("[AUTH_DEBUG] Skipping authentication for public endpoint: " + path);
             return chain.filter(exchange);
         }

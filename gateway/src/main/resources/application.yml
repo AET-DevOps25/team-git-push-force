@@ -12,16 +12,18 @@ spring:
           uri: forward:/health
           predicates:
             - Path=/api
+        - id: api_health_route
+          uri: forward:/health
+          predicates:
+            - Path=/api/health
         - id: root_redirect
           uri: forward:/health
           predicates:
             - Path=/
         - id: auth_route
-          uri: forward:/auth
+          uri: forward:/api/auth
           predicates:
             - Path=/api/auth/**
-          filters:
-            - RewritePath=/api/auth/(?<segment>.*), /auth/$\{segment}
         - id: user_health_route
           uri: ${user-svc.url}
           predicates:

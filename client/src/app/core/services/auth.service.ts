@@ -30,8 +30,8 @@ export class AuthService {
   login(credentials: LoginRequest): Observable<AuthResponse> {
     this.stateService.setLoading('login', true);
     console.log('🔐 AuthService.login() called with:', credentials.email);
-    
-    return this.apiService.post<AuthResponse>('/auth/login', credentials)
+
+    return this.apiService.post<AuthResponse>('/api/auth/login', credentials)
       .pipe(
         tap(response => {
           console.log('✅ AuthService received login response:', response);
@@ -50,7 +50,7 @@ export class AuthService {
 
   register(userData: RegisterRequest): Observable<AuthResponse> {
     this.stateService.setLoading('auth', true);
-    return this.apiService.post<AuthResponse>('/auth/register', userData)
+    return this.apiService.post<AuthResponse>('/api/auth/register', userData)
       .pipe(
         tap(response => {
           this.handleAuthSuccess(response);
@@ -66,7 +66,7 @@ export class AuthService {
   }
 
   logout(): void {
-    this.apiService.post('/auth/logout', {}).subscribe({
+    this.apiService.post('/api/auth/logout', {}).subscribe({
       next: () => {
         this.clearAuth();
         this.router.navigate(['/auth/login']);
@@ -86,7 +86,7 @@ export class AuthService {
       return of(null);
     }
 
-    return this.apiService.post<AuthResponse>('/auth/refresh', { refreshToken })
+    return this.apiService.post<AuthResponse>('/api/auth/refresh', { refreshToken })
       .pipe(
         tap(response => {
           this.handleAuthSuccess(response);
@@ -111,14 +111,14 @@ export class AuthService {
     const hasToken = !!token;
     const isExpired = token ? this.isTokenExpired(token) : true;
     const result = hasToken && !isExpired;
-    
+
     return result;
   }
 
   private initializeAuth(): void {
     const user = this.getCurrentUser();
     const isAuth = this.isAuthenticated();
-    
+
     if (isAuth && user) {
       this.stateService.setUser(user);
       this.isAuthenticatedSubject.next(true);
@@ -129,15 +129,15 @@ export class AuthService {
 
   private handleAuthSuccess(response: AuthResponse): void {
     console.log('🎉 handleAuthSuccess() called with:', response);
-    
+
     this.storageService.setItem(this.TOKEN_KEY, response.accessToken);
     this.storageService.setItem(this.REFRESH_TOKEN_KEY, response.refreshToken);
     this.storageService.setItem(this.USER_KEY, response.user);
-    
+
     this.stateService.setUser(response.user);
     this.isAuthenticatedSubject.next(true);
     this.stateService.setError(null);
-    
+
     console.log('🔒 Authentication state updated:', {
       token: !!response.accessToken,
       user: response.user.email,
@@ -149,7 +149,7 @@ export class AuthService {
     this.storageService.removeItem(this.TOKEN_KEY);
     this.storageService.removeItem(this.REFRESH_TOKEN_KEY);
     this.storageService.removeItem(this.USER_KEY);
-    
+
     this.stateService.setUser(null);
     this.isAuthenticatedSubject.next(false);
     this.stateService.reset();
@@ -160,7 +160,7 @@ export class AuthService {
     if (!token || typeof token !== 'string') {
       return true; // Consider null/undefined/non-string tokens as expired
     }
-    
+
     // Handle mock tokens (they don't expire)
     if (token.startsWith('mock-token-')) {
       console.log('🔧 Mock token detected, never expires:', token);
@@ -170,10 +170,10 @@ export class AuthService {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const isExpired = payload.exp * 1000 < Date.now();
-      console.log('🕐 Token expiry check:', { 
-        exp: payload.exp, 
-        now: Date.now(), 
-        expired: isExpired 
+      console.log('🕐 Token expiry check:', {
+        exp: payload.exp,
+        now: Date.now(),
+        expired: isExpired
       });
       return isExpired;
     } catch (error) {
@@ -181,4 +181,4 @@ export class AuthService {
       return true;
     }
   }
-} 
+}

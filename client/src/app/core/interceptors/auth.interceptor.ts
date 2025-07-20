@@ -11,20 +11,20 @@ export class AuthInterceptor implements HttpInterceptor {
     const token = this.authService.getToken();
 
     console.log('🔧 AuthInterceptor - Token:', token);
-    
+
     if (token && !this.isAuthRequest(req.url)) {
       const authReq = req.clone({
         headers: req.headers.set('Authorization', `Bearer ${token}`)
       });
       return next.handle(authReq);
     }
-    
+
     return next.handle(req);
   }
 
   private isAuthRequest(url: string): boolean {
-    return url.includes('/auth/login') || 
-           url.includes('/auth/register') || 
-           url.includes('/auth/refresh');
+    return url.includes('/api/auth/login') ||
+           url.includes('/api/auth/register') ||
+           url.includes('/api/auth/refresh');
   }
-} 
+}

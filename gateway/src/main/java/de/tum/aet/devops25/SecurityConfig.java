@@ -32,7 +32,9 @@ public class SecurityConfig {
 
                     authorizeExchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow preflight requests
-                        .pathMatchers("/", "/health", "/api/users/health", "/api/concepts/health", "/api/genai/health", "/auth/login", "/auth/register", "/auth/refresh", "/auth/logout", "/api/auth/register", "/actuator/prometheus").permitAll()
+                        .pathMatchers("/", "/health", "/api/health", "/api/users/health", "/api/concepts/health", "/api/genai/health", 
+                                     "/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout",
+                                     "/actuator/prometheus").permitAll()
                         .anyExchange().authenticated();
 
                     System.out.println("[SECURITY_DEBUG] Authorization rules configured");

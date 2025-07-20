@@ -71,12 +71,12 @@ describe('ErrorInterceptor', () => {
 
      describe('401 Unauthorized Errors', () => {
      it('should attempt token refresh on 401 error for non-auth requests', () => {
-       const mockRefreshResponse = { 
-         accessToken: 'new-token', 
-         refreshToken: 'new-refresh', 
-         tokenType: 'Bearer', 
-         expiresIn: 3600, 
-         user: { id: '1', email: 'test@test.com', firstName: 'Test', lastName: 'User', preferences: { preferredEventFormat: 'HYBRID' as const, industry: 'Tech', language: 'en', timezone: 'UTC' }, isActive: true, createdAt: new Date(), updatedAt: new Date() } 
+       const mockRefreshResponse = {
+         accessToken: 'new-token',
+         refreshToken: 'new-refresh',
+         tokenType: 'Bearer',
+         expiresIn: 3600,
+         user: { id: '1', email: 'test@test.com', firstName: 'Test', lastName: 'User', preferences: { preferredEventFormat: 'HYBRID' as const, industry: 'Tech', language: 'en', timezone: 'UTC' }, isActive: true, createdAt: new Date(), updatedAt: new Date() }
        };
        authServiceSpy.refreshToken.and.returnValue(of(mockRefreshResponse));
       authServiceSpy.getToken.and.returnValue('new-token');
@@ -128,13 +128,13 @@ describe('ErrorInterceptor', () => {
     });
 
     it('should not attempt refresh for auth requests', () => {
-      httpClient.post('/auth/login', {}).subscribe({
+      httpClient.post('/api/auth/login', {}).subscribe({
         error: (error) => {
           expect(error.status).toBe(401);
         }
       });
 
-      const req = httpMock.expectOne('/auth/login');
+      const req = httpMock.expectOne('/api/auth/login');
       req.flush('Invalid credentials', { status: 401, statusText: 'Unauthorized' });
 
       expect(authServiceSpy.refreshToken).not.toHaveBeenCalled();
@@ -142,13 +142,13 @@ describe('ErrorInterceptor', () => {
     });
 
     it('should not attempt refresh for register requests', () => {
-      httpClient.post('/auth/register', {}).subscribe({
+      httpClient.post('/api/auth/register', {}).subscribe({
         error: (error) => {
           expect(error.status).toBe(401);
         }
       });
 
-      const req = httpMock.expectOne('/auth/register');
+      const req = httpMock.expectOne('/api/auth/register');
       req.flush('Registration failed', { status: 401, statusText: 'Unauthorized' });
 
       expect(authServiceSpy.refreshToken).not.toHaveBeenCalled();
@@ -156,13 +156,13 @@ describe('ErrorInterceptor', () => {
     });
 
     it('should not attempt refresh for refresh token requests', () => {
-      httpClient.post('/auth/refresh', {}).subscribe({
+      httpClient.post('/api/auth/refresh', {}).subscribe({
         error: (error) => {
           expect(error.status).toBe(401);
         }
       });
 
-      const req = httpMock.expectOne('/auth/refresh');
+      const req = httpMock.expectOne('/api/auth/refresh');
       req.flush('Refresh failed', { status: 401, statusText: 'Unauthorized' });
 
       expect(authServiceSpy.refreshToken).not.toHaveBeenCalled();
@@ -240,12 +240,12 @@ describe('ErrorInterceptor', () => {
 
      describe('Token Refresh Flow', () => {
      it('should clone request with new token after successful refresh', () => {
-       const mockRefreshResponse = { 
-         accessToken: 'new-token-12345', 
-         refreshToken: 'new-refresh', 
-         tokenType: 'Bearer', 
-         expiresIn: 3600, 
-         user: { id: '1', email: 'test@test.com', firstName: 'Test', lastName: 'User', preferences: { preferredEventFormat: 'HYBRID' as const, industry: 'Tech', language: 'en', timezone: 'UTC' }, isActive: true, createdAt: new Date(), updatedAt: new Date() } 
+       const mockRefreshResponse = {
+         accessToken: 'new-token-12345',
+         refreshToken: 'new-refresh',
+         tokenType: 'Bearer',
+         expiresIn: 3600,
+         user: { id: '1', email: 'test@test.com', firstName: 'Test', lastName: 'User', preferences: { preferredEventFormat: 'HYBRID' as const, industry: 'Tech', language: 'en', timezone: 'UTC' }, isActive: true, createdAt: new Date(), updatedAt: new Date() }
        };
        authServiceSpy.refreshToken.and.returnValue(of(mockRefreshResponse));
       authServiceSpy.getToken.and.returnValue('new-token-12345');
@@ -267,12 +267,12 @@ describe('ErrorInterceptor', () => {
     });
 
          it('should handle multiple simultaneous 401 errors correctly', () => {
-       const mockRefreshResponse = { 
-         accessToken: 'new-token', 
-         refreshToken: 'new-refresh', 
-         tokenType: 'Bearer', 
-         expiresIn: 3600, 
-         user: { id: '1', email: 'test@test.com', firstName: 'Test', lastName: 'User', preferences: { preferredEventFormat: 'HYBRID' as const, industry: 'Tech', language: 'en', timezone: 'UTC' }, isActive: true, createdAt: new Date(), updatedAt: new Date() } 
+       const mockRefreshResponse = {
+         accessToken: 'new-token',
+         refreshToken: 'new-refresh',
+         tokenType: 'Bearer',
+         expiresIn: 3600,
+         user: { id: '1', email: 'test@test.com', firstName: 'Test', lastName: 'User', preferences: { preferredEventFormat: 'HYBRID' as const, industry: 'Tech', language: 'en', timezone: 'UTC' }, isActive: true, createdAt: new Date(), updatedAt: new Date() }
        };
        authServiceSpy.refreshToken.and.returnValue(of(mockRefreshResponse));
       authServiceSpy.getToken.and.returnValue('new-token');
@@ -284,7 +284,7 @@ describe('ErrorInterceptor', () => {
       // Both fail with 401
       const req1 = httpMock.expectOne('/api/data1');
       const req2 = httpMock.expectOne('/api/data2');
-      
+
       req1.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
       req2.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
 
@@ -316,22 +316,22 @@ describe('ErrorInterceptor', () => {
     });
 
     it('should correctly identify register requests', () => {
-      httpClient.post('/user/auth/register', {}).subscribe({
+      httpClient.post('/api/auth/register', {}).subscribe({
         error: () => {}
       });
 
-      const req = httpMock.expectOne('/user/auth/register');
+      const req = httpMock.expectOne('/api/auth/register');
       req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
 
       expect(authServiceSpy.refreshToken).not.toHaveBeenCalled();
     });
 
     it('should correctly identify refresh requests', () => {
-      httpClient.post('/auth/refresh/token', {}).subscribe({
+      httpClient.post('/api/auth/refresh/token', {}).subscribe({
         error: () => {}
       });
 
-      const req = httpMock.expectOne('/auth/refresh/token');
+      const req = httpMock.expectOne('/api/auth/refresh/token');
       req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
 
       expect(authServiceSpy.refreshToken).not.toHaveBeenCalled();
@@ -423,4 +423,4 @@ describe('ErrorInterceptor', () => {
       expect(authServiceSpy.refreshToken).toHaveBeenCalledTimes(1);
     });
   });
-}); 
+});

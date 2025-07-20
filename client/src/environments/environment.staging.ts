@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
   useMockApi: false,
-  apiUrl: 'https://dev-aieventconcepter.student.k8s.aet.cit.tum.de/api',
+  apiUrl: 'https://dev-aieventconcepter.student.k8s.aet.cit.tum.de',
   mockDelay: 200,
   enableLogging: true
-}; 
+};

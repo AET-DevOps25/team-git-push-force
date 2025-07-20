@@ -53,8 +53,8 @@ export class ErrorInterceptor implements HttpInterceptor {
   }
 
   private isAuthRequest(url: string): boolean {
-    return url.includes('/auth/login') || 
-           url.includes('/auth/register') || 
-           url.includes('/auth/refresh');
+    return url.includes('/api/auth/login') ||
+           url.includes('/api/auth/register') ||
+           url.includes('/api/auth/refresh');
   }
-} 
+}

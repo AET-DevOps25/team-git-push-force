@@ -124,9 +124,9 @@ describe('AuthInterceptor', () => {
       const mockToken = 'mock-token-12345';
       authServiceSpy.getToken.and.returnValue(mockToken);
 
-      httpClient.post('/auth/login', { email: 'test@test.com', password: 'password' }).subscribe();
+      httpClient.post('/api/auth/login', { email: 'test@test.com', password: 'password' }).subscribe();
 
-      const req = httpMock.expectOne('/auth/login');
+      const req = httpMock.expectOne('/api/auth/login');
       expect(req.request.headers.get('Authorization')).toBeNull();
       req.flush({});
     });
@@ -135,9 +135,9 @@ describe('AuthInterceptor', () => {
       const mockToken = 'mock-token-12345';
       authServiceSpy.getToken.and.returnValue(mockToken);
 
-      httpClient.post('/auth/register', { email: 'test@test.com', password: 'password' }).subscribe();
+      httpClient.post('/api/auth/register', { email: 'test@test.com', password: 'password' }).subscribe();
 
-      const req = httpMock.expectOne('/auth/register');
+      const req = httpMock.expectOne('/api/auth/register');
       expect(req.request.headers.get('Authorization')).toBeNull();
       req.flush({});
     });
@@ -146,9 +146,9 @@ describe('AuthInterceptor', () => {
       const mockToken = 'mock-token-12345';
       authServiceSpy.getToken.and.returnValue(mockToken);
 
-      httpClient.post('/auth/refresh', { refreshToken: 'refresh-token' }).subscribe();
+      httpClient.post('/api/auth/refresh', { refreshToken: 'refresh-token' }).subscribe();
 
-      const req = httpMock.expectOne('/auth/refresh');
+      const req = httpMock.expectOne('/api/auth/refresh');
       expect(req.request.headers.get('Authorization')).toBeNull();
       req.flush({});
     });
@@ -169,8 +169,8 @@ describe('AuthInterceptor', () => {
       authServiceSpy.getToken.and.returnValue(mockToken);
 
       // Auth request with query params should not get token
-      httpClient.post('/auth/login?redirect=dashboard', {}).subscribe();
-      const authReq = httpMock.expectOne('/auth/login?redirect=dashboard');
+      httpClient.post('/api/auth/login?redirect=dashboard', {}).subscribe();
+      const authReq = httpMock.expectOne('/api/auth/login?redirect=dashboard');
       expect(authReq.request.headers.get('Authorization')).toBeNull();
       authReq.flush({});
 
@@ -186,14 +186,14 @@ describe('AuthInterceptor', () => {
       authServiceSpy.getToken.and.returnValue(mockToken);
 
       // Relative URL
-      httpClient.post('/auth/login', {}).subscribe();
-      const relativeReq = httpMock.expectOne('/auth/login');
+      httpClient.post('/api/auth/login', {}).subscribe();
+      const relativeReq = httpMock.expectOne('/api/auth/login');
       expect(relativeReq.request.headers.get('Authorization')).toBeNull();
       relativeReq.flush({});
 
       // Absolute URL (if testing with full URLs)
-      httpClient.post('https://api.example.com/auth/register', {}).subscribe();
-      const absoluteReq = httpMock.expectOne('https://api.example.com/auth/register');
+      httpClient.post('https://api.example.com/api/auth/register', {}).subscribe();
+      const absoluteReq = httpMock.expectOne('https://api.example.com/api/auth/register');
       expect(absoluteReq.request.headers.get('Authorization')).toBeNull();
       absoluteReq.flush({});
     });
@@ -208,7 +208,7 @@ describe('AuthInterceptor', () => {
       httpClient.get('/api/test', { headers: originalHeaders }).subscribe();
 
       const req = httpMock.expectOne('/api/test');
-      
+
       // Should have original headers plus Authorization
       expect(req.request.headers.get('Content-Type')).toBe('application/json');
       expect(req.request.headers.get('Authorization')).toBe(`Bearer ${mockToken}`);
@@ -229,9 +229,9 @@ describe('AuthInterceptor', () => {
       const mockToken = 'mock-token-12345';
       authServiceSpy.getToken.and.returnValue(mockToken);
 
-      httpClient.post('/auth/login', {}).subscribe();
+      httpClient.post('/api/auth/login', {}).subscribe();
 
-      const req = httpMock.expectOne('/auth/login');
+      const req = httpMock.expectOne('/api/auth/login');
       expect(req.request.headers.get('Authorization')).toBeNull();
       req.flush({});
     });
@@ -323,14 +323,14 @@ describe('AuthInterceptor', () => {
       req.flush({});
 
       // Test register URL
-      httpClient.post('/user/auth/register', {}).subscribe();
-      req = httpMock.expectOne('/user/auth/register');
+      httpClient.post('/api/auth/register', {}).subscribe();
+      req = httpMock.expectOne('/api/auth/register');
       expect(req.request.headers.get('Authorization')).toBeNull();
       req.flush({});
 
       // Test refresh URL
-      httpClient.post('/auth/refresh/token', {}).subscribe();
-      req = httpMock.expectOne('/auth/refresh/token');
+      httpClient.post('/api/auth/refresh', {}).subscribe();
+      req = httpMock.expectOne('/api/auth/refresh');
       expect(req.request.headers.get('Authorization')).toBeNull();
       req.flush({});
 
@@ -341,4 +341,4 @@ describe('AuthInterceptor', () => {
       req.flush({});
     });
   });
-}); 
+});

@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import { 
-  Concept, 
-  CreateConceptRequest, 
+import {
+  Concept,
+  CreateConceptRequest,
   UpdateConceptRequest,
-  ConceptStatus 
+  ConceptStatus
 } from '../models/concept.model';
 
 export interface ConceptFilters {
@@ -30,7 +30,7 @@ export class ConceptService {
     if (filters?.page !== undefined) params.page = filters.page;
     if (filters?.limit !== undefined) params.size = filters.limit;
     if (filters?.status) params.status = filters.status;
-    
+
     return this.apiService.get<{content: Concept[], totalElements: number, totalPages: number}>('/api/concepts', params);
   }
 
@@ -73,4 +73,4 @@ export class ConceptService {
   unarchiveConcept(id: string): Observable<Concept> {
     return this.updateConceptStatus(id, 'DRAFT');
   }
-} 
+}
