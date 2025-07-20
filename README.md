@@ -2,8 +2,13 @@
 
 ## 🚀 Quick Start (≤3 Commands)
 
+**Prerequisites:** Install code generation dependencies first:
 ```bash
-git clone https://github.com/AET-DevOps25/team-git-push-force.git && cd team-git-push-force
+npm install
+```
+
+**Start the application:**
+```bash
 # Edit docker-compose.yml line 135: Replace 'your_api_token' with your actual OpenWebUI API token
 ./start-dev.sh
 ```
