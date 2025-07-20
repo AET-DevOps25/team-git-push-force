@@ -61,51 +61,251 @@ spec:
   groups:
   - name: ai-event-concepter
     rules:
-    # Service availability alerts
+    # ============================================================================
+    # SERVICE AVAILABILITY ALERTS
+    # ============================================================================
+    
+    # Critical: Service completely down
     - alert: ServiceDown
       expr: up == 0
       for: 1m
       labels:
         severity: critical
+        team: ai-event-concepter
       annotations:
-        summary: "Service {{`{{`}} $labels.instance {{`}}`}} is down"
-        description: "Service {{`{{`}} $labels.instance {{`}}`}} has been down for more than 1 minute."
+        summary: "Service {{`{{`}} $labels.job {{`}}`}} is down"
+        description: "Service {{`{{`}} $labels.job {{`}}`}} has been down for more than 1 minute. Check pod status and logs."
+        runbook_url: "https://github.com/AET-DevOps25/team-git-push-force/tree/main/docs/runbooks#service-down"
 
-    # High memory usage
+    # Warning: Service responding slowly
+    - alert: ServiceSlow
+      expr: up == 1 and rate(http_server_requests_seconds_count[5m]) < 0.01
+      for: 3m
+      labels:
+        severity: warning
+        team: ai-event-concepter
+      annotations:
+        summary: "Service {{`{{`}} $labels.job {{`}}`}} is responding slowly"
+        description: "Service {{`{{`}} $labels.job {{`}}`}} has very low request rate (< 0.01 req/sec) for 3 minutes."
+
+    # ============================================================================
+    # INFRASTRUCTURE ALERTS
+    # ============================================================================
+    
+    # Warning: High memory usage
     - alert: HighMemoryUsage
       expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
       for: 5m
       labels:
         severity: warning
+        team: ai-event-concepter
       annotations:
         summary: "High memory usage on {{`{{`}} $labels.instance {{`}}`}}"
-        description: "Memory usage is above 85% on {{`{{`}} $labels.instance {{`}}`}}"
+        description: "Memory usage is above 85% on {{`{{`}} $labels.instance {{`}}`}} for 5 minutes."
 
-    # High CPU usage
+    # Critical: Very high memory usage
+    - alert: CriticalMemoryUsage
+      expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 95
+      for: 2m
+      labels:
+        severity: critical
+        team: ai-event-concepter
+      annotations:
+        summary: "Critical memory usage on {{`{{`}} $labels.instance {{`}}`}}"
+        description: "Memory usage is above 95% on {{`{{`}} $labels.instance {{`}}`}} for 2 minutes."
+
+    # Warning: High CPU usage
     - alert: HighCPUUsage
       expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
       for: 5m
       labels:
         severity: warning
+        team: ai-event-concepter
       annotations:
         summary: "High CPU usage on {{`{{`}} $labels.instance {{`}}`}}"
-        description: "CPU usage is above 80% on {{`{{`}} $labels.instance {{`}}`}}"
+        description: "CPU usage is above 80% on {{`{{`}} $labels.instance {{`}}`}} for 5 minutes."
 
-    # Spring Boot specific alerts
-    - alert: SpringBootHighErrorRate
-      expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.1
+    # Critical: Very high CPU usage
+    - alert: CriticalCPUUsage
+      expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+      for: 2m
+      labels:
+        severity: critical
+        team: ai-event-concepter
+      annotations:
+        summary: "Critical CPU usage on {{`{{`}} $labels.instance {{`}}`}}"
+        description: "CPU usage is above 90% on {{`{{`}} $labels.instance {{`}}`}} for 2 minutes."
+
+    # ============================================================================
+    # APPLICATION PERFORMANCE ALERTS
+    # ============================================================================
+    
+    # Warning: High error rate (5xx errors)
+    - alert: HighErrorRate
+      expr: sum by(job) (rate(http_server_requests_seconds_count{status=~"5.."}[5m])) > 0.05
       for: 2m
       labels:
         severity: warning
+        team: ai-event-concepter
       annotations:
-        summary: "High error rate in Spring Boot service {{`{{`}} $labels.service {{`}}`}}"
-        description: "Error rate is above 0.1 errors per second in {{`{{`}} $labels.service {{`}}`}}"
+        summary: "High error rate in {{`{{`}} $labels.job {{`}}`}}"
+        description: "5xx error rate is above 0.05 errors per second in {{`{{`}} $labels.job {{`}}`}} for 2 minutes."
 
-    - alert: SpringBootHighResponseTime
-      expr: histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])) > 2
+    # Critical: Very high error rate
+    - alert: CriticalErrorRate
+      expr: sum by(job) (rate(http_server_requests_seconds_count{status=~"5.."}[5m])) > 0.2
+      for: 1m
+      labels:
+        severity: critical
+        team: ai-event-concepter
+      annotations:
+        summary: "Critical error rate in {{`{{`}} $labels.job {{`}}`}}"
+        description: "5xx error rate is above 0.2 errors per second in {{`{{`}} $labels.job {{`}}`}} for 1 minute."
+
+    # Warning: High response time (95th percentile)
+    - alert: HighResponseTime
+      expr: histogram_quantile(0.95, sum by(le, job) (rate(http_server_requests_seconds_bucket[5m]))) > 1.5
+      for: 3m
+      labels:
+        severity: warning
+        team: ai-event-concepter
+      annotations:
+        summary: "High response time in {{`{{`}} $labels.job {{`}}`}}"
+        description: "95th percentile response time is above 1.5 seconds in {{`{{`}} $labels.job {{`}}`}} for 3 minutes."
+
+    # Critical: Very high response time
+    - alert: CriticalResponseTime
+      expr: histogram_quantile(0.95, sum by(le, job) (rate(http_server_requests_seconds_bucket[5m]))) > 3
+      for: 2m
+      labels:
+        severity: critical
+        team: ai-event-concepter
+      annotations:
+        summary: "Critical response time in {{`{{`}} $labels.job {{`}}`}}"
+        description: "95th percentile response time is above 3 seconds in {{`{{`}} $labels.job {{`}}`}} for 2 minutes."
+
+    # ============================================================================
+    # JVM ALERTS (Spring Boot Services)
+    # ============================================================================
+    
+    # Warning: High JVM memory usage
+    - alert: HighJVMMemoryUsage
+      expr: (jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"}) * 100 > 80
       for: 5m
       labels:
         severity: warning
+        team: ai-event-concepter
       annotations:
-        summary: "High response time in Spring Boot service {{`{{`}} $labels.service {{`}}`}}"
-        description: "95th percentile response time is above 2 seconds in {{`{{`}} $labels.service {{`}}`}}" 
+        summary: "High JVM heap usage in {{`{{`}} $labels.job {{`}}`}}"
+        description: "JVM heap usage is above 80% in {{`{{`}} $labels.job {{`}}`}} for 5 minutes."
+
+    # Critical: Very high JVM memory usage
+    - alert: CriticalJVMMemoryUsage
+      expr: (jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"}) * 100 > 90
+      for: 2m
+      labels:
+        severity: critical
+        team: ai-event-concepter
+      annotations:
+        summary: "Critical JVM heap usage in {{`{{`}} $labels.job {{`}}`}}"
+        description: "JVM heap usage is above 90% in {{`{{`}} $labels.job {{`}}`}} for 2 minutes."
+
+    # Warning: High JVM GC frequency
+    - alert: HighJVMCGCount
+      expr: rate(jvm_gc_collection_seconds_count[5m]) > 10
+      for: 5m
+      labels:
+        severity: warning
+        team: ai-event-concepter
+      annotations:
+        summary: "High GC frequency in {{`{{`}} $labels.job {{`}}`}}"
+        description: "Garbage collection frequency is above 10 GCs per minute in {{`{{`}} $labels.job {{`}}`}} for 5 minutes."
+
+    # ============================================================================
+    # DATABASE ALERTS
+    # ============================================================================
+    
+    # Warning: High database connection usage
+    - alert: HighDatabaseConnections
+      expr: hikaricp_connections_active / hikaricp_connections_max * 100 > 80
+      for: 3m
+      labels:
+        severity: warning
+        team: ai-event-concepter
+      annotations:
+        summary: "High database connection usage in {{`{{`}} $labels.job {{`}}`}}"
+        description: "Database connection pool usage is above 80% in {{`{{`}} $labels.job {{`}}`}} for 3 minutes."
+
+    # Critical: Database connection pool exhausted
+    - alert: DatabaseConnectionPoolExhausted
+      expr: hikaricp_connections_active >= hikaricp_connections_max
+      for: 1m
+      labels:
+        severity: critical
+        team: ai-event-concepter
+      annotations:
+        summary: "Database connection pool exhausted in {{`{{`}} $labels.job {{`}}`}}"
+        description: "All database connections are in use in {{`{{`}} $labels.job {{`}}`}} for 1 minute."
+
+    # Warning: Slow database queries
+    - alert: SlowDatabaseQueries
+      expr: histogram_quantile(0.95, rate(hikaricp_connections_acquire_seconds_bucket[5m])) > 1
+      for: 3m
+      labels:
+        severity: warning
+        team: ai-event-concepter
+      annotations:
+        summary: "Slow database queries in {{`{{`}} $labels.job {{`}}`}}"
+        description: "95th percentile database query time is above 1 second in {{`{{`}} $labels.job {{`}}`}} for 3 minutes."
+
+    # ============================================================================
+    # FLASK SERVICE ALERTS (GenAI Service)
+    # ============================================================================
+    
+    # Warning: High Flask error rate
+    - alert: FlaskHighErrorRate
+      expr: sum by(job) (rate(flask_http_request_total{status=~"5.."}[5m])) > 0.05
+      for: 2m
+      labels:
+        severity: warning
+        team: ai-event-concepter
+      annotations:
+        summary: "High error rate in Flask service {{`{{`}} $labels.job {{`}}`}}"
+        description: "5xx error rate is above 0.05 errors per second in Flask service {{`{{`}} $labels.job {{`}}`}} for 2 minutes."
+
+    # Warning: High Flask response time
+    - alert: FlaskHighResponseTime
+      expr: histogram_quantile(0.95, sum by(le, job) (rate(flask_http_request_duration_seconds_bucket[5m]))) > 2
+      for: 3m
+      labels:
+        severity: warning
+        team: ai-event-concepter
+      annotations:
+        summary: "High response time in Flask service {{`{{`}} $labels.job {{`}}`}}"
+        description: "95th percentile response time is above 2 seconds in Flask service {{`{{`}} $labels.job {{`}}`}} for 3 minutes."
+
+    # ============================================================================
+    # BUSINESS LOGIC ALERTS
+    # ============================================================================
+    
+    # Warning: Low request volume (potential issue)
+    - alert: LowRequestVolume
+      expr: sum by(job) (rate(http_server_requests_seconds_count[5m])) < 0.001
+      for: 10m
+      labels:
+        severity: warning
+        team: ai-event-concepter
+      annotations:
+        summary: "Low request volume in {{`{{`}} $labels.job {{`}}`}}"
+        description: "Request rate is below 0.001 requests per second in {{`{{`}} $labels.job {{`}}`}} for 10 minutes."
+
+    # Warning: High 4xx error rate (client errors)
+    - alert: HighClientErrorRate
+      expr: sum by(job) (rate(http_server_requests_seconds_count{status=~"4.."}[5m])) > 0.1
+      for: 5m
+      labels:
+        severity: warning
+        team: ai-event-concepter
+      annotations:
+        summary: "High client error rate in {{`{{`}} $labels.job {{`}}`}}"
+        description: "4xx error rate is above 0.1 errors per second in {{`{{`}} $labels.job {{`}}`}} for 5 minutes." 
