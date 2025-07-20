@@ -14,7 +14,7 @@ spec:
       targetLabel: service_name
     - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
       targetLabel: managed_by
-    targetPort: 8080
+    port: http
   namespaceSelector:
     matchNames:
     - team-git-push-force-dev
@@ -64,7 +64,7 @@ spec:
       targetLabel: service_name
     - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
       targetLabel: managed_by
-    targetPort: 8080
+    port: http
   namespaceSelector:
     matchNames:
     - team-git-push-force-dev
@@ -84,12 +84,7 @@ spec:
   endpoints:
   - interval: 30s
     path: /metrics
-    relabelings:
-    - sourceLabels: [__meta_kubernetes_service_label_app]
-      targetLabel: service_name
-    - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_managed_by]
-      targetLabel: managed_by
-    targetPort: 8083
+    port: http
   namespaceSelector:
     matchNames:
     - team-git-push-force-dev
@@ -122,3 +117,23 @@ spec:
   selector:
     matchLabels:
       app: genai-svc-minio
+
+# ServiceMonitor for Node Exporter
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: node-exporter-service-monitor
+  labels:
+    app: prometheus
+spec:
+  endpoints:
+    - interval: 30s
+      path: /metrics
+      port: metrics
+  namespaceSelector:
+    matchNames:
+      - team-git-push-force-monitor
+  selector:
+    matchLabels:
+      app: node-exporter
+      monitoring: "true"

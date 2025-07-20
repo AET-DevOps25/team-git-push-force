@@ -8,15 +8,17 @@ metadata:
     {{- include "monitoring.labels" . | nindent 4 }}
 spec:
   serviceAccountName: prometheus
-  serviceMonitorSelector:
-    matchLabels:
-      app: prometheus
+  serviceMonitorSelector: {}
   serviceMonitorNamespaceSelector: {}
-  ruleSelector:
-    matchLabels:
-      app: prometheus
+  ruleSelector: {}
   ruleNamespaceSelector: {}
   probeSelector: {}
+  probeNamespaceSelector: {}
+  podMonitorSelector: {}
+  podMonitorNamespaceSelector: {}
+  alertmanagerSelector: {}
+  alertmanagerNamespaceSelector: {}
+
   alerting:
     alertmanagers:
     - namespace: team-git-push-force-monitor

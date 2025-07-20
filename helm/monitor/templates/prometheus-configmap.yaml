@@ -16,47 +16,15 @@ data:
     rule_files:
       - "rules/*.yml"
 
-    # ServiceMonitor discovery is handled automatically by Prometheus Operator
-    # No need for manual scrape_configs when using ServiceMonitors
+    # ServiceMonitor discovery is handled automatically by the Prometheus Operator
+    # Do not add manual scrape_configs for services here.
     scrape_configs:
-      # Prometheus itself
       - job_name: 'prometheus'
         static_configs:
           - targets: ['localhost:9090']
         metrics_path: '/metrics'
         scrape_interval: 15s
 
-      # Node Exporter for system metrics (if deployed)
-      - job_name: 'node-exporter'
-        kubernetes_sd_configs:
-        - role: endpoints
-          namespaces:
-            names:
-            - team-git-push-force-monitor
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_service_name]
-          action: keep
-          regex: node-exporter
-        - target_label: monitoring
-          replacement: "true"
-
-      {{- if .Values.cadvisor.enabled }}
-      # cAdvisor for container metrics (if deployed)
-      - job_name: 'cadvisor'
-        kubernetes_sd_configs:
-        - role: endpoints
-          namespaces:
-            names:
-            - team-git-push-force-monitor
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_service_name]
-          action: keep
-          regex: cadvisor
-        - target_label: monitoring
-          replacement: "true"
-      {{- end }}
-
-    # Alertmanager configuration
     alerting:
       alertmanagers:
         - static_configs:
